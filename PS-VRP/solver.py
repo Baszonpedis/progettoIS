@@ -99,8 +99,7 @@ def swap(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
     soluzione_swap=[] #lista contenente tutte le schedule
     for macchina in lista_macchine: #per ogni macchina
         macchina_schedula=[s for s in schedulazione if s['macchina']==macchina.nome_macchina] #vado a prendere tutte le schedule ad essa associate
-        schedula=macchina.lista_commesse_processate #copia profonda della lista di commesse schedulate
-
+        schedula=macchina.lista_commesse_processate #copia della lista di commesse schedulate
         #schedula=deepcopy(macchina.lista_commesse_processate) #copia profonda della lista di commesse schedulate
         #ultima_lavorazione=macchina.ultima_lavorazione #copia del parametro che indica i minuti a partire dai quali una macchina è disponibile
         improved = True #variabile booleana che indica se è stato trovato un miglioramento
@@ -599,3 +598,69 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
             if improved:
                 break
     return schedula1,schedula2,f_best,contatore
+
+def grafico_schedulazione(schedulazione):
+    """
+    :param schedulazione: lista di dizionari che contiene le informazioni relative ad una schedulazione
+    :return: plot del grafico relativo alla schedulazione
+    """
+    macchine = list(set(schedula["macchina"] for schedula in schedulazione))  # Prendo i nomi unici delle macchine dal dizionario tramite il set
+    macchine.sort(reverse = True)
+    asse_x_setup = []  # Inizializzo l'asse delle x relativo al setup
+    asse_y_setup = []  # Inizializzo l'asse delle y relativo al setup
+    asse_x_lavorazione = []  # Inizializzo l'asse delle x relativo alla lavorazione
+    asse_y_lavorazione = []  # Inizializzo l'asse delle y relativo alla lavorazione
+    identificativi_commesse = []  # Inizializzo la lista degli identificativi delle commesse
+
+    # Assegna un colore univoco a ogni veicolo
+    veicoli = list(set(schedula["veicolo"] for schedula in schedulazione))
+    colori = list(mcolors.TABLEAU_COLORS.values())  # Usa i colori della palette 'TABLEAU_COLORS'
+    colori_veicoli = {veicolo: colori[i % len(colori)] for i, veicolo in enumerate(veicoli)}
+
+    for schedula in schedulazione:  # Per ogni schedula nella lista vado a riempire le liste
+        asse_x_setup.append((schedula["inizio_setup"], schedula["fine_setup"]))
+        asse_y_setup.append(macchine.index(schedula["macchina"]))
+        asse_x_lavorazione.append((schedula["inizio_lavorazione"], schedula["fine_lavorazione"]))
+        asse_y_lavorazione.append(macchine.index(schedula["macchina"]))
+        identificativi_commesse.append(schedula["commessa"])
+
+    # Plot delle barre dei setup
+    for i in range(len(asse_x_setup)):
+        plt.barh(y=asse_y_setup[i], width=asse_x_setup[i][1] - asse_x_setup[i][0], left=asse_x_setup[i][0], height=0.5,
+                 color='red', edgecolor='black')
+
+    # Plot delle barre di lavorazione
+    for i in range(len(asse_x_lavorazione)):
+        veicolo = next(
+            schedula["veicolo"] for schedula in schedulazione if schedula["commessa"] == identificativi_commesse[i])
+        colore = colori_veicoli[veicolo]
+        plt.barh(y=asse_y_lavorazione[i], width=asse_x_lavorazione[i][1] - asse_x_lavorazione[i][0],
+                 left=asse_x_lavorazione[i][0], height=0.5, color=colore, edgecolor='black')
+        plt.text(x=asse_x_lavorazione[i][0] + (asse_x_lavorazione[i][1] - asse_x_lavorazione[i][0]) / 2,
+                 y=asse_y_lavorazione[i], s=identificativi_commesse[i], ha='center', va='center', color='black')
+
+    plt.yticks(range(len(macchine)), macchine)  # Per ogni macchina, mette il suo nome sull'asse y
+    inizi = [schedula["inizio_setup"] for schedula in schedulazione] + [schedula["inizio_lavorazione"] for schedula in
+                                                                        schedulazione]  # Lista contenente tutti gli istanti di inizio lavorazione
+    fine = [schedula["fine_setup"] for schedula in schedulazione] + [schedula["fine_lavorazione"] for schedula in
+                                                                     schedulazione]  # Lista contenente tutti gli istanti di fine lavorazione
+    #plt.xticks(ticks=inizi + fine,labels=[time.strftime('%Y-%m-%d %H:%M:%S') for time in inizi] + [time.strftime('%Y-%m-%d %H:%M:%S') for time in fine], rotation=90)
+    '''La linea sopra serve per mostrare gli orari precisi, ma si tratta di un'informazione troppo granulare'''
+    plt.xlim(min(inizi + fine),
+             max(inizi + fine))  # Imposta la lunghezza dell'asse x uguale all'istante in cui si conclude l'ultima lavorazione in modo da visualizzare correttamente il grafico
+    plt.gca().set_ylim(-0.5, len(macchine) - 0.5)
+    plt.gcf().autofmt_xdate()  # Serve per visualizzare meglio il grafico
+    plt.xlabel('Tempo')  # Titolo asse x
+    plt.ylabel('Macchina')  # Titolo asse y
+    plt.title('Schedulazione')  # Titolo del grafico
+
+    # Creazione della legenda
+    handles = [mpatches.Patch(color=colore, label=f't taglio commessa associata al veicolo {veicolo}') for veicolo, colore in colori_veicoli.items()]
+    handles.append(mpatches.Patch(color='red', label='t setup'))
+    plt.legend(handles=handles, title="Legenda")
+    plt.savefig("PS-VRP\Dati_output\schedulazione.jpg")
+    plt.show()  # Mostra il grafico
+
+    # Spostare legenda
+    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+    plt.tight_layout()  # Adjust layout to prevent overlapping

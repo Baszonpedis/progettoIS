@@ -32,5 +32,3 @@ class Commessa():
             return int(self.fascia_iniziale/self.fascia_finale)+1
         else:
             return 0
-
-

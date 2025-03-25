@@ -32,6 +32,7 @@ output.write_output_soluzione_euristica(schedulazione3,"PS-VRP\OUTPUT_TEST\euris
 print(f'Funzione obiettivo euristico {f_obj3}\n')
 end_time_eur = time.time()
 tot_time_eur= end_time_eur-start_time_eur
+solver.grafico_schedulazione(schedulazione3)
 
 ##DEEPCOPIES PER RICERCHE LOCALI
 lista_veicoli_copy=deepcopy(lista_veicoli)
