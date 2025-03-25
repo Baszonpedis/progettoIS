@@ -27,12 +27,10 @@ print('\nEURISTICO COSTRUTTIVO')
 commesse_filtrate=solver.filtro_commesse(lista_commesse,lista_veicoli)
 numero_commesse_filtrate=len(commesse_filtrate)
 schedulazione3,f_obj3=solver.euristico_costruttivo(commesse_filtrate,lista_macchine,lista_veicoli)
-#output.write_output_soluzione_euristica(schedulazione3,"Dati_output\euristico_risultati_euristico3.xlsx")
 output.write_output_soluzione_euristica(schedulazione3,"PS-VRP\OUTPUT_TEST\euristico_1.xlsx")
 print(f'Funzione obiettivo euristico {f_obj3}\n')
 end_time_eur = time.time()
 tot_time_eur= end_time_eur-start_time_eur
-solver.grafico_schedulazione(schedulazione3)
 
 ##DEEPCOPIES PER RICERCHE LOCALI
 lista_veicoli_copy=deepcopy(lista_veicoli)
@@ -109,3 +107,4 @@ print('TEMPO Greedy + LS1:',tot_time_eur+tot1) #move2
 print('TEMPO Greedy + LS2:',tot_time_eur+tot2) #move
 print('TEMPO Greedy + LS3:',tot_time_eur+tot3) #swap
 print('TEMPO Greedy + LS1 + LS2 + LS3:',tot_time_eur+tot1+tot_tot) #tutti
+solver.grafico_schedulazione(schedulazione3)

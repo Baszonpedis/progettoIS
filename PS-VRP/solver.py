@@ -66,7 +66,7 @@ def aggiorna_schedulazione1(commessa: Commessa ,macchina: Macchina, tempo_setup,
 def filtro_commesse(lista_commesse:list,lista_veicoli):
     data_partenza_veicoli(lista_commesse,lista_veicoli)
     lista_veicoli_disponibili = [veicolo for veicolo in lista_veicoli if veicolo.disponibilita == 1]  # lista che contiene i veicoli disponibili (veicoli filtrati per disponibilità)
-    zone_aperte = set([veicolo.zone_coperte for veicolo in lista_veicoli_disponibili])  # set contenete tutte le zone aperte (una lista può contenere duplicati, mentre un set ha elementi unici)
+    zone_aperte = set([veicolo.zone_coperte for veicolo in lista_veicoli_disponibili])  # set contenente tutte le zone aperte (una lista può contenere duplicati, mentre un set ha elementi unici)
     commesse_da_tagliare = []
     for commessa in lista_commesse:
         intersezione = set(commessa.zona_cliente).intersection(zone_aperte)  # calcolo l'intersezione tra l'insieme delle zone della commessa e le zone aperte
@@ -661,6 +661,6 @@ def grafico_schedulazione(schedulazione):
     plt.savefig("PS-VRP\Dati_output\schedulazione.jpg")
     plt.show()  # Mostra il grafico
 
-    # Spostare legenda
+    # Spostamento legenda
     plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
     plt.tight_layout()  # Adjust layout to prevent overlapping
