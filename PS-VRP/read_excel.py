@@ -12,7 +12,7 @@ import warnings
 campi_input_macchine=['Nome macchina','disponibilita','setup','velocità media','tipologia taglio','dt ultima lavorazione','ora ultima lavorazione','tempo setup cambio alberi','tempo setup prima fila coltelli','tempo setup coltelli','tempo carico bobina','tempo avvio taglio','tempo scarico bobina','tempo confezionamento sacchetti']
 campi_attrezzaggio=['numero file ult lavoro','diam tubo ult lavoro']
 campi_input_commesse=['commessa','data fine stampa','stato stampa calc','Commesse::DATA CONSEGNA','Commesse::Priorita cliente','qta da tagliare metri per schedulatore','qta da tagliare per schedulatore','Commesse::CODICE DI ZONA','Anagrafica incarti::tipologia taglio','Commesse::FASCIA','Commesse::FASCIA UTILE','Commesse::Diam int tubo','compatibilità macchine taglio::check dati','Commesse::categoria materiale']
-campi_compatibilita=['commessa','data fine stampa','stato stampa calc','Commesse::DATA CONSEGNA','Commesse::Priorita cliente','qta da tagliare metri per schedulatore','qta da tagliare per schedulatore','Commesse::CODICE DI ZONA','Anagrafica incarti::tipologia taglio','Commesse::FASCIA','Commesse::FASCIA UTILE','Commesse::Diam int tubo','compatibilità macchine taglio::check dati','compatibilità macchine taglio::check dati','compatibilità macchine taglio::compat macc taglio 1','compatibilità macchine taglio::compat macc taglio 2','compatibilità macchine taglio::compat macc taglio 3','compatibilità macchine taglio::compat macc taglio 4','compatibilità macchine taglio::compat macc taglio 5','compatibilità macchine taglio::compat macc taglio 6','compatibilità macchine taglio::compat macc taglio 7','compatibilità macchine taglio::compat macc taglio 8','compatibilità macchine taglio::compat macc taglio 9','compatibilità macchine taglio::compat macc taglio 10','compatibilità macchine taglio::compat macc taglio 11','compatibilità macchine taglio::compat macc taglio 12','compatibilità macchine taglio::compat macc taglio 13','compatibilità macchine taglio::compat macc taglio 14','compatibilità macchine taglio::compat macc taglio 15','compatibilità macchine taglio::compat macc taglio 16','compatibilità macchine taglio::compat macc taglio 17','Commesse::categoria materiale']
+campi_compatibilita=campi_input_commesse+['compatibilità macchine taglio::compat macc taglio 1','compatibilità macchine taglio::compat macc taglio 2','compatibilità macchine taglio::compat macc taglio 3','compatibilità macchine taglio::compat macc taglio 4','compatibilità macchine taglio::compat macc taglio 5','compatibilità macchine taglio::compat macc taglio 6','compatibilità macchine taglio::compat macc taglio 7','compatibilità macchine taglio::compat macc taglio 8','compatibilità macchine taglio::compat macc taglio 9','compatibilità macchine taglio::compat macc taglio 10','compatibilità macchine taglio::compat macc taglio 11','compatibilità macchine taglio::compat macc taglio 12','compatibilità macchine taglio::compat macc taglio 13','compatibilità macchine taglio::compat macc taglio 14','compatibilità macchine taglio::compat macc taglio 15','compatibilità macchine taglio::compat macc taglio 16','compatibilità macchine taglio::compat macc taglio 17']
 campi_veicoli=['Nome veicolo','Data e ora disponibilita','Disponibilita','Capacita','Zone coperte']
 
 def read_excel_macchine(nome_file):
@@ -28,6 +28,15 @@ def read_excel_macchine(nome_file):
     lista_macchine=[] #lista di macchine inizialmente vuota
     df.loc[~df['Nome macchina'].str.startswith('BIMEC'),'Nome macchina'] = df['Nome macchina'].str.split().str[0] #per tutte le macchine il cui nome non inizia con BIMEC, tengo solo la sottostringa del nome
     df.loc[df['Nome macchina'].str.contains('H7'),'Nome macchina'] = df['Nome macchina'].str.split('_').str[0] #per H7 prendo solo la sottostringa con il suo nome
+    
+    #VERIFICA DEL DTYPE DELLA COLONNA
+    if pd.api.types.is_timedelta64_dtype(df['ora ultima lavorazione']):
+        #Conversione timedelta diretta
+        df['ora ultima lavorazione'] = df['ora ultima lavorazione'].apply(lambda x: (pd.Timestamp("1900-01-01") + x).time())
+    else:
+        #Conversione stringa a datetime ed estrazione time
+        df['ora ultima lavorazione'] = pd.to_datetime(df['ora ultima lavorazione'], format='%H:%M:%S', errors='coerce').dt.time
+
     df['ora ultima lavorazione']=pd.to_datetime(df['ora ultima lavorazione'], format='%H:%M:%S').dt.time
     df['Data e ora disponibilita'] = df.apply(lambda row: pd.Timestamp.combine(row['dt ultima lavorazione'], row['ora ultima lavorazione']), axis=1)
     df=df.drop(columns=['dt ultima lavorazione','ora ultima lavorazione'])
