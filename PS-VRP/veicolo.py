@@ -10,7 +10,6 @@ class Veicolo():
 
     def set_data_partenza(self,data):
         self.data_partenza=data
-        
-        #funzione per inizializzare set e get
-        #vado a fare sort delle commesse per priorità e due date
-        #poi schedulo minimizzando i setup
+        '''funzione per inizializzare set e get
+            vado a fare sort delle commesse per priorità e due date
+            poi schedulo minimizzando i setup'''

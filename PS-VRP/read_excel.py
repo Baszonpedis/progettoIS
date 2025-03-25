@@ -8,14 +8,12 @@ from datetime import timedelta
 import output
 import warnings
 
-######## CAMPI DI LETTURA DEI FILE DI INPUT
-
+#CAMPI DI LETTURA DEI FILE DI INPUT
 campi_input_macchine=['Nome macchina','disponibilita','setup','velocità media','tipologia taglio','dt ultima lavorazione','ora ultima lavorazione','tempo setup cambio alberi','tempo setup prima fila coltelli','tempo setup coltelli','tempo carico bobina','tempo avvio taglio','tempo scarico bobina','tempo confezionamento sacchetti']
 campi_attrezzaggio=['numero file ult lavoro','diam tubo ult lavoro']
 campi_input_commesse=['commessa','data fine stampa','stato stampa calc','Commesse::DATA CONSEGNA','Commesse::Priorita cliente','qta da tagliare metri per schedulatore','qta da tagliare per schedulatore','Commesse::CODICE DI ZONA','Anagrafica incarti::tipologia taglio','Commesse::FASCIA','Commesse::FASCIA UTILE','Commesse::Diam int tubo','compatibilità macchine taglio::check dati','Commesse::categoria materiale']
 campi_compatibilita=['commessa','data fine stampa','stato stampa calc','Commesse::DATA CONSEGNA','Commesse::Priorita cliente','qta da tagliare metri per schedulatore','qta da tagliare per schedulatore','Commesse::CODICE DI ZONA','Anagrafica incarti::tipologia taglio','Commesse::FASCIA','Commesse::FASCIA UTILE','Commesse::Diam int tubo','compatibilità macchine taglio::check dati','compatibilità macchine taglio::check dati','compatibilità macchine taglio::compat macc taglio 1','compatibilità macchine taglio::compat macc taglio 2','compatibilità macchine taglio::compat macc taglio 3','compatibilità macchine taglio::compat macc taglio 4','compatibilità macchine taglio::compat macc taglio 5','compatibilità macchine taglio::compat macc taglio 6','compatibilità macchine taglio::compat macc taglio 7','compatibilità macchine taglio::compat macc taglio 8','compatibilità macchine taglio::compat macc taglio 9','compatibilità macchine taglio::compat macc taglio 10','compatibilità macchine taglio::compat macc taglio 11','compatibilità macchine taglio::compat macc taglio 12','compatibilità macchine taglio::compat macc taglio 13','compatibilità macchine taglio::compat macc taglio 14','compatibilità macchine taglio::compat macc taglio 15','compatibilità macchine taglio::compat macc taglio 16','compatibilità macchine taglio::compat macc taglio 17','Commesse::categoria materiale']
 campi_veicoli=['Nome veicolo','Data e ora disponibilita','Disponibilita','Capacita','Zone coperte']
-
 
 def read_excel_macchine(nome_file):
     """
@@ -40,7 +38,7 @@ def read_excel_macchine(nome_file):
     data_inizio_schedulazione=d-timedelta(days_ahead)  # Timedelta può essere usato per sottrarre un tot di giorni ad una certa data, in questo caso d. Sottraendo days_ahead ad una data qualunque si può risalire al primo lunedì antecedente alla data d.
     df['data_inizio_schedulazione'] = data_inizio_schedulazione.replace(hour=7, minute=0,second=0)  # Aggiungiamo la colonna 'data_inizio_lavorazione' al dataframe file_macchine. L'ora di inizio schedulazione viene impostata alle 7 della mattina
     for (i,f) in df.iterrows():  # iterrows() ritorna una pd.Series per ogni riga nel dataframe, "i" prende l'indice e "f" è la riga/pd.Series
-        lista_macchine.append(Macchina(*list([ele for ele in f]))) #aggiungo alla lista la macchina
+        lista_macchine.append(Macchina(*f)) #aggiungo alla lista la macchina
         #if lista_macchine[i].disponibilita==1: #per il momento imposto la data a mano (data del giorno in cui si è fatta l'estrazione)
         #    lista_macchine[i].data_ora_disponibilita=datetime.strptime('03/07/2024','%d/%m/%Y').replace(hour=8, minute=0) #se la macchina è disponibile, diventa disponibile dal momento in cui eseguo il run, quindi datetime.today()
     return lista_macchine
@@ -70,7 +68,7 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
     colonne_commesse_foglio=['Commesse::FASCIA','Commesse::Diam int tubo']
     for col in colonne_commesse_foglio:
         df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col] = df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col].fillna(0)
-    output.write_error_output(df,"Dati_output\error_read_file.xlsx")
+    output.write_error_output(df,"PS-VRP\Dati_output\error_read_file.xlsx")
     df=df.dropna()
     lista_commesse=[] #lista commesse inizialmente vuota
     df=df[~df['compatibilità macchine taglio::check dati'].str.startswith('ERR')] #elimino tutte le righe del df che presentano errori nell'estrazione filemaker
@@ -103,7 +101,7 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
                         'Commesse::Diam int tubo','data_inizio_schedulazione','Commesse::categoria materiale'] #stabilisco il nuovo ordine delle colonne del df
     df=df[ordine_colonne_df] #assegno il nuovo ordine di colonne
     for (_,f) in df.iterrows():  # iterrows() ritorna una pd.Series per ogni riga nel dataframe, "_" prende l'indice (usato quando non mi importa il valore di tale indice) e "f" è la riga/pd.Series
-        lista_commesse.append(Commessa(*list([ele for ele in f])))
+        lista_commesse.append(Commessa(*f))
     return lista_commesse
 
 def read_compatibilita(nome_file,lista_commesse):
@@ -139,6 +137,5 @@ def read_excel_veicoli(nome_file):
     df=pd.read_excel(nome_file, 0, skiprows=0, usecols=campi_veicoli)
     lista_veicoli=[] #creo una lista di veicoli inizialmente vuota
     for (_,f) in df.iterrows():  # iterrows() ritorna una pd.Series per ogni riga nel dataframe, "_" prende l'indice (usato quando non mi importa il valore di tale indice) e "f" è la riga/pd.Series
-        lista_veicoli.append(Veicolo(*list([ele for ele in f])))
+        lista_veicoli.append(Veicolo(*f))
     return lista_veicoli
-
