@@ -83,109 +83,6 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
     #print(len(lista_commesse),len(commesse_da_schedulare))
     return commesse_da_schedulare
 
-def swap(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
-    """
-    :param lista_macchine: lista contenente oggetti macchina
-    :param lista_veicoli: lista contenente oggetti veicolo
-    :param f_obj: funzione obiettivo ottenuta con l'euristico greedy
-    :param schedulazione: schedulazione ottenuta con l'euristico greedy
-    :return: schedulazione ottenuta applicando ricerca locale swap intra macchina
-    """
-    contatore=0
-    partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli} #dizionario in cui ad ogni veicolo viene associata la sua data di partenza
-    inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione #data in cui inizia la schedulazione
-    f_best = f_obj #funzione obiettivo
-    eps = 0.00001 #parametro per stabilire se il delta è conveniente
-    soluzione_swap=[] #lista contenente tutte le schedule
-    for macchina in lista_macchine: #per ogni macchina
-        macchina_schedula=[s for s in schedulazione if s['macchina']==macchina.nome_macchina] #vado a prendere tutte le schedule ad essa associate
-        schedula=macchina.lista_commesse_processate #copia della lista di commesse schedulate
-        #schedula=deepcopy(macchina.lista_commesse_processate) #copia profonda della lista di commesse schedulate
-        #ultima_lavorazione=macchina.ultima_lavorazione #copia del parametro che indica i minuti a partire dai quali una macchina è disponibile
-        improved = True #variabile booleana che indica se è stato trovato un miglioramento
-        if len(schedula)>=3: #se ho sufficienti elementi nella lista per effettuare uno swap
-            while improved: #finchè trovo miglioramenti continuo
-                improved=False #imposto subito la variabile boolena a False, così se non trovo miglioramenti esco dal ciclo
-                #scorro tutte le possibili coppie i,j di commesse schedulate sulla macchina evitando coppie con elementi identici
-                for i in range(1,len(schedula)-1):
-                    for j in range(i+1,len(schedula)):
-                        #for vvv in schedula:
-                            #print(vvv.id_commessa)
-                        ultima_lavorazione = macchina.ultima_lavorazione #imposto la variabile al tempo in cui la macchina diventa disponibile per la prima volta
-                        veicolo_i = schedula[i].veicolo #prendo il veicolo associato alla commessa i
-                        veicolo_j = schedula[j].veicolo #prendo il veicolo associato alla commessa j
-                        #effettuo il calcolo del delta
-                        #print(i,j)
-                        if i+1<j and j+1<len(schedula): #commesse non consecutive con j non in ultima posizione
-                            #print('if1')
-                            delta=macchina.calcolo_tempi_setup(schedula[i-1],schedula[j])+macchina.calcolo_tempi_setup(schedula[j],schedula[i+1])+\
-                                  macchina.calcolo_tempi_setup(schedula[j-1],schedula[i])+macchina.calcolo_tempi_setup(schedula[i],schedula[j+1])+ \
-                                  -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[i],schedula[i+1])+ \
-                                  -macchina.calcolo_tempi_setup(schedula[j-1],schedula[j])-macchina.calcolo_tempi_setup(schedula[j],schedula[j+1])
-
-                        if i+1==j and j+1<len(schedula): #commesse consecutive con j non in ultima posizione
-                            #print('if2')
-                            delta=macchina.calcolo_tempi_setup(schedula[i-1],schedula[j])+macchina.calcolo_tempi_setup(schedula[j],schedula[i])+\
-                                  macchina.calcolo_tempi_setup(schedula[i],schedula[j+1])-macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])+\
-                                  -macchina.calcolo_tempi_setup(schedula[i],schedula[j])-macchina.calcolo_tempi_setup(schedula[j],schedula[j+1])
-
-                        if i+1<j and j+1==len(schedula): #commesse non consecutive con j in ultima posizione
-                            #print('if3')
-                            delta=macchina.calcolo_tempi_setup(schedula[i-1],schedula[j])+macchina.calcolo_tempi_setup(schedula[j],schedula[i+1])+\
-                                  macchina.calcolo_tempi_setup(schedula[j-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[j-1],schedula[j])+\
-                                  -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[i],schedula[i+1])
-
-                        if i+1==j and j+1==len(schedula): #commesse consecutive con j in ultima posizione
-                            #print('if4')
-                            delta=macchina.calcolo_tempi_setup(schedula[i-1],schedula[j])+macchina.calcolo_tempi_setup(schedula[j],schedula[i])+\
-                                  -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[i],schedula[j])
-
-                        #print(delta)
-                        if delta<-eps: #se la swap è migliorativo
-                            s=[] #imposto nuova schedula inizialmente vuota
-                            comm_i=schedula[i] #commessa i
-                            comm_j=schedula[j] #commessa j
-                            #eseguo temporaneamente lo swap
-                            schedula[i]=schedula[j]
-                            schedula[j]=comm_i
-                            check=True
-                            for k in range(1,len(schedula)): #vado a ricostruire la soluzione e la schedula
-                                tempo_setup_commessa=macchina.calcolo_tempi_setup(schedula[k-1],schedula[k])
-                                tempo_processamento_commessa=schedula[k].metri_da_tagliare/macchina.velocita_taglio_media
-                                return_schedulazione(schedula[k],macchina,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione,inizio_schedulazione,s)
-                                if s[-1]['fine_lavorazione']<schedula[k].release_date or s[-1]['fine_lavorazione']>partenze[schedula[k].veicolo]:
-                                    check=False
-                                ultima_lavorazione=ultima_lavorazione+tempo_setup_commessa+tempo_processamento_commessa
-                            if check:
-                            #if partenze[veicolo_i]>=s[j-1]['fine_lavorazione'] and partenze[veicolo_j]>=s[i-1]['fine_lavorazione'] and check: #faccio il check sulle date di partenza dei veicoli
-                                #print(veicolo_i,s[j-1]['commessa'],' ',veicolo_j,s[i-1]['commessa'])
-                            #if partenze[veicolo_i]>=s[j]['fine_lavorazione'] and partenze[veicolo_j]>=s[i]['fine_lavorazione']: #faccio il check sulle date di partenza dei veicoli
-                                #print(veicolo_i,s[j]['commessa'],' ',veicolo_j,s[i]['commessa'])
-                                improved=True #miglioramento trovato
-                                f_best+=delta #aggiorno funzione obiettivo
-                                #print(f'scambio {schedula[i].id_commessa} con {schedula[j].id_commessa} con delta={delta} su {macchina.nome_macchina}')
-                                macchina_schedula=s #aggiorno le schedule associate alla macchina
-                                #for vvv in schedula:
-                                    #print(vvv.id_commessa)
-                                #break
-                                contatore+=1
-                            else:
-                                #print('scambio non feasible')
-                                #se lo swap non è ammissibile torno indietro annullando lo scambio
-                                schedula[i]=comm_i
-                                schedula[j]=comm_j
-                        if improved:
-                            break
-                    if improved:
-                        break
-                #if improved:
-                    #break
-            soluzione_swap.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
-        else:
-            soluzione_swap.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
-    print('Swap eseguiti =',contatore)
-    return soluzione_swap,f_best
-
 def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, minuti_processamento, minuti_fine_ultima_commessa, inizio_schedulazione, schedulazione):
     id=commessa.id_commessa
     macchina_lavorazione=macchina.nome_macchina
@@ -255,6 +152,36 @@ def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicol
             lista_macchine.remove(macchina)
     return schedulazione, f_obj
 
+#INSERT INTER-MACCHINA (Ricerca locale 1)
+def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
+    partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli}  # dizionario in cui ad ogni veicolo viene associata la sua data di partenza
+    inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # data in cui inizia la schedulazione
+    f_best = f_obj  # funzione obiettivo
+    soluzione_move = []  # lista contenente tutte le schedule
+    contatore=0
+    for m1 in range(len(lista_macchine)):
+        for m2 in range(len(lista_macchine)):
+            #print(lista_macchine[m1].nome_macchina,len(lista_macchine[m1].lista_commesse_processate))
+            #print(lista_macchine[m2].nome_macchina,len(lista_macchine[m2].lista_commesse_processate))
+            if m1!=m2 and len(lista_macchine[m1].lista_commesse_processate)>2 and len(lista_macchine[m2].lista_commesse_processate)>2:
+                schedula1,schedula2,f_best,contatore=move_inter_macchina(lista_macchine[m1],lista_macchine[m2],partenze,contatore,inizio_schedulazione,f_best)
+                lista_macchine[m1].lista_commesse_processate=schedula1
+                lista_macchine[m2].lista_commesse_processate=schedula2
+                #print('nuove dim')
+                #print(lista_macchine[m1].nome_macchina,len(lista_macchine[m1].lista_commesse_processate))
+                #print(lista_macchine[m2].nome_macchina,len(lista_macchine[m2].lista_commesse_processate))
+    print('Mosse =',contatore)
+    for m in lista_macchine:
+        if len(m.lista_commesse_processate)>1:
+            ultima_lavorazione=m.ultima_lavorazione
+            for pos in range(1,len(m.lista_commesse_processate)):
+                tempo_setup_commessa=m.calcolo_tempi_setup(m.lista_commesse_processate[pos-1],m.lista_commesse_processate[pos])
+                tempo_processamento_commessa=m.lista_commesse_processate[pos].metri_da_tagliare/m.velocita_taglio_media
+                return_schedulazione(m.lista_commesse_processate[pos],m, tempo_setup_commessa, tempo_processamento_commessa,ultima_lavorazione,inizio_schedulazione,soluzione_move)
+                ultima_lavorazione = ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa
+    return soluzione_move,f_best
+
+#INSERT INTRA-MACCHINA (Ricerca locale 2)
 def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
     """
     :param lista_macchine: lista contenente oggetti macchina
@@ -309,9 +236,6 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                 a=3
                                 delta=macchina.calcolo_tempi_setup(schedula[i-1],schedula[i+1])+macchina.calcolo_tempi_setup(schedula[j],schedula[i])+\
                                       -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[i],schedula[i+1])
-
-
-
                             #print(delta)
                             #for s1 in schedula:
                                 #print(s1.id_commessa)
@@ -380,6 +304,7 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
     print('Mosse eseguite =',contatore)
     return soluzione_move,f_best
 
+#SWAP INTRA-MACCHINA (Ricerca locale 3)
 def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
     """
     :param lista_macchine: lista contenente oggetti macchina
@@ -388,7 +313,7 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
     :param schedulazione: schedulazione ottenuta con l'euristico greedy
     :return: schedulazione ottenuta applicando ricerca locale swap intra macchina
     """
-    contatore=0
+    contatore=0 #numero di swap eseguiti
     partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli} #dizionario in cui ad ogni veicolo viene associata la sua data di partenza
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione #data in cui inizia la schedulazione
     f_best = f_obj #funzione obiettivo
@@ -491,34 +416,7 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
     print('Swap eseguiti =',contatore)
     return soluzione_swap,f_best
 
-def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
-    partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli}  # dizionario in cui ad ogni veicolo viene associata la sua data di partenza
-    inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # data in cui inizia la schedulazione
-    f_best = f_obj  # funzione obiettivo
-    soluzione_move = []  # lista contenente tutte le schedule
-    contatore=0
-    for m1 in range(len(lista_macchine)):
-        for m2 in range(len(lista_macchine)):
-            #print(lista_macchine[m1].nome_macchina,len(lista_macchine[m1].lista_commesse_processate))
-            #print(lista_macchine[m2].nome_macchina,len(lista_macchine[m2].lista_commesse_processate))
-            if m1!=m2 and len(lista_macchine[m1].lista_commesse_processate)>2 and len(lista_macchine[m2].lista_commesse_processate)>2:
-                schedula1,schedula2,f_best,contatore=move_inter_macchina(lista_macchine[m1],lista_macchine[m2],partenze,contatore,inizio_schedulazione,f_best)
-                lista_macchine[m1].lista_commesse_processate=schedula1
-                lista_macchine[m2].lista_commesse_processate=schedula2
-                #print('nuove dim')
-                #print(lista_macchine[m1].nome_macchina,len(lista_macchine[m1].lista_commesse_processate))
-                #print(lista_macchine[m2].nome_macchina,len(lista_macchine[m2].lista_commesse_processate))
-    print('Mosse =',contatore)
-    for m in lista_macchine:
-        if len(m.lista_commesse_processate)>1:
-            ultima_lavorazione=m.ultima_lavorazione
-            for pos in range(1,len(m.lista_commesse_processate)):
-                tempo_setup_commessa=m.calcolo_tempi_setup(m.lista_commesse_processate[pos-1],m.lista_commesse_processate[pos])
-                tempo_processamento_commessa=m.lista_commesse_processate[pos].metri_da_tagliare/m.velocita_taglio_media
-                return_schedulazione(m.lista_commesse_processate[pos],m, tempo_setup_commessa, tempo_processamento_commessa,ultima_lavorazione,inizio_schedulazione,soluzione_move)
-                ultima_lavorazione = ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa
-    return soluzione_move,f_best
-
+#Usato da move_2_macchine
 def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,contatore:int,inizio_schedulazione,f_best):
     #macchina1_schedula=[s for s in schedulazione if s['macchina']==macchina1.nome_macchina] #vado a prendere tutte le schedule ad essa associate
     #macchina2_schedula=[s for s in schedulazione if s['macchina']==macchina2.nome_macchina] #vado a prendere tutte le schedule ad essa associate
@@ -599,6 +497,7 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                 break
     return schedula1,schedula2,f_best,contatore
 
+#GRAFICAZIONE
 def grafico_schedulazione(schedulazione):
     """
     :param schedulazione: lista di dizionari che contiene le informazioni relative ad una schedulazione
