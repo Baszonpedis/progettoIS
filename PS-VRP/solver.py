@@ -152,13 +152,13 @@ def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicol
             lista_macchine.remove(macchina)
     return schedulazione, f_obj
 
-#INSERT INTER-MACCHINA (Ricerca locale 1)
+##INSERT INTER-MACCHINA (Ricerca locale 1)
 def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
     partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli}  # dizionario in cui ad ogni veicolo viene associata la sua data di partenza
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # data in cui inizia la schedulazione
     f_best = f_obj  # funzione obiettivo
     soluzione_move = []  # lista contenente tutte le schedule
-    contatore=0
+    contatore=0 # contatore mosse insert
     for m1 in range(len(lista_macchine)):
         for m2 in range(len(lista_macchine)):
             #print(lista_macchine[m1].nome_macchina,len(lista_macchine[m1].lista_commesse_processate))
@@ -181,32 +181,113 @@ def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj,schedulazion
                 ultima_lavorazione = ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa
     return soluzione_move,f_best
 
-#INSERT INTRA-MACCHINA (Ricerca locale 2)
+#Usato da move_2_macchine (Ricerca locale 1)
+def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,contatore:int,inizio_schedulazione,f_best):
+    #macchina1_schedula=[s for s in schedulazione if s['macchina']==macchina1.nome_macchina] #vado a prendere tutte le schedule ad essa associate
+    #macchina2_schedula=[s for s in schedulazione if s['macchina']==macchina2.nome_macchina] #vado a prendere tutte le schedule ad essa associate
+    schedula1=macchina1.lista_commesse_processate #copia profonda della lista di commesse schedulate
+    schedula2=macchina2.lista_commesse_processate #copia profonda della lista di commesse schedulate
+    eps = 0.00001  # parametro per stabilire se il delta è conveniente
+    improved = True #variabile booleana che indica se è stato trovato un miglioramento
+    while improved:  # finchè trovo miglioramenti continuo
+        improved = False  # imposto subito la variabile boolena a False, così se non trovo miglioramenti esco dal ciclo
+        for i in range(1, len(schedula1)):
+            for j in range(1, len(schedula2)):
+                commessa = schedula1[i]
+                if commessa.compatibilita[macchina2.nome_macchina]==1:
+                    posizione = j
+                    ultima_lavorazione1=macchina1.ultima_lavorazione
+                    ultima_lavorazione2=macchina2.ultima_lavorazione
+                    if i+1<len(schedula1) and j+1<len(schedula2):
+                        delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])-macchina1.calcolo_tempi_setup(schedula1[i],schedula1[i+1])+\
+                              -macchina2.calcolo_tempi_setup(schedula2[j-1],schedula2[j])+\
+                              +macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i+1])+\
+                              +macchina2.calcolo_tempi_setup(schedula2[j-1],schedula1[i])+macchina2.calcolo_tempi_setup(schedula1[i],schedula2[j])
+
+                    if i+1==len(schedula1) and j+1<len(schedula2):
+                        delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])+\
+                              -macchina2.calcolo_tempi_setup(schedula2[j-1],schedula2[j])+\
+                              +macchina2.calcolo_tempi_setup(schedula2[j-1],schedula1[i])+macchina2.calcolo_tempi_setup(schedula1[i],schedula2[j])
+
+                    if i+1==len(schedula1) and j+1==len(schedula2):
+                        delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])+ \
+                              +macchina2.calcolo_tempi_setup(schedula2[j],schedula1[i]) #[j-1][i]
+
+                    if i+1<len(schedula1) and j+1==len(schedula2):
+                        delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])-macchina1.calcolo_tempi_setup(schedula1[i],schedula1[i+1])+\
+                              +macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i+1])+\
+                              +macchina2.calcolo_tempi_setup(schedula2[j],schedula1[i])
+
+                    if delta<-eps:
+                        s1=[]
+                        s2=[]
+                        copia1=deepcopy(schedula1)
+                        copia2=deepcopy(schedula2)
+                        schedula1.remove(commessa)
+                        if j + 1 == len(schedula2):
+                            schedula2.append(commessa)
+                        else:
+                            schedula2.insert(posizione, commessa)
+                        #schedula2.insert(posizione,commessa)
+                        check1=True
+                        for k in range(1,len(schedula1)): #vado a ricostruire la soluzione e la schedula
+                            tempo_setup_commessa=macchina1.calcolo_tempi_setup(schedula1[k-1],schedula1[k])
+                            tempo_processamento_commessa=schedula1[k].metri_da_tagliare/macchina1.velocita_taglio_media
+                            return_schedulazione(schedula1[k],macchina1,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione1,inizio_schedulazione,s1)
+                            if s1[-1]['fine_lavorazione'] < schedula1[k].release_date or s1[-1]['fine_lavorazione'] > partenze[schedula1[k].veicolo]:
+                                check1=False
+                            ultima_lavorazione1=ultima_lavorazione1+tempo_setup_commessa+tempo_processamento_commessa
+                        check2 = True
+                        for k in range(1, len(schedula2)):  # vado a ricostruire la soluzione e la schedula
+                            tempo_setup_commessa=macchina2.calcolo_tempi_setup(schedula2[k - 1], schedula2[k])
+                            tempo_processamento_commessa = schedula2[k].metri_da_tagliare / macchina2.velocita_taglio_media
+                            return_schedulazione(schedula2[k], macchina2, tempo_setup_commessa,tempo_processamento_commessa, ultima_lavorazione2, inizio_schedulazione,s2)
+                            if s2[-1]['fine_lavorazione'] < schedula2[k].release_date or s2[-1]['fine_lavorazione'] > partenze[schedula2[k].veicolo]:
+                                check2 = False
+                            ultima_lavorazione2=ultima_lavorazione2+tempo_setup_commessa+tempo_processamento_commessa
+                        if check1 and check2: #faccio il check sulle date di partenza dei veicoli
+                            improved=True #miglioramento trovato
+                            f_best+=delta #aggiorno funzione obiettivo
+                            #print(f'metto {commessa.id_commessa} dalla posizione {i} su macchina {macchina1.nome_macchina} in posizione {posizione} su macchina {macchina2.nome_macchina} con delta={delta}')
+
+                            #macchina_schedula1=s1 #aggiorno le schedule associate alla macchina
+                            #macchina_schedula2=s2
+                            contatore+=1
+                        else:
+                            schedula1=copia1
+                            schedula2=copia2
+                if improved:
+                    break
+            if improved:
+                break
+    return schedula1,schedula2,f_best,contatore
+
+##INSERT INTRA-MACCHINA (Ricerca locale 2)
 def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
     """
     :param lista_macchine: lista contenente oggetti macchina
     :param lista_veicoli: lista contenente oggetti veicolo
     :param f_obj: funzione obiettivo ottenuta con l'euristico greedy
     :param schedulazione: schedulazione ottenuta con l'euristico greedy
-    :return: schedulazione ottenuta applicando ricerca locale swap intra macchina
+    :return: schedulazione ottenuta applicando ricerca locale insert intra macchina
     """
-    contatore=0
+    #INIZIALIZZAZIONI
+    contatore=0 #contatore mosse eseguite
     partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli} #dizionario in cui ad ogni veicolo viene associata la sua data di partenza
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione #data in cui inizia la schedulazione
     f_best = f_obj #funzione obiettivo
     eps = 0.00001 #parametro per stabilire se il delta è conveniente
     soluzione_move=[] #lista contenente tutte le schedule
+
+    #CICLO PRINCIPALE
     for macchina in lista_macchine: #per ogni macchina
         macchina_schedula=[s for s in schedulazione if s['macchina']==macchina.nome_macchina] #vado a prendere tutte le schedule ad essa associate
         #schedula=deepcopy(macchina.lista_commesse_processate) #copia profonda della lista di commesse schedulate
-
-        schedula=macchina.lista_commesse_processate #copia profonda della lista di commesse schedulate
+        schedula=macchina.lista_commesse_processate #copia semplice della lista di commesse schedulate
         #ultima_lavorazione=macchina.ultima_lavorazione #copia del parametro che indica i minuti a partire dai quali una macchina è disponibile
         improved = True #variabile booleana che indica se è stato trovato un miglioramento
-
         f_macchina=sum(s['minuti setup'] for s in macchina_schedula)
-        #print('inizio', f_macchina)
-        if len(schedula)>=3: #se ho sufficienti elementi nella lista per effettuare uno swap
+        if len(schedula)>=3: #se ho sufficienti elementi nella lista per effettuare un insert
             while improved: #finchè trovo miglioramenti continuo
                 improved=False #imposto subito la variabile boolena a False, così se non trovo miglioramenti esco dal ciclo
                 for i in range(1,len(schedula)): #scorro tutti i possibili job
@@ -240,25 +321,13 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                             #for s1 in schedula:
                                 #print(s1.id_commessa)
                             """
-
                             if True: #delta<-eps: #se la swap è migliorativo
-                                #print('a=',a,'i=',i,'j=',j,'len=',len(schedula), macchina.nome_macchina)
                                 s=[] #imposto nuova schedula inizialmente vuota
                                 comm_i=schedula[i] #commessa i
                                 #eseguo temporaneamente il move
-                                #for vvv in schedula:
-                                    #print(vvv.id_commessa)
                                 copia=deepcopy(schedula)
                                 schedula.remove(comm_i)
                                 schedula.insert(j,comm_i)
-                                #schedula.remove(comm_i)
-                                #if j>i and j-1!=i and j<len(schedula):# and j-1!=1:
-                                #    j-=1
-                                #schedula.insert(j,comm_i)
-                                #for s1 in schedula:
-                                    #print(s1.id_commessa)
-                                #schedula[i]=schedula[j]
-                                #schedula[j]=comm_i
                                 F=0
                                 check=True
                                 for k in range(1,len(schedula)): #vado a ricostruire la soluzione e la schedula
@@ -266,11 +335,9 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     F+=tempo_setup_commessa
                                     tempo_processamento_commessa=schedula[k].metri_da_tagliare/macchina.velocita_taglio_media
                                     return_schedulazione(schedula[k],macchina,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione,inizio_schedulazione,s)
-                                    # if s[-1]['fine_lavorazione']<schedula[k].release_date:
                                     if s[-1]['fine_lavorazione'] < schedula[k].release_date or s[-1]['fine_lavorazione'] > partenze[schedula[k].veicolo]:
                                         check=False
                                     ultima_lavorazione=ultima_lavorazione+tempo_setup_commessa+tempo_processamento_commessa
-                                #print('fine', F)
                                 if check and F < f_macchina:
                                 #if partenze[veicolo_i]>=s[j-1]['fine_lavorazione'] and check and F<f_macchina: #faccio il check sulle date di partenza dei veicoli
                                     delta=F-f_macchina
@@ -279,17 +346,9 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     f_best+=delta #aggiorno funzione obiettivo
                                     #print(f'metto commessa {comm_i.id_commessa} con delta={delta} in posizione {j} su macchina {macchina.nome_macchina}')
                                     macchina_schedula=s #aggiorno le schedule associate alla macchina
-                                    #for vvv in schedula:
-                                        #print(vvv.id_commessa)
-                                    #break
                                     contatore+=1
-                                    #print(delta, comm_i.id_commessa,'j-->', j,'i-->', i , len(schedula))
-
-                                    #print(delta, comm_i.id_commessa, j)
                                 else:
-                                    #print('scambio non feasible')
                                     #se lo swap non è ammissibile torno indietro annullando lo scambio
-                                    #schedula=copia
                                     schedula.remove(comm_i)
                                     schedula.insert(i,comm_i)
                             if improved:
@@ -304,7 +363,7 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
     print('Mosse eseguite =',contatore)
     return soluzione_move,f_best
 
-#SWAP INTRA-MACCHINA (Ricerca locale 3)
+##SWAP INTRA-MACCHINA (Ricerca locale 3)
 def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
     """
     :param lista_macchine: lista contenente oggetti macchina
@@ -415,87 +474,6 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
             soluzione_swap.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
     print('Swap eseguiti =',contatore)
     return soluzione_swap,f_best
-
-#Usato da move_2_macchine
-def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,contatore:int,inizio_schedulazione,f_best):
-    #macchina1_schedula=[s for s in schedulazione if s['macchina']==macchina1.nome_macchina] #vado a prendere tutte le schedule ad essa associate
-    #macchina2_schedula=[s for s in schedulazione if s['macchina']==macchina2.nome_macchina] #vado a prendere tutte le schedule ad essa associate
-    schedula1=macchina1.lista_commesse_processate #copia profonda della lista di commesse schedulate
-    schedula2=macchina2.lista_commesse_processate #copia profonda della lista di commesse schedulate
-    eps = 0.00001  # parametro per stabilire se il delta è conveniente
-    improved = True #variabile booleana che indica se è stato trovato un miglioramento
-    while improved:  # finchè trovo miglioramenti continuo
-        improved = False  # imposto subito la variabile boolena a False, così se non trovo miglioramenti esco dal ciclo
-        for i in range(1, len(schedula1)):
-            for j in range(1, len(schedula2)):
-                commessa = schedula1[i]
-                if commessa.compatibilita[macchina2.nome_macchina]==1:
-                    posizione = j
-                    ultima_lavorazione1=macchina1.ultima_lavorazione
-                    ultima_lavorazione2=macchina2.ultima_lavorazione
-                    if i+1<len(schedula1) and j+1<len(schedula2):
-                        delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])-macchina1.calcolo_tempi_setup(schedula1[i],schedula1[i+1])+\
-                              -macchina2.calcolo_tempi_setup(schedula2[j-1],schedula2[j])+\
-                              +macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i+1])+\
-                              +macchina2.calcolo_tempi_setup(schedula2[j-1],schedula1[i])+macchina2.calcolo_tempi_setup(schedula1[i],schedula2[j])
-
-                    if i+1==len(schedula1) and j+1<len(schedula2):
-                        delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])+\
-                              -macchina2.calcolo_tempi_setup(schedula2[j-1],schedula2[j])+\
-                              +macchina2.calcolo_tempi_setup(schedula2[j-1],schedula1[i])+macchina2.calcolo_tempi_setup(schedula1[i],schedula2[j])
-
-                    if i+1==len(schedula1) and j+1==len(schedula2):
-                        delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])+ \
-                              +macchina2.calcolo_tempi_setup(schedula2[j],schedula1[i]) #[j-1][i]
-
-                    if i+1<len(schedula1) and j+1==len(schedula2):
-                        delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])-macchina1.calcolo_tempi_setup(schedula1[i],schedula1[i+1])+\
-                              +macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i+1])+\
-                              +macchina2.calcolo_tempi_setup(schedula2[j],schedula1[i])
-
-                    if delta<-eps:
-                        s1=[]
-                        s2=[]
-                        copia1=deepcopy(schedula1)
-                        copia2=deepcopy(schedula2)
-                        schedula1.remove(commessa)
-                        if j + 1 == len(schedula2):
-                            schedula2.append(commessa)
-                        else:
-                            schedula2.insert(posizione, commessa)
-                        #schedula2.insert(posizione,commessa)
-                        check1=True
-                        for k in range(1,len(schedula1)): #vado a ricostruire la soluzione e la schedula
-                            tempo_setup_commessa=macchina1.calcolo_tempi_setup(schedula1[k-1],schedula1[k])
-                            tempo_processamento_commessa=schedula1[k].metri_da_tagliare/macchina1.velocita_taglio_media
-                            return_schedulazione(schedula1[k],macchina1,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione1,inizio_schedulazione,s1)
-                            if s1[-1]['fine_lavorazione'] < schedula1[k].release_date or s1[-1]['fine_lavorazione'] > partenze[schedula1[k].veicolo]:
-                                check1=False
-                            ultima_lavorazione1=ultima_lavorazione1+tempo_setup_commessa+tempo_processamento_commessa
-                        check2 = True
-                        for k in range(1, len(schedula2)):  # vado a ricostruire la soluzione e la schedula
-                            tempo_setup_commessa=macchina2.calcolo_tempi_setup(schedula2[k - 1], schedula2[k])
-                            tempo_processamento_commessa = schedula2[k].metri_da_tagliare / macchina2.velocita_taglio_media
-                            return_schedulazione(schedula2[k], macchina2, tempo_setup_commessa,tempo_processamento_commessa, ultima_lavorazione2, inizio_schedulazione,s2)
-                            if s2[-1]['fine_lavorazione'] < schedula2[k].release_date or s2[-1]['fine_lavorazione'] > partenze[schedula2[k].veicolo]:
-                                check2 = False
-                            ultima_lavorazione2=ultima_lavorazione2+tempo_setup_commessa+tempo_processamento_commessa
-                        if check1 and check2: #faccio il check sulle date di partenza dei veicoli
-                            improved=True #miglioramento trovato
-                            f_best+=delta #aggiorno funzione obiettivo
-                            #print(f'metto {commessa.id_commessa} dalla posizione {i} su macchina {macchina1.nome_macchina} in posizione {posizione} su macchina {macchina2.nome_macchina} con delta={delta}')
-
-                            #macchina_schedula1=s1 #aggiorno le schedule associate alla macchina
-                            #macchina_schedula2=s2
-                            contatore+=1
-                        else:
-                            schedula1=copia1
-                            schedula2=copia2
-                if improved:
-                    break
-            if improved:
-                break
-    return schedula1,schedula2,f_best,contatore
 
 #GRAFICAZIONE
 def grafico_schedulazione(schedulazione):

@@ -103,8 +103,10 @@ print('COMMESSE INIZIALI:',len(lista_commesse))
 print('COMMESSE FILTRATE:',numero_commesse_filtrate)
 print('COMMESSE SCHEDULATE:',len(schedulazione3),'\n')
 print('TEMPO Greedy:',tot_time_eur)
-print('TEMPO Greedy + LS1:',tot_time_eur+tot1) #move2
-print('TEMPO Greedy + LS2:',tot_time_eur+tot2) #move
-print('TEMPO Greedy + LS3:',tot_time_eur+tot3) #swap
+print('TEMPO Greedy + LS1:',tot_time_eur+tot1) #insert inter
+print('TEMPO Greedy + LS2:',tot_time_eur+tot2) #insert intra
+print('TEMPO Greedy + LS3:',tot_time_eur+tot3) #swap inter
 print('TEMPO Greedy + LS1 + LS2 + LS3:',tot_time_eur+tot1+tot_tot) #in sequenza
-solver.grafico_schedulazione(schedulazione3)
+solver.grafico_schedulazione(schedulazione3) #euristico
+solver.grafico_schedulazione(soluzione_move) #sequenza pariale (G+LS1+LS2)
+solver.grafico_schedulazione(soluzione_swap) #soluzione sequenza finale (G+LS1+LS2+LS3)
