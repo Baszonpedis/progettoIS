@@ -28,3 +28,4 @@ Per il funzionamento del main sono chiamate solamente le funzioni
 - swap_no_delta (da solver.py)
   - [**]
 - write_output_soluzione_euristica (da output.py)
+- grafico_schedulazione (da solver.py) [non nella versione originale]
