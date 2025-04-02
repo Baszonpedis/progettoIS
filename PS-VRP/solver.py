@@ -355,7 +355,7 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                 break
                     if improved:
                         break
-                #if improved:
+                #if improved:   [ridondante]
                     #break
             soluzione_move.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
         else:
@@ -383,7 +383,6 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
         macchina_schedula=[s for s in schedulazione if s['macchina']==macchina.nome_macchina] #vado a prendere tutte le schedule ad essa associate
         schedula=macchina.lista_commesse_processate #copia profonda della lista di commesse schedulate
         f_macchina = sum(s['minuti setup'] for s in macchina_schedula)
-
         #schedula=deepcopy(macchina.lista_commesse_processate) #copia profonda della lista di commesse schedulate
         #ultima_lavorazione=macchina.ultima_lavorazione #copia del parametro che indica i minuti a partire dai quali una macchina è disponibile
         improved = True #variabile booleana che indica se è stato trovato un miglioramento
@@ -393,13 +392,10 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                 #scorro tutte le possibili coppie i,j di commesse schedulate sulla macchina evitando coppie con elementi identici
                 for i in range(1,len(schedula)-1):
                     for j in range(i+1,len(schedula)):
-                        #for vvv in schedula:
-                            #print(vvv.id_commessa)
                         ultima_lavorazione = macchina.ultima_lavorazione #imposto la variabile al tempo in cui la macchina diventa disponibile per la prima volta
                         veicolo_i = schedula[i].veicolo #prendo il veicolo associato alla commessa i
                         veicolo_j = schedula[j].veicolo #prendo il veicolo associato alla commessa j
                         #effettuo il calcolo del delta
-                        #print(i,j)
                         """
                         if i+1<j and j+1<len(schedula): #commesse non consecutive con j non in ultima posizione
                             #print('if1')
@@ -425,7 +421,6 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                             delta=macchina.calcolo_tempi_setup(schedula[i-1],schedula[j])+macchina.calcolo_tempi_setup(schedula[j],schedula[i])+\
                                   -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[i],schedula[j])
                         """
-                        #print(delta)
                         if True:#delta<-eps: #se la swap è migliorativo
                             s=[] #imposto nuova schedula inizialmente vuota
                             comm_i=schedula[i] #commessa i
@@ -444,8 +439,6 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     check=False
                                 ultima_lavorazione=ultima_lavorazione+tempo_setup_commessa+tempo_processamento_commessa
                             if check and F<f_macchina:
-                            #if partenze[veicolo_i]>=s[j-1]['fine_lavorazione'] and partenze[veicolo_j]>=s[i-1]['fine_lavorazione'] and check: #faccio il check sulle date di partenza dei veicoli
-                                #print(veicolo_i,s[j-1]['commessa'],' ',veicolo_j,s[i-1]['commessa'])
                             #if partenze[veicolo_i]>=s[j]['fine_lavorazione'] and partenze[veicolo_j]>=s[i]['fine_lavorazione']: #faccio il check sulle date di partenza dei veicoli
                                 #print(veicolo_i,s[j]['commessa'],' ',veicolo_j,s[i]['commessa'])
                                 improved=True #miglioramento trovato
@@ -454,12 +447,8 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                 f_best+=delta #aggiorno funzione obiettivo
                                 #print(f'scambio {schedula[i].id_commessa} con {schedula[j].id_commessa} con delta={delta} su {macchina.nome_macchina}')
                                 macchina_schedula=s #aggiorno le schedule associate alla macchina
-                                #for vvv in schedula:
-                                    #print(vvv.id_commessa)
-                                #break
                                 contatore+=1
                             else:
-                                #print('scambio non feasible')
                                 #se lo swap non è ammissibile torno indietro annullando lo scambio
                                 schedula[i]=comm_i
                                 schedula[j]=comm_j
