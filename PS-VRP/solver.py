@@ -290,9 +290,9 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
         if len(schedula)>=3: #se ho sufficienti elementi nella lista per effettuare un insert
             while improved: #finchè trovo miglioramenti continuo
                 improved=False #imposto subito la variabile boolena a False, così se non trovo miglioramenti esco dal ciclo
-                for i in range(1,len(schedula)): #scorro tutti i possibili job
-                    for j in range(1,len(schedula)): #scorro tutte le possibili posizioni
-                        if i!=j:
+                for i in range(1,len(schedula)): #scorro tutte le possibili posizioni
+                    for j in range(1,len(schedula)): #idem
+                        if i!=j: #evito il reinserimento in stessa posizione
                             delta=math.inf
                             ultima_lavorazione = macchina.ultima_lavorazione #imposto la variabile al tempo in cui la macchina diventa disponibile per la prima volta
                             veicolo_i = schedula[i].veicolo #prendo il veicolo associato alla commessa i

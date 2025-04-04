@@ -93,7 +93,7 @@ class Macchina():
             if commessa1.diametro_tubo!=commessa2.diametro_tubo: # se il diametro del tubo tra le due commesse è diverso inserisco un tempo di setup
                 tempo_setup+=self.setup_cambio_albero
             tempo_setup+=self.setup_coltelli_fisso
-            differenza_coltelli=abs((commessa1.numero_coltelli-2)-(commessa2.numero_coltelli-2))
+            differenza_coltelli=abs((commessa1.numero_coltelli)-(commessa2.numero_coltelli))
             tempo_setup+=(differenza_coltelli*self.setup_cambio_coltelli)
             tempo_setup+=self.tempo_avvio_taglio
             #if commessa2.kg_da_tagliare>=500 and (self.nome_macchina=='H7' or self.nome_macchina=='R5' or or self.nome_macchina=='R5'):
