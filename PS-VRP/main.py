@@ -11,8 +11,8 @@ from datetime import timedelta
 from datetime import datetime
 
 ##INPUT
-file_macchine_excel="PS-VRP\INPUT_TEST\MACCHINE5.xlsx" # metto il nome del file all'interno di una variabile
-file_commesse_excel="PS-VRP\INPUT_TEST\COMMESSE_100.xlsx" # metto il nome del file all'interno di una variabile
+file_macchine_excel="PS-VRP\Dati_input\Scheda_macchine_taglio.xlsx" # metto il nome del file all'interno di una variabile
+file_commesse_excel="PS-VRP\Dati_input\Commesse_da_tagliare.xlsx" # metto il nome del file all'interno di una variabile
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) # creo una lista di oggetti macchina
 read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
 inizio_schedulazione=lista_macchine[0].data_inizio_schedulazione
