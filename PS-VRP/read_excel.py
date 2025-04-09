@@ -11,7 +11,7 @@ import warnings
 #CAMPI DI LETTURA DEI FILE DI INPUT
 campi_input_macchine=['Nome macchina','disponibilita','setup','velocità media','tipologia taglio','dt ultima lavorazione','ora ultima lavorazione','tempo setup cambio alberi','tempo setup prima fila coltelli','tempo setup coltelli','tempo carico bobina','tempo avvio taglio','tempo scarico bobina','tempo confezionamento sacchetti']
 campi_attrezzaggio=['numero file ult lavoro','diam tubo ult lavoro']
-campi_input_commesse=['commessa','data fine stampa','stato stampa calc','Commesse::DATA CONSEGNA','Commesse::Priorita cliente','qta da tagliare metri per schedulatore','qta da tagliare per schedulatore','Commesse::CODICE DI ZONA','Anagrafica incarti::tipologia taglio','Commesse::FASCIA','Commesse::FASCIA UTILE','Commesse::Diam int tubo','compatibilità macchine taglio::check dati','Commesse::categoria materiale']
+campi_input_commesse=['commessa','data fine stampa per schedulatore','stato stampa calc','Commesse::DATA CONSEGNA','Commesse::Priorita cliente','qta da tagliare metri per schedulatore','qta da tagliare per schedulatore','Commesse::CODICE DI ZONA','Anagrafica incarti::tipologia taglio','Commesse::FASCIA','Commesse::FASCIA UTILE','Commesse::Diam int tubo','compatibilità macchine taglio::check dati','Commesse::categoria materiale']
 campi_compatibilita=campi_input_commesse+['compatibilità macchine taglio::compat macc taglio 1','compatibilità macchine taglio::compat macc taglio 2','compatibilità macchine taglio::compat macc taglio 3','compatibilità macchine taglio::compat macc taglio 4','compatibilità macchine taglio::compat macc taglio 5','compatibilità macchine taglio::compat macc taglio 6','compatibilità macchine taglio::compat macc taglio 7','compatibilità macchine taglio::compat macc taglio 8','compatibilità macchine taglio::compat macc taglio 9','compatibilità macchine taglio::compat macc taglio 10','compatibilità macchine taglio::compat macc taglio 11','compatibilità macchine taglio::compat macc taglio 12','compatibilità macchine taglio::compat macc taglio 13','compatibilità macchine taglio::compat macc taglio 14','compatibilità macchine taglio::compat macc taglio 15','compatibilità macchine taglio::compat macc taglio 16','compatibilità macchine taglio::compat macc taglio 17']
 campi_veicoli=['Nome veicolo','Data e ora disponibilita','Disponibilita','Capacita','Zone coperte']
 
@@ -83,23 +83,8 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
     df=df[~df['compatibilità macchine taglio::check dati'].str.startswith('ERR')] #elimino tutte le righe del df che presentano errori nell'estrazione filemaker
     df=df.drop(columns=['compatibilità macchine taglio::check dati']) #elimino la colonna dopo averla utilizzata per filtrare le commesse
     df=df.reset_index(drop=True)
-    #df['Release date']=df.apply(lambda row: datetime.strptime('03/07/2024', '%d/%m/%Y') #imposto la data del giorno in cui è stata effettuata l'estrazione filemaker
-    #if row['stato stampa calc'] in ['STAMPATO','IN STAMPA'] #se la commessa è già stata STAMPATA o è in STAMPA imposto la data odierna
-    #else row['data fine stampa'], axis=1) #altrimenti se la commessa è in stampa la data di disponibilità sarà quella di fine stampa
-
-    #df['Release date']=df['data fine stampa']
-    df['Release date']=pd.to_datetime(df['data fine stampa']).apply(lambda x: x.replace(hour=14, minute=0, second=0))#df['data fine stampa']
-
-
-    #df['Release date']=pd.to_datetime(df['data fine stampa'])
-    #df['Release date']=df['Release date'].fillna(datetime.strptime('05/07/2024','%d/%m/%Y')) #per le commesse che hanno una release date vuota le riempio con una data
-    #df['Commesse::DATA CONSEGNA']=df['Commesse::DATA CONSEGNA'].fillna(datetime.strptime('01/01/2025','%d/%m/%Y')) #riempio il campo data di consegna per quelle commesse col campo vuoto
-    #df['Commesse::CODICE DI ZONA']=df['Commesse::CODICE DI ZONA'].fillna(str(-1))
-
-    #df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].apply(lambda x: [int(num) for num in x.split(' / ')]) #trasformo le zone di una commessa in una lista di zone
-
+    df['Release date']=pd.to_datetime(df['data fine stampa per schedulatore']).apply(lambda x: x.replace(hour=14, minute=0, second=0))
     df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].apply(lambda x: [int(num) for num in str(x).split(' / ')])
-
     #df['Commesse::Diam int tubo']=df['Commesse::Diam int tubo'].fillna(70)
     #df['Commesse::FASCIA']=df['Commesse::FASCIA'].fillna(600)
     df['data_inizio_schedulazione']=inizio_schedulazione
