@@ -18,7 +18,7 @@ read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
 inizio_schedulazione=lista_macchine[0].data_inizio_schedulazione
 lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedulazione) # creo una lista di oggetti commessa
 read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse)
-lista_veicoli=read_excel.read_excel_veicoli("PS-VRP\INPUT_TEST\VEICOLI5.xlsx")
+lista_veicoli=read_excel.read_excel_veicoli("PS-VRP\INPUT_TEST\VEICOLI9.xlsx")
 lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
 print(f'Lista macchine {lista_macchine}, Lista veicoli {lista_veicoli}, Lista_commesse {lista_commesse}')
 
@@ -109,5 +109,5 @@ print('TEMPO Greedy + LS2:',tot_time_eur+tot2) #insert intra
 print('TEMPO Greedy + LS3:',tot_time_eur+tot3) #swap inter
 print('TEMPO Greedy + LS1 + LS2 + LS3:',tot_time_eur+tot1+tot_tot) #in sequenza
 solver.grafico_schedulazione(schedulazione3) #euristico
-solver.grafico_schedulazione(soluzione_move) #sequenza pariale (G+LS1+LS2)
+#solver.grafico_schedulazione(soluzione_move) #sequenza pariale (G+LS1+LS2)
 solver.grafico_schedulazione(soluzione_swap) #soluzione sequenza finale (G+LS1+LS2+LS3)
