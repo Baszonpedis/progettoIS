@@ -80,7 +80,7 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
                 #if commessa not in commesse_da_schedulare:
                 commesse_da_schedulare.append(commessa)
                 break
-    #print(len(lista_commesse),len(commesse_da_schedulare))
+    #print(f'Commesse da schedulare {commesse_da_schedulare}')
     return commesse_da_schedulare
 
 def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, minuti_processamento, minuti_fine_ultima_commessa, inizio_schedulazione, schedulazione):
@@ -126,7 +126,9 @@ def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicol
         lista_macchine=sorted(lista_macchine,key=lambda macchina: macchina._minuti_fine_ultima_lavorazione)
         macchina=lista_macchine[0]
         for commessa in lista_commesse:
+            print(f'Macchina disponibilità = {macchina.disponibilita}, commessa compatibilità = {commessa.compatibilita[macchina.nome_macchina]}, minuti release commessa {commessa._minuti_release_date}, minuti fine ultima lav {macchina._minuti_fine_ultima_lavorazione}')
             if macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1 and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
+                print("SONO ENTRATO")
                 tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
                 tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
                 tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione

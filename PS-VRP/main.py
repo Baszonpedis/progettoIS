@@ -11,7 +11,7 @@ from datetime import timedelta
 from datetime import datetime
 
 ##INPUT
-file_macchine_excel="PS-VRP\Dati_input\Scheda_Macchine_Taglio_.xlsx" # metto il nome del file all'interno di una variabile
+file_macchine_excel="PS-VRP\INPUT_TEST\MACCHINE12.xlsx" # metto il nome del file all'interno di una variabile
 file_commesse_excel="PS-VRP\Dati_input\Commesse_da_tagliare.xlsx" # metto il nome del file all'interno di una variabile
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) # creo una lista di oggetti macchina
 read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
@@ -20,6 +20,7 @@ lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedul
 read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse)
 lista_veicoli=read_excel.read_excel_veicoli("PS-VRP\INPUT_TEST\VEICOLI5.xlsx")
 lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
+print(f'Lista macchine {lista_macchine}, Lista veicoli {lista_veicoli}, Lista_commesse {lista_commesse}')
 
 ##EURISTICO COSTRUTTIVO
 start_time_eur = time.time()

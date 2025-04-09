@@ -15,7 +15,6 @@ class Macchina():
         self.lista_commesse_processate=[]
         self.data_ora_disponibilita=data_ora_disponibilita
         self.data_inizio_schedulazione=data_inizio_schedulazione
-
         m_1=int((data_ora_disponibilita - data_inizio_schedulazione).total_seconds() / 60) #differenza in minuti tra il lunedi della settimana e il primo giorno di disponibilita della macchina
         m_2=m_1 // 1440  # 1440 minuti totali in 24 ore (giorni trascorsi tra data_inizio_schedulazione e data_ora_disponibilita)
         m_3=m_1 // 10080  # 10080 minuti totali in 7 giorni (numero di settimane trascorse tra data_inizio_schedulazione e data_ora_disponibilita)
@@ -23,7 +22,7 @@ class Macchina():
         h_lavorative = 8 #ore lavorative in una giornata
         m_lavorativi = round(h_lavorative * 60) #minuti lavorativi 480 al giorno
         self._minuti_fine_ultima_lavorazione = max(m_1 - 2 * m_lavorativi * m_2 - 2 * m_lavorativi * m_3, 0) #minuti lavorativi che separano l'inizio della schedulazione con la prima disponibilita della macchina
-
+        #print(self._minuti_fine_ultima_lavorazione)
         self.setup_cambio_albero = setup_cambio_albero
         self.setup_coltelli_fisso = setup_coltelli_fisso
         self.setup_cambio_coltelli = setup_cambio_coltelli

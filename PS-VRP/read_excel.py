@@ -45,6 +45,7 @@ def read_excel_macchine(nome_file):
     d=file.iat[0,12]  # .iat ritorna un elemento in una posizione particolare di un dataframe d e' la prima data di ultima lavorazione, in altre parole, in posizione 0,13 troviamo la prima (indice 0) macchina disponibile (dato che erano state ordinate per 'data ultima lavorazione') e con indice di colonna = 5 andiamo a prendere il valore di tale data
     days_ahead=d.weekday()  # days_ahead e' il giorno della settimana corrispondente alla data d, espresso in int (0 = lunedì, 6 = domenica)
     data_inizio_schedulazione=d-timedelta(days_ahead)  # Timedelta può essere usato per sottrarre un tot di giorni ad una certa data, in questo caso d. Sottraendo days_ahead ad una data qualunque si può risalire al primo lunedì antecedente alla data d.
+    print(f'timedelta {timedelta(days_ahead)}')
     df['data_inizio_schedulazione'] = data_inizio_schedulazione.replace(hour=7, minute=0,second=0)  # Aggiungiamo la colonna 'data_inizio_lavorazione' al dataframe file_macchine. L'ora di inizio schedulazione viene impostata alle 7 della mattina
     for (i,f) in df.iterrows():  # iterrows() ritorna una pd.Series per ogni riga nel dataframe, "i" prende l'indice e "f" è la riga/pd.Series
         lista_macchine.append(Macchina(*f)) #aggiungo alla lista la macchina
@@ -84,10 +85,13 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
     df=df.drop(columns=['compatibilità macchine taglio::check dati']) #elimino la colonna dopo averla utilizzata per filtrare le commesse
     df=df.reset_index(drop=True)
     df['Release date']=pd.to_datetime(df['data fine stampa per schedulatore']).apply(lambda x: x.replace(hour=14, minute=0, second=0))
+    #print(df['Release date'])
     df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].apply(lambda x: [int(num) for num in str(x).split(' / ')])
+    #print(f'{df['Commesse::CODICE DI ZONA']}')
     #df['Commesse::Diam int tubo']=df['Commesse::Diam int tubo'].fillna(70)
     #df['Commesse::FASCIA']=df['Commesse::FASCIA'].fillna(600)
     df['data_inizio_schedulazione']=inizio_schedulazione
+    print(df['data_inizio_schedulazione'])
     ordine_colonne_df=['commessa','Release date','Commesse::DATA CONSEGNA',
                         'Commesse::Priorita cliente', 'qta da tagliare metri per schedulatore',
                         'qta da tagliare per schedulatore', 'Commesse::CODICE DI ZONA',
