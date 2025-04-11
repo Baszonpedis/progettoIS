@@ -34,7 +34,7 @@ def data_partenza_veicoli(lista_commesse:list,lista_veicoli:list):
         if len(lista_filtrata)>0: #se ho almeno una commessa nella lista
             data_partenza=lista_filtrata[0].due_date #calcolo la data di partenza come la data di quella più urgente
             oggi=datetime.now() #data di oggi
-            oggi=datetime.strptime("2024-09-11","%Y-%m-%d")
+            oggi=datetime.strptime("2025-04-11","%Y-%m-%d") #NB: RIMUOVERE in fase di applicazione diretta; è solo per il testing sull'istanza basata attorno al 10/04
             if oggi>=data_partenza: #se la commessa più urgente ha una data nel passato rispetto ad oggi
                 data_partenza=oggi+timedelta(days=2) #aggiungo 2 giorni alla data di oggi
             else:
@@ -467,37 +467,35 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
     return soluzione_swap,f_best
 
 #GRAFICAZIONE
+#GRAFICAZIONE
 def grafico_schedulazione(schedulazione):
     """
     :param schedulazione: lista di dizionari che contiene le informazioni relative ad una schedulazione
     :return: plot del grafico relativo alla schedulazione
     """
-    macchine = list(set(schedula["macchina"] for schedula in schedulazione))  # Prendo i nomi unici delle macchine dal dizionario tramite il set
-    macchine.sort(reverse = True)
-    asse_x_setup = []  # Inizializzo l'asse delle x relativo al setup
-    asse_y_setup = []  # Inizializzo l'asse delle y relativo al setup
-    asse_x_lavorazione = []  # Inizializzo l'asse delle x relativo alla lavorazione
-    asse_y_lavorazione = []  # Inizializzo l'asse delle y relativo alla lavorazione
-    identificativi_commesse = []  # Inizializzo la lista degli identificativi delle commesse
+    macchine = list(set(schedula["macchina"] for schedula in schedulazione))
+    macchine.sort(reverse=True)
+    asse_x_setup = []
+    asse_y_setup = []
+    asse_x_lavorazione = []
+    asse_y_lavorazione = []
+    identificativi_commesse = []
 
-    # Assegna un colore univoco a ogni veicolo
     veicoli = list(set(schedula["veicolo"] for schedula in schedulazione))
-    colori = list(mcolors.TABLEAU_COLORS.values())  # Usa i colori della palette 'TABLEAU_COLORS'
+    colori = list(mcolors.TABLEAU_COLORS.values())
     colori_veicoli = {veicolo: colori[i % len(colori)] for i, veicolo in enumerate(veicoli)}
 
-    for schedula in schedulazione:  # Per ogni schedula nella lista vado a riempire le liste
+    for schedula in schedulazione:
         asse_x_setup.append((schedula["inizio_setup"], schedula["fine_setup"]))
         asse_y_setup.append(macchine.index(schedula["macchina"]))
         asse_x_lavorazione.append((schedula["inizio_lavorazione"], schedula["fine_lavorazione"]))
         asse_y_lavorazione.append(macchine.index(schedula["macchina"]))
         identificativi_commesse.append(schedula["commessa"])
 
-    # Plot delle barre dei setup
     for i in range(len(asse_x_setup)):
-        plt.barh(y=asse_y_setup[i], width=asse_x_setup[i][1] - asse_x_setup[i][0], left=asse_x_setup[i][0], height=0.5,
-                 color='red', edgecolor='black')
+        plt.barh(y=asse_y_setup[i], width=asse_x_setup[i][1] - asse_x_setup[i][0],
+                 left=asse_x_setup[i][0], height=0.5, color='red', edgecolor='black')
 
-    # Plot delle barre di lavorazione
     for i in range(len(asse_x_lavorazione)):
         veicolo = next(
             schedula["veicolo"] for schedula in schedulazione if schedula["commessa"] == identificativi_commesse[i])
@@ -507,28 +505,40 @@ def grafico_schedulazione(schedulazione):
         plt.text(x=asse_x_lavorazione[i][0] + (asse_x_lavorazione[i][1] - asse_x_lavorazione[i][0]) / 2,
                  y=asse_y_lavorazione[i], s=identificativi_commesse[i], ha='center', va='center', color='black')
 
-    plt.yticks(range(len(macchine)), macchine)  # Per ogni macchina, mette il suo nome sull'asse y
-    inizi = [schedula["inizio_setup"] for schedula in schedulazione] + [schedula["inizio_lavorazione"] for schedula in
-                                                                        schedulazione]  # Lista contenente tutti gli istanti di inizio lavorazione
-    fine = [schedula["fine_setup"] for schedula in schedulazione] + [schedula["fine_lavorazione"] for schedula in
-                                                                     schedulazione]  # Lista contenente tutti gli istanti di fine lavorazione
-    #plt.xticks(ticks=inizi + fine,labels=[time.strftime('%Y-%m-%d %H:%M:%S') for time in inizi] + [time.strftime('%Y-%m-%d %H:%M:%S') for time in fine], rotation=90)
-    '''La linea sopra serve per mostrare gli orari precisi, ma si tratta di un'informazione troppo granulare'''
-    plt.xlim(min(inizi + fine),
-             max(inizi + fine))  # Imposta la lunghezza dell'asse x uguale all'istante in cui si conclude l'ultima lavorazione in modo da visualizzare correttamente il grafico
+    plt.yticks(range(len(macchine)), macchine)
+    inizi = [schedula["inizio_setup"] for schedula in schedulazione] + [schedula["inizio_lavorazione"] for schedula in schedulazione]
+    fine = [schedula["fine_setup"] for schedula in schedulazione] + [schedula["fine_lavorazione"] for schedula in schedulazione]
+
+    plt.xlim(min(inizi + fine), max(inizi + fine))
     plt.gca().set_ylim(-0.5, len(macchine) - 0.5)
-    plt.gcf().autofmt_xdate()  # Serve per visualizzare meglio il grafico
-    plt.xlabel('Tempo')  # Titolo asse x
-    plt.ylabel('Macchina')  # Titolo asse y
-    plt.title('Schedulazione')  # Titolo del grafico
+    plt.gcf().autofmt_xdate()
+    plt.xlabel('Tempo')
+    plt.ylabel('Macchina')
+    plt.title('Schedulazione')
+
+    # Aggiunta delle fasce di non produzione (15:00 -> 07:00)
+    inizio_timeline = min(inizi + fine)
+    fine_timeline = max(inizi + fine)
+    current_time = inizio_timeline.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    while current_time < fine_timeline:
+        non_work_start = current_time + timedelta(hours=15)  # 15:00
+        non_work_end = current_time + timedelta(days=1, hours=7)  # 07:00 del giorno dopo
+
+        start = max(non_work_start, inizio_timeline)
+        end = min(non_work_end, fine_timeline)
+
+        if start < end:
+            plt.axvspan(start, end, color='gray', alpha=0.3, label='Non produzione' if current_time == inizio_timeline else "")
+
+        current_time += timedelta(days=1)
 
     # Creazione della legenda
-    handles = [mpatches.Patch(color=colore, label=f't taglio commessa associata al veicolo {veicolo}') for veicolo, colore in colori_veicoli.items()]
+    handles = [mpatches.Patch(color=colore, label=f't taglio commessa associata al veicolo {veicolo}')
+               for veicolo, colore in colori_veicoli.items()]
     handles.append(mpatches.Patch(color='red', label='t setup'))
-    plt.legend(handles=handles, title="Legenda")
+    handles.append(mpatches.Patch(color='gray', alpha=0.3, label='Non produzione'))
+    plt.legend(handles=handles, title="Legenda", loc='upper left', bbox_to_anchor=(1, 1))
+    plt.tight_layout()
     plt.savefig("PS-VRP\Dati_output\schedulazione.jpg")
-    plt.show()  # Mostra il grafico
-
-    # Spostamento legenda
-    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
-    plt.tight_layout()  # Adjust layout to prevent overlapping
+    plt.show()
