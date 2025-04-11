@@ -8,7 +8,7 @@ Contenuti:
 - main.py (modificato)
 - solver.py (solver - testing)
 - solver - originale.py (solver - originale)
-- Dati_input (dati reali?)
+- Dati_input (dati reali)
 - Dati_ouput
 - INPUT_TEST (input ad hoc)
 - OUTPUT_TEST
