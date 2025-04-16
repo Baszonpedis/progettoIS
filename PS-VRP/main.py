@@ -20,7 +20,7 @@ lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedul
 read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse)
 lista_veicoli=read_excel.read_excel_veicoli("PS-VRP\INPUT_TEST\VEICOLI9.xlsx")
 lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
-print(f'Lista macchine {lista_macchine}, Lista veicoli {lista_veicoli}, Lista_commesse {lista_commesse}')
+#print(f'Lista macchine {lista_macchine}, Lista veicoli {lista_veicoli}, Lista_commesse {lista_commesse}')
 
 ##EURISTICO COSTRUTTIVO
 start_time_eur = time.time()
@@ -100,7 +100,7 @@ end_time_tot=time.time()
 tot_tot = end_time_move-start_time_move
 
 ##STAMPE FINALI
-print('COMMESSE INIZIALI:',len(lista_commesse))
+print('COMMESSE SENZA CAMPI MANCANTI (LETTE CORRETTAMENTE):',len(lista_commesse))
 print('COMMESSE FILTRATE:',numero_commesse_filtrate)
 print('COMMESSE SCHEDULATE:',len(schedulazione3),'\n')
 print('TEMPO Greedy:',tot_time_eur)

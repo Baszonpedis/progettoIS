@@ -74,6 +74,7 @@ def write_error_output(df,nome_file):
     start_column=1 #inizializzo le colonne in cui andrò a printare si parte dalla prima e si andrà avanti fino all'ultimo campo
 
     commesse_campi_vuoti=list(df[df.isnull().any(axis=1)].index)
+    print(f'COMMESSE CON CAMPO MANCANTE: ', len(commesse_campi_vuoti))
     fill=PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
     for riga in commesse_campi_vuoti:
         ws1.cell(row=riga+2,column=1).fill=fill

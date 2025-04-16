@@ -34,7 +34,7 @@ def data_partenza_veicoli(lista_commesse:list,lista_veicoli:list):
         if len(lista_filtrata)>0: #se ho almeno una commessa nella lista
             data_partenza=lista_filtrata[0].due_date #calcolo la data di partenza come la data di quella più urgente
             oggi=datetime.now() #data di oggi
-            oggi=datetime.strptime("2025-04-11","%Y-%m-%d") #NB: RIMUOVERE in fase di applicazione diretta; è solo per il testing sull'istanza basata attorno al 10/04
+            #oggi=datetime.strptime("2024-04-11","%Y-%m-%d") #NB: RIMUOVERE in fase di applicazione diretta; è solo per il testing sull'istanza basata attorno al 10/04
             if oggi>=data_partenza: #se la commessa più urgente ha una data nel passato rispetto ad oggi
                 data_partenza=oggi+timedelta(days=2) #aggiungo 2 giorni alla data di oggi
             else:
@@ -66,12 +66,15 @@ def aggiorna_schedulazione1(commessa: Commessa ,macchina: Macchina, tempo_setup,
 def filtro_commesse(lista_commesse:list,lista_veicoli):
     data_partenza_veicoli(lista_commesse,lista_veicoli)
     lista_veicoli_disponibili = [veicolo for veicolo in lista_veicoli if veicolo.disponibilita == 1]  # lista che contiene i veicoli disponibili (veicoli filtrati per disponibilità)
+    #print(f'lista veicoli disponibili {lista_veicoli_disponibili}')
     zone_aperte = set([veicolo.zone_coperte for veicolo in lista_veicoli_disponibili])  # set contenente tutte le zone aperte (una lista può contenere duplicati, mentre un set ha elementi unici)
     commesse_da_tagliare = []
     for commessa in lista_commesse:
         intersezione = set(commessa.zona_cliente).intersection(zone_aperte)  # calcolo l'intersezione tra l'insieme delle zone della commessa e le zone aperte
         if intersezione:  # se l'intersezione contiene elementi (è diversa dall'insieme vuoto)
             commesse_da_tagliare.append(commessa)  # aggiungo alla lista la commessa
+        #else:
+            #print(f'La commessa {commessa} non ha un codice zona associato')
     commesse_da_schedulare=[]
     for commessa in commesse_da_tagliare:
         for veicolo in lista_veicoli_disponibili:
@@ -126,9 +129,9 @@ def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicol
         lista_macchine=sorted(lista_macchine,key=lambda macchina: macchina._minuti_fine_ultima_lavorazione)
         macchina=lista_macchine[0]
         for commessa in lista_commesse:
-            print(f'Macchina disponibilità = {macchina.disponibilita}, commessa compatibilità = {commessa.compatibilita[macchina.nome_macchina]}, minuti release commessa {commessa._minuti_release_date}, minuti fine ultima lav {macchina._minuti_fine_ultima_lavorazione}')
+            #print(f'Macchina disponibilità = {macchina.disponibilita}, commessa compatibilità = {commessa.compatibilita[macchina.nome_macchina]}, minuti release commessa {commessa._minuti_release_date}, minuti fine ultima lav {macchina._minuti_fine_ultima_lavorazione}')
             if macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1 and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
-                print("SONO ENTRATO")
+                #print("SONO ENTRATO")
                 tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
                 tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
                 tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
@@ -466,7 +469,6 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
     print('Swap eseguiti =',contatore)
     return soluzione_swap,f_best
 
-#GRAFICAZIONE
 #GRAFICAZIONE
 def grafico_schedulazione(schedulazione):
     """
