@@ -69,13 +69,15 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
     #print(f'lista veicoli disponibili {lista_veicoli_disponibili}')
     zone_aperte = set([veicolo.zone_coperte for veicolo in lista_veicoli_disponibili])  # set contenente tutte le zone aperte (una lista può contenere duplicati, mentre un set ha elementi unici)
     commesse_da_tagliare = []
+    commesse_da_schedulare=[]
     for commessa in lista_commesse:
         intersezione = set(commessa.zona_cliente).intersection(zone_aperte)  # calcolo l'intersezione tra l'insieme delle zone della commessa e le zone aperte
         if intersezione:  # se l'intersezione contiene elementi (è diversa dall'insieme vuoto)
             commesse_da_tagliare.append(commessa)  # aggiungo alla lista la commessa
         #else:
             #print(f'La commessa {commessa} non ha un codice zona associato')
-    commesse_da_schedulare=[]
+        if 0 in commessa.zona_cliente: #filtro separatamente le commesse con zona "zero" (ovvero senza zona indicata)
+            commesse_da_schedulare.append(commessa)
     for commessa in commesse_da_tagliare:
         for veicolo in lista_veicoli_disponibili:
             #if veicolo.zone_coperte in commessa.zona_cliente and commessa.due_date>=veicolo.data_partenza:#commessa.due_date<=veicolo.data_partenza:
@@ -129,6 +131,19 @@ def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicol
         lista_macchine=sorted(lista_macchine,key=lambda macchina: macchina._minuti_fine_ultima_lavorazione)
         macchina=lista_macchine[0]
         for commessa in lista_commesse:
+            if 0 in commessa.zona_cliente:
+                if macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1 and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
+                    tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
+                    tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
+                    tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
+                    tempo_fine_lavorazione = tempo_inizio_taglio + tempo_processamento + tempo_setup
+                    data_fine_lavorazione = aggiungi_minuti(tempo_fine_lavorazione, inizio_schedulazione)
+                    schedulazione_eseguita=True
+                    f_obj+=tempo_setup
+                    aggiorna_schedulazione1(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione)
+                    lista_commesse.remove(commessa)
+                if schedulazione_eseguita==True:
+                    break
             #print(f'Macchina disponibilità = {macchina.disponibilita}, commessa compatibilità = {commessa.compatibilita[macchina.nome_macchina]}, minuti release commessa {commessa._minuti_release_date}, minuti fine ultima lav {macchina._minuti_fine_ultima_lavorazione}')
             if macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1 and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
                 #print("SONO ENTRATO")

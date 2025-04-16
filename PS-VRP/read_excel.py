@@ -79,26 +79,15 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
     for col in colonne_commesse_foglio:
         df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col] = df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col].fillna(0)
     output.write_error_output(df,"PS-VRP\Dati_output\error_read_file.xlsx")
-    # Soluzione: cicliamo sulle righe per raccogliere l'id e le colonne vuote se presenti
-    id_con_campi_vuoti = []
-    for index, row in df.iterrows():
-        # Trova tutte le colonne in cui il valore è NaN (o None)
-        colonne_vuote = row[row.isnull()].index.tolist()        
-        # Se ci sono colonne vuote, aggiungo l'id e la lista delle colonne
-        if colonne_vuote:
-            id_con_campi_vuoti.append((row['commessa'], colonne_vuote))
-    # Visualizza il risultato
-    print(id_con_campi_vuoti)
-
-
-    #df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].fillna("0")
+    df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].fillna(0)
     df = df.dropna()
     lista_commesse=[] #lista commesse inizialmente vuota
     df=df[~df['compatibilità macchine taglio::check dati'].str.startswith('ERR')] #elimino tutte le righe del df che presentano errori nell'estrazione filemaker
     df=df.drop(columns=['compatibilità macchine taglio::check dati']) #elimino la colonna dopo averla utilizzata per filtrare le commesse
     df=df.reset_index(drop=True)
     df['Release date']=pd.to_datetime(df['data fine stampa per schedulatore']).apply(lambda x: x.replace(hour=14, minute=0, second=0))
-    df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].apply(lambda x: [int(num) for num in str(x).split(' / ')])
+    if df['Commesse::CODICE DI ZONA'] is not int:
+        df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].apply(lambda x: [int(num) for num in str(x).split(' / ')])
     df['data_inizio_schedulazione']=inizio_schedulazione
     #print(df['data_inizio_schedulazione'])
     ordine_colonne_df=['commessa','Release date','Commesse::DATA CONSEGNA',
@@ -109,7 +98,7 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
     df=df[ordine_colonne_df] #assegno il nuovo ordine di colonne
     for (_,f) in df.iterrows():  # iterrows() ritorna una pd.Series per ogni riga nel dataframe, "_" prende l'indice (usato quando non mi importa il valore di tale indice) e "f" è la riga/pd.Series
         lista_commesse.append(Commessa(*f))
-    return lista_commesse, id_con_campi_vuoti
+    return lista_commesse
 
 def read_compatibilita(nome_file,lista_commesse):
     """
@@ -121,6 +110,7 @@ def read_compatibilita(nome_file,lista_commesse):
     colonne_commesse_foglio = ['Commesse::FASCIA', 'Commesse::Diam int tubo']
     for col in colonne_commesse_foglio:
         df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col] = df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col].fillna(0)
+    df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].fillna(0)
     df=df.dropna()
     df=df[~df['compatibilità macchine taglio::check dati'].str.startswith('ERR')]
     df=df.drop(columns=campi_input_commesse)

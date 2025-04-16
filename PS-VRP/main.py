@@ -23,6 +23,7 @@ lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
 #print(f'Lista macchine {lista_macchine}, Lista veicoli {lista_veicoli}, Lista_commesse {lista_commesse}')
 
 ##EURISTICO COSTRUTTIVO
+print('COMMESSE SENZA CAMPI MANCANTI (LETTE CORRETTAMENTE):',len(lista_commesse))
 start_time_eur = time.time()
 print('\nEURISTICO COSTRUTTIVO')
 commesse_filtrate=solver.filtro_commesse(lista_commesse,lista_veicoli)
@@ -32,6 +33,7 @@ output.write_output_soluzione_euristica(schedulazione3,"PS-VRP\OUTPUT_TEST\euris
 print(f'Funzione obiettivo euristico {f_obj3}\n')
 end_time_eur = time.time()
 tot_time_eur= end_time_eur-start_time_eur
+solver.grafico_schedulazione(schedulazione3) #euristico
 
 ##DEEPCOPIES PER RICERCHE LOCALI
 lista_veicoli_copy=deepcopy(lista_veicoli)
@@ -108,6 +110,6 @@ print('TEMPO Greedy + LS1:',tot_time_eur+tot1) #insert inter
 print('TEMPO Greedy + LS2:',tot_time_eur+tot2) #insert intra
 print('TEMPO Greedy + LS3:',tot_time_eur+tot3) #swap inter
 print('TEMPO Greedy + LS1 + LS2 + LS3:',tot_time_eur+tot1+tot_tot) #in sequenza
-solver.grafico_schedulazione(schedulazione3) #euristico
+#solver.grafico_schedulazione(schedulazione3) #euristico
 #solver.grafico_schedulazione(soluzione_move) #sequenza pariale (G+LS1+LS2)
-solver.grafico_schedulazione(soluzione_swap) #soluzione sequenza finale (G+LS1+LS2+LS3)
+#solver.grafico_schedulazione(soluzione_swap) #soluzione sequenza finale (G+LS1+LS2+LS3)
