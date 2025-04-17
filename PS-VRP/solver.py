@@ -29,6 +29,8 @@ def aggiungi_minuti(minuti,data):
 
 def data_partenza_veicoli(lista_commesse:list,lista_veicoli:list):
     lista_commesse.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente sulla due date
+    for commessa in lista_commesse:
+        print(f'Commessa: {commessa.id_commessa}, Priorità: {commessa.priorita_cliente}')
     for veicolo in lista_veicoli:
         lista_filtrata=[commessa for commessa in lista_commesse if veicolo.zone_coperte in commessa.zona_cliente] #lista che contiene solo le commesse ammissibili per il veicolo
         if len(lista_filtrata)>0: #se ho almeno una commessa nella lista
@@ -120,7 +122,14 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
 
 def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicoli:list):
     #data_partenza_veicoli(lista_commesse,lista_veicoli)
-    lista_commesse.sort(key=lambda commessa: (commessa.due_date.timestamp(), commessa.priorita_cliente))
+    lista_commesse.sort(
+    key=lambda commessa: (
+        (0.25*commessa.due_date.timestamp() if 0 in commessa.zona_cliente else commessa.due_date.timestamp()),
+        -commessa.priorita_cliente
+    )
+    )
+    for commessa in lista_commesse:
+        print(f'Commessa: {commessa.id_commessa}, Priorità: {commessa.priorita_cliente}, Due Date: {commessa.due_date.timestamp()}')
     f_obj = 0  # funzione obiettivo (somma pesata dei tempi di setup)
     schedulazione = []  # è una lista che conterrà tutte le schedulazioni
     for i in lista_macchine:
@@ -254,7 +263,10 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                             tempo_setup_commessa=macchina1.calcolo_tempi_setup(schedula1[k-1],schedula1[k])
                             tempo_processamento_commessa=schedula1[k].metri_da_tagliare/macchina1.velocita_taglio_media
                             return_schedulazione(schedula1[k],macchina1,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione1,inizio_schedulazione,s1)
-                            if s1[-1]['fine_lavorazione'] < schedula1[k].release_date or s1[-1]['fine_lavorazione'] > partenze[schedula1[k].veicolo]:
+                            if (
+                            s1[-1]['fine_lavorazione'] < schedula1[k].release_date or 
+                            (schedula1[k].veicolo is not None and s1[-1]['fine_lavorazione'] > partenze[schedula1[k].veicolo])
+                            ):
                                 check1=False
                             ultima_lavorazione1=ultima_lavorazione1+tempo_setup_commessa+tempo_processamento_commessa
                         check2 = True
@@ -262,7 +274,10 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                             tempo_setup_commessa=macchina2.calcolo_tempi_setup(schedula2[k - 1], schedula2[k])
                             tempo_processamento_commessa = schedula2[k].metri_da_tagliare / macchina2.velocita_taglio_media
                             return_schedulazione(schedula2[k], macchina2, tempo_setup_commessa,tempo_processamento_commessa, ultima_lavorazione2, inizio_schedulazione,s2)
-                            if s2[-1]['fine_lavorazione'] < schedula2[k].release_date or s2[-1]['fine_lavorazione'] > partenze[schedula2[k].veicolo]:
+                            if (
+                            s2[-1]['fine_lavorazione'] < schedula2[k].release_date or 
+                            (schedula2[k].veicolo is not None and s2[-1]['fine_lavorazione'] > partenze[schedula2[k].veicolo])
+                            ):                                
                                 check2 = False
                             ultima_lavorazione2=ultima_lavorazione2+tempo_setup_commessa+tempo_processamento_commessa
                         if check1 and check2: #faccio il check sulle date di partenza dei veicoli
@@ -355,7 +370,10 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     F+=tempo_setup_commessa
                                     tempo_processamento_commessa=schedula[k].metri_da_tagliare/macchina.velocita_taglio_media
                                     return_schedulazione(schedula[k],macchina,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione,inizio_schedulazione,s)
-                                    if s[-1]['fine_lavorazione'] < schedula[k].release_date or s[-1]['fine_lavorazione'] > partenze[schedula[k].veicolo]:
+                                    if (
+                                    s[-1]['fine_lavorazione'] < schedula[k].release_date or 
+                                    (schedula[k].veicolo is not None and s[-1]['fine_lavorazione'] > partenze[schedula[k].veicolo])
+                                    ):
                                         check=False
                                     ultima_lavorazione=ultima_lavorazione+tempo_setup_commessa+tempo_processamento_commessa
                                 if check and F < f_macchina:
@@ -455,7 +473,10 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                 F+=tempo_setup_commessa
                                 tempo_processamento_commessa=schedula[k].metri_da_tagliare/macchina.velocita_taglio_media
                                 return_schedulazione(schedula[k],macchina,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione,inizio_schedulazione,s)
-                                if s[-1]['fine_lavorazione']<schedula[k].release_date or s[-1]['fine_lavorazione']>partenze[schedula[k].veicolo]:
+                                if (
+                                s[-1]['fine_lavorazione'] < schedula[k].release_date or 
+                                (schedula[k].veicolo is not None and s[-1]['fine_lavorazione'] > partenze[schedula[k].veicolo])
+                                ):
                                     check=False
                                 ultima_lavorazione=ultima_lavorazione+tempo_setup_commessa+tempo_processamento_commessa
                             if check and F<f_macchina:

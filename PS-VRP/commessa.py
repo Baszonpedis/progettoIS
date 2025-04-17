@@ -4,10 +4,14 @@ class Commessa():
         self.id_commessa=id_commessa
         self.release_date=release_date
         self.due_date=due_date
-        self.priorita_cliente=priorita_cliente
         self.metri_da_tagliare=metri_da_tagliare
         self.kg_da_tagliare=kg_da_tagliare
         self.zona_cliente=zona_cliente
+        self.priorita_cliente=priorita_cliente
+        #if isinstance(zona_cliente, list): #necessario per come viene letto poi in modo diverso nel codice
+        #    self.priorita_cliente = 50 if 0 in zona_cliente else priorita_cliente
+        #else:
+        #    self.priorita_cliente = 50 if zona_cliente == 0 else priorita_cliente
         self.compatibilita=None #matrice compatibilita commessa-macchina. inizialmente viene messo None per poi rimpiazzarlo con un dizionario
         self.tipologia_taglio=tipologia_taglio
         self.fascia_iniziale=fascia_iniziale
