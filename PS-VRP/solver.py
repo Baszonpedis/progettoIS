@@ -36,7 +36,7 @@ def data_partenza_veicoli(lista_commesse:list,lista_veicoli:list):
         if len(lista_filtrata)>0: #se ho almeno una commessa nella lista
             data_partenza=lista_filtrata[0].due_date #calcolo la data di partenza come la data di quella più urgente
             oggi=datetime.now() #data di oggi
-            #oggi=datetime.strptime("2024-04-11","%Y-%m-%d") #NB: RIMUOVERE in fase di applicazione diretta; è solo per il testing sull'istanza basata attorno al 10/04
+            oggi=datetime.strptime("2025-04-10","%Y-%m-%d") #NB: RIMUOVERE in fase di applicazione diretta; è solo per il testing sull'istanza basata attorno al 10/04
             if oggi>=data_partenza: #se la commessa più urgente ha una data nel passato rispetto ad oggi
                 data_partenza=oggi+timedelta(days=2) #aggiungo 2 giorni alla data di oggi
             else:
@@ -122,6 +122,7 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
 
 def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicoli:list):
     #data_partenza_veicoli(lista_commesse,lista_veicoli)
+    causa_fallimento={}
     lista_commesse.sort(
     key=lambda commessa: (
         (0.25*commessa.due_date.timestamp() if 0 in commessa.zona_cliente else commessa.due_date.timestamp()),
@@ -155,7 +156,6 @@ def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicol
                     break
             #print(f'Macchina disponibilità = {macchina.disponibilita}, commessa compatibilità = {commessa.compatibilita[macchina.nome_macchina]}, minuti release commessa {commessa._minuti_release_date}, minuti fine ultima lav {macchina._minuti_fine_ultima_lavorazione}')
             if macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1 and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
-                #print("SONO ENTRATO")
                 tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
                 tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
                 tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
@@ -163,6 +163,7 @@ def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicol
                 data_fine_lavorazione = aggiungi_minuti(tempo_fine_lavorazione, inizio_schedulazione)
                 veicoli_feasible = [veicolo for veicolo in lista_veicoli if (veicolo.zone_coperte in commessa.zona_cliente and veicolo.disponibilita == 1)]
                 for veicolo in veicoli_feasible:
+                    #print(f'La data di fine lavorazione {data_fine_lavorazione} della commessa {commessa.id_commessa} | La data di partenza {veicolo.data_partenza}')
                     if data_fine_lavorazione <= veicolo.data_partenza and veicolo.capacita >= commessa.kg_da_tagliare:
                         commessa.veicolo=veicolo.nome
                         veicolo.capacita-=commessa.kg_da_tagliare
@@ -171,6 +172,14 @@ def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicol
                         aggiorna_schedulazione1(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione)
                         lista_commesse.remove(commessa)
                         #print(macchina.nome_macchina,commessa.id_commessa,veicolo.nome)
+                    if data_fine_lavorazione > veicolo.data_partenza:
+                        causa_fallimento[commessa.id_commessa] = (
+                        f'La commessa non viene completata in tempo per la partenza del veicolo {veicolo.nome}'
+                        )
+                    elif veicolo.capacita < commessa.kg_da_tagliare:
+                        causa_fallimento[commessa.id_commessa] = (
+                        f'La commessa è troppo grande per il veicolo {veicolo.nome}'
+                        )
                     if schedulazione_eseguita:
                         break
                 #if schedulazione_eseguita:
@@ -179,6 +188,10 @@ def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicol
                 break
         if not schedulazione_eseguita:
             lista_macchine.remove(macchina)
+            #print(f'Mancano {len(lista_commesse)} commesse quando chiudo la macchina {macchina.nome_macchina}')
+            #print(f"Le commesse mancanti sono: {', '.join(str(c.id_commessa) for c in lista_commesse)}")
+    print(f"Le commesse non schedulate sono: {', '.join(str(c.id_commessa) for c in lista_commesse)}")
+    print(causa_fallimento)
     return schedulazione, f_obj
 
 ##INSERT INTER-MACCHINA (Ricerca locale 1)
