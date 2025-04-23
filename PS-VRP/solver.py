@@ -122,13 +122,14 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
 
 def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicoli:list):
     #data_partenza_veicoli(lista_commesse,lista_veicoli)
-    causa_fallimento={}
-    lista_commesse.sort(
-    key=lambda commessa: (
-        (0.25*commessa.due_date.timestamp() if 0 in commessa.zona_cliente else commessa.due_date.timestamp()),
-        -commessa.priorita_cliente
-    )
-    )
+    causa_fallimento={} #dizionario con formato "commessa_fallita:motivo"
+    lista_commesse_0=[c for c in lista_commesse if 0 in c.zona_cliente] #lista commesse "zona zero" (vettori esterni)
+    lista_commesse_restanti=[c for c in lista_commesse if 0 not in c.zona_cliente] #lista commesse vettori interni
+    #sorting separato
+    lista_commesse_0.sort(key=lambda c: (c.due_date.timestamp(), -c.priorita_cliente))
+    lista_commesse_restanti.sort(key=lambda c: (c.due_date.timestamp(), -c.priorita_cliente))
+    #riunione liste
+    lista_commesse = lista_commesse_0 + lista_commesse_restanti
     for commessa in lista_commesse:
         print(f'Commessa: {commessa.id_commessa}, Priorità: {commessa.priorita_cliente}, Due Date: {commessa.due_date.timestamp()}')
     f_obj = 0  # funzione obiettivo (somma pesata dei tempi di setup)
@@ -282,18 +283,28 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                             ):
                                 check1=False
                             ultima_lavorazione1=ultima_lavorazione1+tempo_setup_commessa+tempo_processamento_commessa
-                        check2 = True
-                        for k in range(1, len(schedula2)):  # vado a ricostruire la soluzione e la schedula
-                            tempo_setup_commessa=macchina2.calcolo_tempi_setup(schedula2[k - 1], schedula2[k])
-                            tempo_processamento_commessa = schedula2[k].metri_da_tagliare / macchina2.velocita_taglio_media
-                            return_schedulazione(schedula2[k], macchina2, tempo_setup_commessa,tempo_processamento_commessa, ultima_lavorazione2, inizio_schedulazione,s2)
-                            if (
-                            s2[-1]['fine_lavorazione'] < schedula2[k].release_date or 
-                            (schedula2[k].veicolo is not None and s2[-1]['fine_lavorazione'] > partenze[schedula2[k].veicolo])
-                            ):                                
-                                check2 = False
-                            ultima_lavorazione2=ultima_lavorazione2+tempo_setup_commessa+tempo_processamento_commessa
-                        if check1 and check2: #faccio il check sulle date di partenza dei veicoli
+                            check2 = True
+                            check3 = True
+                            for k in range(1, len(schedula2)):  # vado a ricostruire la soluzione e la schedula
+                                tempo_setup_commessa = macchina2.calcolo_tempi_setup(schedula2[k - 1], schedula2[k])
+                                tempo_processamento_commessa = schedula2[k].metri_da_tagliare / macchina2.velocita_taglio_media
+                                return_schedulazione(schedula2[k], macchina2, tempo_setup_commessa, tempo_processamento_commessa, ultima_lavorazione2, inizio_schedulazione, s2)
+
+                                fine_lavorazione = s2[-1]['fine_lavorazione']
+
+                                # Check2: rispetto release_date e partenze veicoli
+                                if (
+                                    fine_lavorazione < schedula2[k].release_date or 
+                                    (schedula2[k].veicolo is not None and fine_lavorazione > partenze[schedula2[k].veicolo])
+                                ):
+                                    check2 = False
+
+                                # Check3: rispetto due_date per zona_cliente == 0
+                                if schedula2[k].zona_cliente == 0 and fine_lavorazione > schedula2[k].due_date:
+                                    check3 = False
+
+                                ultima_lavorazione2 = ultima_lavorazione2 + tempo_setup_commessa + tempo_processamento_commessa
+                        if check1 and check2 and check3: #se va tutto bene
                             improved=True #miglioramento trovato
                             f_best+=delta #aggiorno funzione obiettivo
                             #print(f'metto {commessa.id_commessa} dalla posizione {i} su macchina {macchina1.nome_macchina} in posizione {posizione} su macchina {macchina2.nome_macchina} con delta={delta}')
@@ -376,20 +387,28 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                 copia=deepcopy(schedula)
                                 schedula.remove(comm_i)
                                 schedula.insert(j,comm_i)
-                                F=0
-                                check=True
-                                for k in range(1,len(schedula)): #vado a ricostruire la soluzione e la schedula
-                                    tempo_setup_commessa=macchina.calcolo_tempi_setup(schedula[k-1],schedula[k])
-                                    F+=tempo_setup_commessa
-                                    tempo_processamento_commessa=schedula[k].metri_da_tagliare/macchina.velocita_taglio_media
-                                    return_schedulazione(schedula[k],macchina,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione,inizio_schedulazione,s)
+                                check1 = True  # release_date e partenze
+                                check2 = True  # due_date solo per zona_cliente == 0
+                                F = 0
+                                for k in range(1, len(schedula)):
+                                    tempo_setup_commessa = macchina.calcolo_tempi_setup(schedula[k - 1], schedula[k])
+                                    F += tempo_setup_commessa
+                                    tempo_processamento_commessa = schedula[k].metri_da_tagliare / macchina.velocita_taglio_media
+                                    return_schedulazione(schedula[k], macchina, tempo_setup_commessa, tempo_processamento_commessa, ultima_lavorazione, inizio_schedulazione, s)
+
+                                    fine_lavorazione = s[-1]['fine_lavorazione']
+
                                     if (
-                                    s[-1]['fine_lavorazione'] < schedula[k].release_date or 
-                                    (schedula[k].veicolo is not None and s[-1]['fine_lavorazione'] > partenze[schedula[k].veicolo])
+                                        fine_lavorazione < schedula[k].release_date or
+                                        (schedula[k].veicolo is not None and fine_lavorazione > partenze[schedula[k].veicolo])
                                     ):
-                                        check=False
-                                    ultima_lavorazione=ultima_lavorazione+tempo_setup_commessa+tempo_processamento_commessa
-                                if check and F < f_macchina:
+                                        check1 = False
+
+                                    if schedula[k].zona_cliente == 0 and fine_lavorazione > schedula[k].due_date:
+                                        check2 = False
+
+                                    ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
+                                if check1 and check2 and F < f_macchina:
                                 #if partenze[veicolo_i]>=s[j-1]['fine_lavorazione'] and check and F<f_macchina: #faccio il check sulle date di partenza dei veicoli
                                     delta=F-f_macchina
                                     f_macchina = F
@@ -479,20 +498,30 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                             #eseguo temporaneamente lo swap
                             schedula[i]=schedula[j]
                             schedula[j]=comm_i
-                            check=True
                             F=0
-                            for k in range(1,len(schedula)): #vado a ricostruire la soluzione e la schedula
-                                tempo_setup_commessa=macchina.calcolo_tempi_setup(schedula[k-1],schedula[k])
-                                F+=tempo_setup_commessa
-                                tempo_processamento_commessa=schedula[k].metri_da_tagliare/macchina.velocita_taglio_media
-                                return_schedulazione(schedula[k],macchina,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione,inizio_schedulazione,s)
+                            check1=True
+                            check2=True
+                            for k in range(1, len(schedula)):  # vado a ricostruire la soluzione e la schedula
+                                tempo_setup_commessa = macchina.calcolo_tempi_setup(schedula[k - 1], schedula[k])
+                                F += tempo_setup_commessa
+                                tempo_processamento_commessa = schedula[k].metri_da_tagliare / macchina.velocita_taglio_media
+                                return_schedulazione(schedula[k], macchina, tempo_setup_commessa, tempo_processamento_commessa, ultima_lavorazione, inizio_schedulazione, s)
+                                
+                                fine_lavorazione = s[-1]['fine_lavorazione']
+
+                                # Check1: rispetto release_date e partenze veicoli
                                 if (
-                                s[-1]['fine_lavorazione'] < schedula[k].release_date or 
-                                (schedula[k].veicolo is not None and s[-1]['fine_lavorazione'] > partenze[schedula[k].veicolo])
+                                    fine_lavorazione < schedula[k].release_date or 
+                                    (schedula[k].veicolo is not None and fine_lavorazione > partenze[schedula[k].veicolo])
                                 ):
-                                    check=False
-                                ultima_lavorazione=ultima_lavorazione+tempo_setup_commessa+tempo_processamento_commessa
-                            if check and F<f_macchina:
+                                    check1 = False
+
+                                # Check2: rispetto due_date per zona_cliente == 0
+                                if schedula[k].zona_cliente == 0 and fine_lavorazione > schedula[k].due_date:
+                                    check2 = False
+
+                                ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
+                            if check1 and check2 and F<f_macchina:
                             #if partenze[veicolo_i]>=s[j]['fine_lavorazione'] and partenze[veicolo_j]>=s[i]['fine_lavorazione']: #faccio il check sulle date di partenza dei veicoli
                                 #print(veicolo_i,s[j]['commessa'],' ',veicolo_j,s[i]['commessa'])
                                 improved=True #miglioramento trovato
