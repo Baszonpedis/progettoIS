@@ -284,7 +284,7 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                                 check1=False
                             ultima_lavorazione1=ultima_lavorazione1+tempo_setup_commessa+tempo_processamento_commessa
                             check2 = True
-                            check3 = True
+                            #check3 = True
                             for k in range(1, len(schedula2)):  # vado a ricostruire la soluzione e la schedula
                                 tempo_setup_commessa = macchina2.calcolo_tempi_setup(schedula2[k - 1], schedula2[k])
                                 tempo_processamento_commessa = schedula2[k].metri_da_tagliare / macchina2.velocita_taglio_media
@@ -300,11 +300,11 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                                     check2 = False
 
                                 # Check3: rispetto due_date per zona_cliente == 0
-                                if schedula2[k].zona_cliente == 0 and fine_lavorazione > schedula2[k].due_date:
-                                    check3 = False
+                                #if schedula2[k].zona_cliente == 0 and fine_lavorazione > schedula2[k].due_date:
+                                #    check3 = False
 
                                 ultima_lavorazione2 = ultima_lavorazione2 + tempo_setup_commessa + tempo_processamento_commessa
-                        if check1 and check2 and check3: #se va tutto bene
+                        if check1 and check2: #and check3 #se va tutto bene
                             improved=True #miglioramento trovato
                             f_best+=delta #aggiorno funzione obiettivo
                             #print(f'metto {commessa.id_commessa} dalla posizione {i} su macchina {macchina1.nome_macchina} in posizione {posizione} su macchina {macchina2.nome_macchina} con delta={delta}')
@@ -388,7 +388,7 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                 schedula.remove(comm_i)
                                 schedula.insert(j,comm_i)
                                 check1 = True  # release_date e partenze
-                                check2 = True  # due_date solo per zona_cliente == 0
+                                #check2 = True  # due_date solo per zona_cliente == 0
                                 F = 0
                                 for k in range(1, len(schedula)):
                                     tempo_setup_commessa = macchina.calcolo_tempi_setup(schedula[k - 1], schedula[k])
@@ -404,11 +404,11 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     ):
                                         check1 = False
 
-                                    if schedula[k].zona_cliente == 0 and fine_lavorazione > schedula[k].due_date:
-                                        check2 = False
+                                    #if schedula[k].zona_cliente == 0 and fine_lavorazione > schedula[k].due_date:
+                                    #    check2 = False
 
                                     ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
-                                if check1 and check2 and F < f_macchina:
+                                if check1 and F < f_macchina: #and check2
                                 #if partenze[veicolo_i]>=s[j-1]['fine_lavorazione'] and check and F<f_macchina: #faccio il check sulle date di partenza dei veicoli
                                     delta=F-f_macchina
                                     f_macchina = F
@@ -500,7 +500,7 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                             schedula[j]=comm_i
                             F=0
                             check1=True
-                            check2=True
+                            #check2=True
                             for k in range(1, len(schedula)):  # vado a ricostruire la soluzione e la schedula
                                 tempo_setup_commessa = macchina.calcolo_tempi_setup(schedula[k - 1], schedula[k])
                                 F += tempo_setup_commessa
@@ -517,11 +517,11 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     check1 = False
 
                                 # Check2: rispetto due_date per zona_cliente == 0
-                                if schedula[k].zona_cliente == 0 and fine_lavorazione > schedula[k].due_date:
-                                    check2 = False
+                                #if schedula[k].zona_cliente == 0 and fine_lavorazione > schedula[k].due_date:
+                                #    check2 = False
 
                                 ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
-                            if check1 and check2 and F<f_macchina:
+                            if check1 and F<f_macchina: #and check2
                             #if partenze[veicolo_i]>=s[j]['fine_lavorazione'] and partenze[veicolo_j]>=s[i]['fine_lavorazione']: #faccio il check sulle date di partenza dei veicoli
                                 #print(veicolo_i,s[j]['commessa'],' ',veicolo_j,s[i]['commessa'])
                                 improved=True #miglioramento trovato
