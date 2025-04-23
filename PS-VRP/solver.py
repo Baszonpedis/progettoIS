@@ -81,9 +81,11 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
         if 0 in commessa.zona_cliente: #filtro separatamente le commesse con zona "zero" (ovvero senza zona indicata)
             commesse_da_schedulare.append(commessa)
     for commessa in commesse_da_tagliare:
+        max_data_partenza = max(v.data_partenza for v in lista_veicoli_disponibili if v.data_partenza is not None)
+        print(max_data_partenza)
         for veicolo in lista_veicoli_disponibili:
             #if veicolo.zone_coperte in commessa.zona_cliente and commessa.due_date>=veicolo.data_partenza:#commessa.due_date<=veicolo.data_partenza:
-            if veicolo.zone_coperte in commessa.zona_cliente and commessa.release_date<veicolo.data_partenza:#commessa.due_date<=veicolo.data_partenza:
+            if veicolo.zone_coperte in commessa.zona_cliente and commessa.release_date<veicolo.data_partenza and commessa.due_date<=max_data_partenza:#commessa.due_date<=veicolo.data_partenza:
                 #if commessa not in commesse_da_schedulare:
                 commesse_da_schedulare.append(commessa)
                 break
@@ -271,7 +273,6 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                             schedula2.append(commessa)
                         else:
                             schedula2.insert(posizione, commessa)
-                        #schedula2.insert(posizione,commessa)
                         check1=True
                         for k in range(1,len(schedula1)): #vado a ricostruire la soluzione e la schedula
                             tempo_setup_commessa=macchina1.calcolo_tempi_setup(schedula1[k-1],schedula1[k])
@@ -284,7 +285,7 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                                 check1=False
                             ultima_lavorazione1=ultima_lavorazione1+tempo_setup_commessa+tempo_processamento_commessa
                             check2 = True
-                            #check3 = True
+                            check3=True
                             for k in range(1, len(schedula2)):  # vado a ricostruire la soluzione e la schedula
                                 tempo_setup_commessa = macchina2.calcolo_tempi_setup(schedula2[k - 1], schedula2[k])
                                 tempo_processamento_commessa = schedula2[k].metri_da_tagliare / macchina2.velocita_taglio_media
@@ -299,12 +300,12 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                                 ):
                                     check2 = False
 
-                                # Check3: rispetto due_date per zona_cliente == 0
-                                #if schedula2[k].zona_cliente == 0 and fine_lavorazione > schedula2[k].due_date:
-                                #    check3 = False
+                                #Check3: rispetto due_date per zona_cliente == 0
+                                if 0 in schedula2[k].zona_cliente and commessa.priorita_cliente >=1: #and fine_lavorazione > schedula2[k].due_date
+                                    check3 = False
 
                                 ultima_lavorazione2 = ultima_lavorazione2 + tempo_setup_commessa + tempo_processamento_commessa
-                        if check1 and check2: #and check3 #se va tutto bene
+                        if check1 and check2 and check3: #and check3 #se va tutto bene
                             improved=True #miglioramento trovato
                             f_best+=delta #aggiorno funzione obiettivo
                             #print(f'metto {commessa.id_commessa} dalla posizione {i} su macchina {macchina1.nome_macchina} in posizione {posizione} su macchina {macchina2.nome_macchina} con delta={delta}')
@@ -463,8 +464,8 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                 for i in range(1,len(schedula)-1):
                     for j in range(i+1,len(schedula)):
                         ultima_lavorazione = macchina.ultima_lavorazione #imposto la variabile al tempo in cui la macchina diventa disponibile per la prima volta
-                        veicolo_i = schedula[i].veicolo #prendo il veicolo associato alla commessa i
-                        veicolo_j = schedula[j].veicolo #prendo il veicolo associato alla commessa j
+                        #veicolo_i = schedula[i].veicolo #prendo il veicolo associato alla commessa i
+                        #veicolo_j = schedula[j].veicolo #prendo il veicolo associato alla commessa j
                         #effettuo il calcolo del delta
                         """
                         if i+1<j and j+1<len(schedula): #commesse non consecutive con j non in ultima posizione
