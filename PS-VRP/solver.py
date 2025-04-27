@@ -36,7 +36,7 @@ def data_partenza_veicoli(lista_commesse:list,lista_veicoli:list):
         if len(lista_filtrata)>0: #se ho almeno una commessa nella lista
             data_partenza=lista_filtrata[0].due_date #calcolo la data di partenza come la data di quella più urgente
             oggi=datetime.now() #data di oggi
-            #oggi=datetime.strptime("2025-04-10","%Y-%m-%d") #NB: RIMUOVERE in fase di applicazione diretta; è solo per il testing sull'istanza basata attorno al 10/04
+            #oggi=datetime.strptime("2025-04-24","%Y-%m-%d") #NB: RIMUOVERE in fase di applicazione diretta; è solo per il testing sull'istanza basata attorno al 10/04
             if oggi>=data_partenza: #se la commessa più urgente ha una data nel passato rispetto ad oggi
                 data_partenza=oggi+timedelta(days=2) #aggiungo 2 giorni alla data di oggi
             else:
