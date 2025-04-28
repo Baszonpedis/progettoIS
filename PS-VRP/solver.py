@@ -82,17 +82,12 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
         elif 0 in commessa.zona_cliente: #filtro separatamente le commesse con zona "zero" (ovvero senza zona indicata)
             commesse_da_schedulare.append(commessa)
     for commessa in commesse_da_tagliare:
-        max_data_partenza = max(v.data_partenza for v in lista_veicoli_disponibili if v.data_partenza is not None)
         #print(max_data_partenza)
         for veicolo in lista_veicoli_disponibili:
             #if veicolo.zone_coperte in commessa.zona_cliente and commessa.due_date>=veicolo.data_partenza:#commessa.due_date<=veicolo.data_partenza:
-            if veicolo.zone_coperte in commessa.zona_cliente and commessa.release_date<veicolo.data_partenza and commessa.due_date<=max_data_partenza:#commessa.due_date<=veicolo.data_partenza:
+            if veicolo.zone_coperte in commessa.zona_cliente and commessa.release_date<veicolo.data_partenza:#commessa.due_date<=veicolo.data_partenza:
                 commesse_da_schedulare.append(commessa)
                 break
-            elif commessa.due_date>max_data_partenza:
-                commesse_oltre_data[commessa.id_commessa] = (
-                        f'La commessa non viene assegnata al veicolo {veicolo.nome} in quanto la sua due date ({commessa.due_date}) è oltre la data massima di partenza dei veicoli ({max_data_partenza})'
-                        )
             #elif veicolo.zone_coperte not in commessa.zona_cliente:
             #    print(f'Il veicolo {veicolo.nome} non copre la commessa {commessa.id_commessa}')
         #creazione di un dizionario per commesse filtrate (da tutte le commesse a solo quelle fattibili in base alle zone aperte)
