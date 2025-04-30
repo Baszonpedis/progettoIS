@@ -28,9 +28,9 @@ def aggiungi_minuti(minuti,data):
     return data_copy + timedelta(days = numero_giorni + numero_settimana * 2, minutes = numero_minuti)
 
 def data_partenza_veicoli(lista_commesse:list,lista_veicoli:list):
-    lista_commesse.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente sulla due date
-    #for commessa in lista_commesse:
-    #    print(f'Commessa: {commessa.id_commessa}, Priorità: {commessa.priorita_cliente}')
+    lista_commesse.sort(key=lambda commessa:(commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente sulla due date
+    for commessa in lista_commesse:
+        print(f'Commessa: {commessa.id_commessa}, Priorità: {commessa.priorita_cliente}')
     for veicolo in lista_veicoli:
         lista_filtrata=[commessa for commessa in lista_commesse if veicolo.zone_coperte in commessa.zona_cliente] #lista che contiene solo le commesse ammissibili per il veicolo
         if len(lista_filtrata)>0: #se ho almeno una commessa nella lista
@@ -139,8 +139,8 @@ def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicol
     lista_commesse_0=[c for c in lista_commesse if 0 in c.zona_cliente] #lista commesse "zona zero" (vettori esterni)
     lista_commesse_restanti=[c for c in lista_commesse if 0 not in c.zona_cliente] #lista commesse vettori interni
     #sorting separato
-    lista_commesse_0.sort(key=lambda c: (c.due_date.timestamp(), -c.priorita_cliente))
-    lista_commesse_restanti.sort(key=lambda c: (c.due_date.timestamp(), -c.priorita_cliente))
+    lista_commesse_0.sort(key=lambda c: (c.due_date.timestamp(), c.priorita_cliente))
+    lista_commesse_restanti.sort(key=lambda c: (c.due_date.timestamp(), c.priorita_cliente))
     #riunione liste
     lista_commesse = lista_commesse_0 + lista_commesse_restanti
     #for commessa in lista_commesse:
@@ -313,7 +313,7 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                                     check2 = False
 
                                 #Check3: rispetto due_date per zona_cliente == 0
-                                if 0 in schedula2[k].zona_cliente and schedula2[k].priorita_cliente >=1: #and fine_lavorazione > schedula2[k].due_date
+                                if 0 in schedula2[k].zona_cliente and schedula2[k].priorita_cliente<=1: #and fine_lavorazione > schedula2[k].due_date
                                     check3 = False
 
                                 ultima_lavorazione2 = ultima_lavorazione2 + tempo_setup_commessa + tempo_processamento_commessa
@@ -417,7 +417,7 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     ):
                                         check1 = False
 
-                                    if 0 in schedula[k].zona_cliente and schedula[k].priorita_cliente >=1:
+                                    if 0 in schedula[k].zona_cliente and schedula[k].priorita_cliente<=1:
                                         check2 = False
 
                                     ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
@@ -530,7 +530,7 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     check1 = False
 
                                 # Check2: rispetto due_date per zona_cliente == 0
-                                if 0 in schedula[k].zona_cliente and schedula[k].priorita_cliente >= 1:
+                                if 0 in schedula[k].zona_cliente and schedula[k].priorita_cliente<=1:
                                     check2 = False
 
                                 ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa

@@ -1,17 +1,17 @@
 Contenuti:
+- main.py (modulo principale di esecuzione)
 - commessa.py (classe commessa)
 - macchina.py (classe macchina)
 - veicolo.py (classe veicolo)
-- output.py (per l'output)
-- read_excel.py (per l'input - testing)
-- read_excel - originale.py (per l'input - originale)
-- main.py (modificato)
-- solver.py (solver - testing)
-- solver - originale.py (solver - originale)
+- output.py (scrittura output)
+- read_excel.py (lettura input)
+- read_excel - originale.py (lettura input originale - backup)
+- solver.py (solver)
+- solver - originale.py (solver originale - backup)
 - Dati_input (dati reali)
-- Dati_ouput
+- Dati_ouput (output reali)
 - INPUT_TEST (input ad hoc)
-- OUTPUT_TEST
+- OUTPUT_TEST (output ad hoc)
 
 Per il funzionamento del main sono chiamate solamente le funzioni
 - filtro_commesse (da solver.py)
