@@ -19,7 +19,7 @@ read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
 inizio_schedulazione=lista_macchine[0].data_inizio_schedulazione
 lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedulazione) # creo una lista di oggetti commessa
 read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse)
-lista_veicoli=read_excel.read_excel_veicoli("PS-VRP/INPUT_TEST/VEICOLI9.xlsx")
+lista_veicoli=read_excel.read_excel_veicoli("PS-VRP/INPUT_TEST/VEICOLI reali prova.xlsx")
 lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
 #print(f'Lista macchine {lista_macchine}, Lista veicoli {lista_veicoli}, Lista_commesse {lista_commesse}')
 
@@ -35,11 +35,11 @@ print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE SENZA CAMPI MANCANTI (LETTE CORRETTAM
 
 start_time_eur = time.time()
 
-commesse_da_schedulare, commesse_oltre_data, commesse_filtro_zone, commesse_filtro_veicoli = solver.filtro_commesse(lista_commesse, lista_veicoli)
+commesse_da_schedulare, commesse_filtro_zone, commesse_filtro_veicoli = solver.filtro_commesse(lista_commesse, lista_veicoli)
 schedulazione3, f_obj3, causa_fallimento = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
 output.write_output_soluzione_euristica(schedulazione3, "PS-VRP/OUTPUT_TEST/euristico_costruttivo.xlsx")
-print(f'Fallimenti euristico costruttivo {len(causa_fallimento)}; Commesse oltre data partenza massima {len(commesse_oltre_data)}; Filtrate per zone {len(commesse_filtro_zone)}; Filtrate per veicoli {len(commesse_filtro_veicoli)}')
-commesse_non_schedulate = causa_fallimento | commesse_oltre_data | commesse_filtro_zone | commesse_filtro_veicoli
+print(f'Fallimenti euristico costruttivo {len(causa_fallimento)}; Filtrate per zone {len(commesse_filtro_zone)}; Filtrate per veicoli {len(commesse_filtro_veicoli)}')
+commesse_non_schedulate = causa_fallimento | commesse_filtro_zone | commesse_filtro_veicoli #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
 
 print(f"\n{Fore.RED}{Style.BRIGHT}COMMESSE NON SCHEDULATE: {len(commesse_non_schedulate)}")
 print(f"{Fore.RED}Dettaglio motivi: {commesse_non_schedulate}")

@@ -72,7 +72,7 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
     zone_aperte = set([veicolo.zone_coperte for veicolo in lista_veicoli_disponibili])  # set contenente tutte le zone aperte (una lista può contenere duplicati, mentre un set ha elementi unici)
     commesse_da_tagliare = [] #commesse assegnabili in base alle zone
     commesse_da_schedulare = [] #commesse assegnabili in base ai veicoli
-    commesse_oltre_data = {} #commesse da tagliare non schedulate perché oltre data partenza massima veicolo; formato dizionario per unirlo al resto
+    #commesse_oltre_data = {} #commesse da tagliare non schedulate perché oltre data partenza massima veicolo; formato dizionario per unirlo al resto
     for commessa in lista_commesse:
         intersezione = set(commessa.zona_cliente).intersection(zone_aperte)  # calcolo l'intersezione tra l'insieme delle zone della commessa e le zone aperte
         if intersezione:  # se l'intersezione contiene elementi (è diversa dall'insieme vuoto)
@@ -101,7 +101,7 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
             for commessa in commesse_da_tagliare
             if commessa not in commesse_da_schedulare
         }
-    return commesse_da_schedulare, commesse_oltre_data, commesse_filtro_zone, commesse_filtro_veicoli
+    return commesse_da_schedulare, '''commesse_oltre_data''', commesse_filtro_zone, commesse_filtro_veicoli
 
 def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, minuti_processamento, minuti_fine_ultima_commessa, inizio_schedulazione, schedulazione):
     id=commessa.id_commessa
