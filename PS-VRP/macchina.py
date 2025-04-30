@@ -1,4 +1,3 @@
-
 from commessa import Commessa
 from datetime import datetime
 from datetime import timedelta
@@ -36,28 +35,6 @@ class Macchina():
         #self.minuti_processamenti=self._minuti_fine_ultima_lavorazione
         self.ultima_lavorazione=self._minuti_fine_ultima_lavorazione
 
-    # def calcolo_setup(self,commessa1:Commessa,commessa2:Commessa):
-    #     """
-    #     :param commessa1: oggetto commessa che è stato lavorato sulla macchina
-    #     :param commessa2: oggetto commessa che si vuole provare a lavorare sulla macchina
-    #     :return: tempo di setup sulla macchina per passare dalla commessa1 alla commessa2
-    #     """
-    #     #se bobina e bobina così se bobina e foglio ERR, se foglio e foglio altra cosa
-    #     t_coltelli=30 #si ipotizza un tempo per montare/smontare un singolo coltello (30 minuti)
-    #     t_tubo=50 #si considera un tempo per cambiare il tubo (50 minuti)
-    #     tempo_coltelli=abs(commessa1.numero_coltelli-commessa2.numero_coltelli)*t_coltelli #tempo necessario a cambiare i coltelli
-    #     if commessa1.diametro_tubo!=commessa2.diametro_tubo:
-    #         tempo_tubo=t_tubo #se il tubo tra le due commesse è diverso è necessario cambiarlo
-    #     else:
-    #         tempo_tubo=0 #se il tubo è uguale il tempo è zero
-    #     tempo_setup=tempo_coltelli+tempo_tubo #calcolo il tempo totale di setup
-    #     #if commessa2.id_commessa==242655:
-    #         #print('sei qui ', self.nome_macchina)
-    #         #print(commessa1.numero_coltelli)
-    #         #print(commessa2.numero_coltelli)
-    #         #print(tempo_coltelli)
-    #     return tempo_setup #ritorno il tempo totale di setup
-
     def inizializza_lista_commesse(self):
         """
         funzione che serve per inserire una commessa fittizzia all'inizio della schedulazione di una macchina.
@@ -71,15 +48,6 @@ class Macchina():
         else:
             commessa_dummy = Commessa(-1, pd.to_datetime('03/07/2024'), pd.to_datetime('03/07/2024'), -1, 0, 0, -1,None, 1, 0, 0, self.data_inizio_schedulazione,'')
             self.lista_commesse_processate.append(commessa_dummy)
-
-    # def converti_minuti_in_giorni(self):
-    #     gg_lavorativi= 5
-    #     h_lavorative=8
-    #     # converte i minuti di lavorazione in data espressa in gg-mm-aaaa h-m-s
-    #     numero_settimana = self._minuti_fine_ultima_lavorazione // round(h_lavorative*gg_lavorativi*60)
-    #     numero_minuti = self._minuti_fine_ultima_lavorazione % round(h_lavorative*60)
-    #     numero_giorni = self._minuti_fine_ultima_lavorazione // round(h_lavorative*60)
-    #     return timedelta(minutes=numero_minuti) + timedelta(days=numero_giorni + numero_settimana * 2)
 
     def calcolo_tempi_setup(self, commessa1:Commessa, commessa2:Commessa):
         """

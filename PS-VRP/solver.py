@@ -7,8 +7,8 @@ import pandas as pd
 from commessa import Commessa
 from macchina import Macchina
 from veicolo import Veicolo
-import macchina
-import random
+#import macchina
+#import random
 from copy import deepcopy
 
 def aggiungi_minuti(minuti,data):
@@ -29,8 +29,8 @@ def aggiungi_minuti(minuti,data):
 
 def data_partenza_veicoli(lista_commesse:list,lista_veicoli:list):
     lista_commesse.sort(key=lambda commessa:(commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente sulla due date
-    for commessa in lista_commesse:
-        print(f'Commessa: {commessa.id_commessa}, Priorità: {commessa.priorita_cliente}')
+    #for commessa in lista_commesse:
+    #    print(f'Commessa: {commessa.id_commessa}, Priorità: {commessa.priorita_cliente}')
     for veicolo in lista_veicoli:
         lista_filtrata=[commessa for commessa in lista_commesse if veicolo.zone_coperte in commessa.zona_cliente] #lista che contiene solo le commesse ammissibili per il veicolo
         if len(lista_filtrata)>0: #se ho almeno una commessa nella lista
@@ -133,6 +133,7 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
                           "diametro_tubo": d_tubo,
                           "veicolo": camion})
 
+##EURISTICO COSTRUTTIVO (Greedy)
 def euristico_costruttivo(lista_commesse:list, lista_macchine:list, lista_veicoli:list):
     #data_partenza_veicoli(lista_commesse,lista_veicoli)
     causa_fallimento={} #dizionario con formato "commessa_fallita:motivo"
@@ -215,19 +216,19 @@ def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj,schedulazion
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # data in cui inizia la schedulazione
     f_best = f_obj  # funzione obiettivo
     soluzione_move = []  # lista contenente tutte le schedule
-    contatore=0 # contatore mosse insert
+    contatoreLS1=0 # contatore mosse insert
     for m1 in range(len(lista_macchine)):
         for m2 in range(len(lista_macchine)):
             #print(lista_macchine[m1].nome_macchina,len(lista_macchine[m1].lista_commesse_processate))
             #print(lista_macchine[m2].nome_macchina,len(lista_macchine[m2].lista_commesse_processate))
             if m1!=m2 and len(lista_macchine[m1].lista_commesse_processate)>2 and len(lista_macchine[m2].lista_commesse_processate)>2:
-                schedula1,schedula2,f_best,contatore=move_inter_macchina(lista_macchine[m1],lista_macchine[m2],partenze,contatore,inizio_schedulazione,f_best)
+                schedula1,schedula2,f_best,contatoreLS1=move_inter_macchina(lista_macchine[m1],lista_macchine[m2],partenze,contatoreLS1,inizio_schedulazione,f_best)
                 lista_macchine[m1].lista_commesse_processate=schedula1
                 lista_macchine[m2].lista_commesse_processate=schedula2
                 #print('nuove dim')
                 #print(lista_macchine[m1].nome_macchina,len(lista_macchine[m1].lista_commesse_processate))
                 #print(lista_macchine[m2].nome_macchina,len(lista_macchine[m2].lista_commesse_processate))
-    print('Mosse =',contatore)
+    #print('Mosse =',contatore)
     for m in lista_macchine:
         if len(m.lista_commesse_processate)>1:
             ultima_lavorazione=m.ultima_lavorazione
@@ -236,10 +237,10 @@ def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj,schedulazion
                 tempo_processamento_commessa=m.lista_commesse_processate[pos].metri_da_tagliare/m.velocita_taglio_media
                 return_schedulazione(m.lista_commesse_processate[pos],m, tempo_setup_commessa, tempo_processamento_commessa,ultima_lavorazione,inizio_schedulazione,soluzione_move)
                 ultima_lavorazione = ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa
-    return soluzione_move,f_best
+    return soluzione_move,f_best, contatoreLS1
 
 #Usato da move_2_macchine (Ricerca locale 1)
-def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,contatore:int,inizio_schedulazione,f_best):
+def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,contatoreLS1:int,inizio_schedulazione,f_best):
     #macchina1_schedula=[s for s in schedulazione if s['macchina']==macchina1.nome_macchina] #vado a prendere tutte le schedule ad essa associate
     #macchina2_schedula=[s for s in schedulazione if s['macchina']==macchina2.nome_macchina] #vado a prendere tutte le schedule ad essa associate
     schedula1=macchina1.lista_commesse_processate #copia profonda della lista di commesse schedulate
@@ -324,7 +325,7 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
 
                             #macchina_schedula1=s1 #aggiorno le schedule associate alla macchina
                             #macchina_schedula2=s2
-                            contatore+=1
+                            contatoreLS1+=1
                         else:
                             schedula1=copia1
                             schedula2=copia2
@@ -332,7 +333,7 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                     break
             if improved:
                 break
-    return schedula1,schedula2,f_best,contatore
+    return schedula1,schedula2,f_best,contatoreLS1
 
 ##INSERT INTRA-MACCHINA (Ricerca locale 2)
 def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
@@ -344,11 +345,11 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
     :return: schedulazione ottenuta applicando ricerca locale insert intra macchina
     """
     #INIZIALIZZAZIONI
-    contatore=0 #contatore mosse eseguite
+    contatoreLS2=0 #contatore mosse eseguite
     partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli} #dizionario in cui ad ogni veicolo viene associata la sua data di partenza
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione #data in cui inizia la schedulazione
     f_best = f_obj #funzione obiettivo
-    eps = 0.00001 #parametro per stabilire se il delta è conveniente
+    #eps = 0.00001 #parametro per stabilire se il delta è conveniente
     soluzione_move=[] #lista contenente tutte le schedule
 
     #CICLO PRINCIPALE
@@ -429,7 +430,7 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     f_best+=delta #aggiorno funzione obiettivo
                                     #print(f'metto commessa {comm_i.id_commessa} con delta={delta} in posizione {j} su macchina {macchina.nome_macchina}')
                                     macchina_schedula=s #aggiorno le schedule associate alla macchina
-                                    contatore+=1
+                                    contatoreLS2+=1
                                 else:
                                     #se lo swap non è ammissibile torno indietro annullando lo scambio
                                     schedula.remove(comm_i)
@@ -443,8 +444,8 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
             soluzione_move.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
         else:
             soluzione_move.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
-    print('Mosse eseguite =',contatore)
-    return soluzione_move,f_best
+    #print('Mosse eseguite =',contatore)
+    return soluzione_move,f_best,contatoreLS2
 
 ##SWAP INTRA-MACCHINA (Ricerca locale 3)
 def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
@@ -455,7 +456,7 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
     :param schedulazione: schedulazione ottenuta con l'euristico greedy
     :return: schedulazione ottenuta applicando ricerca locale swap intra macchina
     """
-    contatore=0 #numero di swap eseguiti
+    contatoreLS3=0 #numero di swap eseguiti
     partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli} #dizionario in cui ad ogni veicolo viene associata la sua data di partenza
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione #data in cui inizia la schedulazione
     f_best = f_obj #funzione obiettivo
@@ -543,7 +544,7 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                 f_best+=delta #aggiorno funzione obiettivo
                                 #print(f'scambio {schedula[i].id_commessa} con {schedula[j].id_commessa} con delta={delta} su {macchina.nome_macchina}')
                                 macchina_schedula=s #aggiorno le schedule associate alla macchina
-                                contatore+=1
+                                contatoreLS3+=1
                             else:
                                 #se lo swap non è ammissibile torno indietro annullando lo scambio
                                 schedula[i]=comm_i
@@ -557,8 +558,8 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
             soluzione_swap.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
         else:
             soluzione_swap.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
-    print('Swap eseguiti =',contatore)
-    return soluzione_swap,f_best
+    #print('Swap eseguiti =',contatore)
+    return soluzione_swap,f_best, contatoreLS3
 
 #GRAFICAZIONE
 def grafico_schedulazione(schedulazione):
