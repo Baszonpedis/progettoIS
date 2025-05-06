@@ -36,8 +36,8 @@ print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE SENZA CAMPI MANCANTI (LETTE CORRETTAM
 
 start_time_eur = time.time()
 
-commesse_da_schedulare, commesse_filtro_zone, commesse_filtro_veicoli, commesse_interne_solo_macchine = solver.filtro_commesse(lista_commesse, lista_veicoli)
-schedulazione3, f_obj3, causa_fallimento, commesse_interne_solo_macchine = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
+commesse_da_schedulare, commesse_filtro_zone, commesse_filtro_veicoli, commesse_zona_chiusa = solver.filtro_commesse(lista_commesse, lista_veicoli)
+schedulazione3, f_obj3, causa_fallimento = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli, commesse_zona_chiusa)
 output.write_output_soluzione_euristica(schedulazione3, "PS-VRP/OUTPUT_TEST/euristico_costruttivo.xlsx")
 print(f'Fallimenti euristico costruttivo {len(causa_fallimento)}; Filtrate per zone {len(commesse_filtro_zone)}; Filtrate per veicoli {len(commesse_filtro_veicoli)}')
 commesse_non_schedulate = causa_fallimento | commesse_filtro_zone | commesse_filtro_veicoli #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
@@ -48,6 +48,13 @@ print(f"\n{Fore.YELLOW}Funzione obiettivo euristico: {f_obj3} minuti di setup\n"
 
 end_time_eur = time.time()
 tot_time_eur = end_time_eur - start_time_eur
+
+
+print(f"{Fore.GREEN}COMMESSE LETTE CORRETTAMENTE: {len(lista_commesse)}")
+print(f"{Fore.GREEN}COMMESSE DA SCHEDULARE (FILTRATE): {len(commesse_da_schedulare)}")
+print(f"{Fore.GREEN}COMMESSE SCHEDULATE: {len(schedulazione3)}\n")
+
+
 solver.grafico_schedulazione(schedulazione3)
 
 
