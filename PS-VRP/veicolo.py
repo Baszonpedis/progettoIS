@@ -1,12 +1,11 @@
 
 class Veicolo():
-    def __init__(self,nome,data_disponibilita,disponibilita,capacita,zone_coperte):
+    def __init__(self,nome,data_partenza,zone_coperte,capacita):
         self.nome=nome
-        self.data_disponibilita=data_disponibilita
-        self.disponibilita=disponibilita
+        #self.disponibilita=disponibilita
         self.capacita=capacita
         self.zone_coperte=zone_coperte
-        self.data_partenza=None
+        self.data_partenza=data_partenza
 
     def set_data_partenza(self,data):
         self.data_partenza=data

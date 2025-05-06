@@ -1,6 +1,6 @@
 
 class Commessa():
-    def __init__(self,id_commessa,release_date,due_date,priorita_cliente,metri_da_tagliare,kg_da_tagliare,zona_cliente,tipologia_taglio,fascia_iniziale,fascia_finale,diametro_tubo,data_inizio_schedulazione,materiale):
+    def __init__(self,id_commessa,release_date,due_date,priorita_cliente,metri_da_tagliare,kg_da_tagliare,zona_cliente,tipologia_taglio,fascia_iniziale,fascia_finale,diametro_tubo,data_inizio_schedulazione,materiale, tassativita, id_tassativo):
         self.id_commessa=id_commessa
         self.release_date=release_date
         self.due_date=due_date
@@ -29,6 +29,9 @@ class Commessa():
         m_lavorativi = round(h_lavorative * 60)  # minuti lavorativi 480 al giorno
         self._minuti_release_date = max(m_1 - 2 * m_lavorativi * m_2 - 2 * m_lavorativi * m_3, 0)  # minuti lavorativi che separano l'inizio della schedulazione con la prima disponibilita della macchina
         self.materiale=materiale
+        #NUOVI CAMPI IN ITINERE
+        self.tassativita=tassativita
+        self.id_tassativo=id_tassativo
 
     def calcolo_nr_coltelli(self):
         if str(self.tipologia_taglio).lower()=='bobina':
