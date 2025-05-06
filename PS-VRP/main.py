@@ -1,4 +1,3 @@
-
 from commessa import Commessa
 from macchina import Macchina
 from veicolo import Veicolo
@@ -21,8 +20,8 @@ lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedul
 read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse)
 lista_veicoli=read_excel.read_excel_veicoli("PS-VRP/Dati_input/Estrazione veicoli 3.xlsx")
 lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
-for commessa in lista_commesse:
-    print(f'Commessa: {commessa.id_commessa}, Compatibilità: {commessa.compatibilita}')#print(f'Lista macchine {lista_macchine}, Lista veicoli {lista_veicoli}, Lista_commesse {lista_commesse}')
+#for commessa in lista_commesse:
+#    print(f'Commessa: {commessa.id_commessa}, Compatibilità: {commessa.compatibilita}')#print(f'Lista macchine {lista_macchine}, Lista veicoli {lista_veicoli}, Lista_commesse {lista_commesse}')
 
 
 init(autoreset=True)  # Ripristina i colori dopo ogni print
@@ -36,13 +35,13 @@ print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE SENZA CAMPI MANCANTI (LETTE CORRETTAM
 
 start_time_eur = time.time()
 
-commesse_da_schedulare, commesse_filtro_zone, commesse_filtro_veicoli, commesse_zona_chiusa = solver.filtro_commesse(lista_commesse, lista_veicoli)
-schedulazione3, f_obj3, causa_fallimento = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli, commesse_zona_chiusa)
+commesse_da_schedulare, commesse_filtro_zone, commesse_filtro_veicoli, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
+schedulazione3, f_obj3, causa_fallimento = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli, commesse_scartate)
 output.write_output_soluzione_euristica(schedulazione3, "PS-VRP/OUTPUT_TEST/euristico_costruttivo.xlsx")
 print(f'Fallimenti euristico costruttivo {len(causa_fallimento)}; Filtrate per zone {len(commesse_filtro_zone)}; Filtrate per veicoli {len(commesse_filtro_veicoli)}')
 commesse_non_schedulate = causa_fallimento | commesse_filtro_zone | commesse_filtro_veicoli #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
 
-print(f"\n{Fore.RED}{Style.BRIGHT}COMMESSE NON SCHEDULATE: {len(commesse_non_schedulate)}")
+print(f"\n{Fore.RED}{Style.BRIGHT}COMMESSE NON SCHEDULATE (su veicoli): {len(commesse_non_schedulate)}")
 print(f"{Fore.RED}Dettaglio motivi: {commesse_non_schedulate}")
 print(f"\n{Fore.YELLOW}Funzione obiettivo euristico: {f_obj3} minuti di setup\n")
 
