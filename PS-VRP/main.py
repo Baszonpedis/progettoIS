@@ -36,7 +36,7 @@ print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE SENZA CAMPI MANCANTI (LETTE CORRETTAM
 start_time_eur = time.time()
 
 commesse_da_schedulare, commesse_filtro_zone, commesse_filtro_veicoli, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
-schedulazione3, f_obj3, causa_fallimento = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli, commesse_scartate)
+schedulazione3, f_obj3, causa_fallimento, lista_macchine = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli, commesse_scartate)
 output.write_output_soluzione_euristica(schedulazione3, "PS-VRP/OUTPUT_TEST/euristico_costruttivo.xlsx")
 print(f'Fallimenti euristico costruttivo {len(causa_fallimento)}; Filtrate per zone {len(commesse_filtro_zone)}; Filtrate per veicoli {len(commesse_filtro_veicoli)}')
 commesse_non_schedulate = causa_fallimento | commesse_filtro_zone | commesse_filtro_veicoli #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
@@ -65,6 +65,8 @@ lista_veicoli_copy1 = deepcopy(lista_veicoli)
 lista_macchine_copy1 = deepcopy(lista_macchine)
 lista_commesse_copy1 = deepcopy(lista_commesse)
 lista_veicoli_copy2 = deepcopy(lista_veicoli)
+for macchina in lista_macchine:
+    print(f'La macchina {macchina.nome_macchina} ha {len(macchina.lista_commesse_processate)} commesse processate')
 lista_macchine_copy2 = deepcopy(lista_macchine)
 lista_commesse_copy2 = deepcopy(lista_commesse)
 

@@ -61,8 +61,9 @@ def aggiorna_schedulazione1(commessa: Commessa ,macchina: Macchina, tempo_setup,
                           "macchine compatibili": [machine for machine, value in commessa.compatibilita.items() if value == 1],
                           "nr coltelli": commessa.numero_coltelli,
                           "diametro_tubo": commessa.diametro_tubo,
-                          "veicolo": commessa.veicolo})  # dizionario che contiene le informazioni sulla schedula
-
+                          "veicolo": commessa.veicolo,
+                          "tassativita": commessa.tassativita,
+                          "id_tassativo": commessa.id_tassativo})  # dizionario che contiene le informazioni sulla schedula
     macchina._minuti_fine_ultima_lavorazione = minuti_inizio_lavorazione+tempo_setup+tempo_processamento
     macchina.lista_commesse_processate.append(commessa)  # aggiungo la commessa alla macchina che eseguirà la lavorazione
 
@@ -122,6 +123,8 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
     n_coltelli=commessa.numero_coltelli
     d_tubo=commessa.diametro_tubo
     camion=commessa.veicolo
+    tassativita=commessa.tassativita
+    id_tassativo=commessa.id_tassativo
     schedulazione.append({"commessa": id,
                           "macchina": macchina_lavorazione,
                           "minuti setup": tempo_setup,
@@ -135,7 +138,9 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
                           "macchine compatibili": macchine_compatibili,
                           "nr coltelli": n_coltelli,
                           "diametro_tubo": d_tubo,
-                          "veicolo": camion})
+                          "veicolo": camion,
+                          "tassativita": tassativita,
+                          "id_tassativo": id_tassativo})
 
 ##EURISTICO COSTRUTTIVO (Greedy)
 def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, lista_veicoli:list, commesse_scartate: list):
@@ -250,6 +255,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
         if not schedulazione_eseguita:
             lista_macchine.remove(macchina)
 
+    #Si ricostituisce la lista delle macchine    
     lista_macchine = lista_macchine_copy_eur
 
     commesse_da_schedulare = commesse_da_schedulare + commesse_scartate
@@ -278,9 +284,11 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                 break
         if not schedulazione_eseguita:
             lista_macchine.remove(macchina)
-    #lista_macchine ricostituita per ricerche locali
+
+    #Si ricostituisce la lista delle macchine per le ricerche locali
     lista_macchine = lista_macchine_copy_eur
-    return schedulazione, f_obj, causa_fallimento
+
+    return schedulazione, f_obj, causa_fallimento, lista_macchine
 
 ##INSERT INTER-MACCHINA (Ricerca locale 1)
 def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj, schedulazione: list):
@@ -297,9 +305,6 @@ def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj, schedulazio
                 schedula1,schedula2,f_best,contatoreLS1=move_inter_macchina(lista_macchine[m1],lista_macchine[m2],partenze,contatoreLS1,inizio_schedulazione,f_best)
                 lista_macchine[m1].lista_commesse_processate=schedula1
                 lista_macchine[m2].lista_commesse_processate=schedula2
-                #print('nuove dim')
-                #print(lista_macchine[m1].nome_macchina,len(lista_macchine[m1].lista_commesse_processate))
-                #print(lista_macchine[m2].nome_macchina,len(lista_macchine[m2].lista_commesse_processate))
     #print('Mosse =',contatore)
     for m in lista_macchine:
         if len(m.lista_commesse_processate)>1:
@@ -363,11 +368,10 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                             tempo_setup_commessa=macchina1.calcolo_tempi_setup(schedula1[k-1],schedula1[k])
                             tempo_processamento_commessa=schedula1[k].metri_da_tagliare/macchina1.velocita_taglio_media
                             return_schedulazione(schedula1[k],macchina1,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione1,inizio_schedulazione,s1)
-                            if (
-                            s1[-1]['fine_lavorazione'] < schedula1[k].release_date or 
-                            (schedula1[k].veicolo is not None or str and s1[-1]['fine_lavorazione'] > partenze[schedula1[k].veicolo])
+                            if s1[-1]['fine_lavorazione'] < schedula1[k].release_date or (
+                                schedula1[k].veicolo not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and s1[-1]['fine_lavorazione'] > partenze[schedula1[k].veicolo]
                             ):
-                                check1=False
+                                check1 = False
                             ultima_lavorazione1=ultima_lavorazione1+tempo_setup_commessa+tempo_processamento_commessa
                             check2 = True
                             check3 = True
@@ -386,11 +390,10 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                                     check2 = False
 
                                 #Check3:
-                                if schedula1[k].tassativita == 1 or schedula2[k].tassativita == 1: #and fine_lavorazione > schedula2[k].due_date
+                                if schedula2[k].tassativita == 1: #and fine_lavorazione > schedula2[k].due_date
                                     check3 = False
 
                                 ultima_lavorazione2 = ultima_lavorazione2 + tempo_setup_commessa + tempo_processamento_commessa
-                        print(f'Check 1 {check1}, check2 {check2}, check3 {check3}')
                         if check1 and check2 and check3: #and check3 #se va tutto bene
                             improved=True #miglioramento trovato
                             f_best+=delta #aggiorno funzione obiettivo
@@ -495,7 +498,6 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                         check2 = False
 
                                     ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
-                                print(f'Check 1 {check1}, check2 {check2}')
                                 if check1 and check2 and F < f_macchina: #and check2
                                 #if partenze[veicolo_i]>=s[j-1]['fine_lavorazione'] and check and F<f_macchina: #faccio il check sulle date di partenza dei veicoli
                                     delta=F-f_macchina
@@ -609,7 +611,6 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     check2 = False
 
                                 ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
-                            print(f'Check 1 {check1}, check2 {check2}')
                             if check1 and check2 and F<f_macchina:
                             #if partenze[veicolo_i]>=s[j]['fine_lavorazione'] and partenze[veicolo_j]>=s[i]['fine_lavorazione']: #faccio il check sulle date di partenza dei veicoli
                                 #print(veicolo_i,s[j]['commessa'],' ',veicolo_j,s[i]['commessa'])
