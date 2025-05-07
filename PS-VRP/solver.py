@@ -158,7 +158,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     for i in lista_macchine:
         Macchina.inizializza_lista_commesse(i)  # inizializzo ogni macchina con una commessa dummy
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # è il primo lunedi disponibile che è uguale per tutte le macchine
-    lista_macchine_copy_eur = deepcopy(lista_macchine)
+    lista_macchine2 = []
 
     #Primo ciclo While: si assegnano per prime tutte le commesse tassative - alle macchine e al loro veicolo indicato (id_tassativo)
     while len(lista_commesse_tassative)>0 and len(lista_macchine)>0:
@@ -180,10 +180,17 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
             if schedulazione_eseguita:
                 break
         if not schedulazione_eseguita:
+            lista_macchine2.append(macchina)
             lista_macchine.remove(macchina)
 
     #Si ricostituisce la lista delle macchine    
-    lista_macchine = lista_macchine_copy_eur
+    lista_macchine = lista_macchine2
+    for m in lista_macchine:
+        print(f'MACCHINA {m}')
+        for c in m.lista_commesse_processate:
+            print(c.id_commessa)
+    lista_macchine2 = []
+
 
     #Sorting preliminare dell'input al secondo ciclo While
     commesse_da_schedulare.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente sulla due date
@@ -238,10 +245,13 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                 commesse_da_schedulare.remove(commessa)
                 break
         if not schedulazione_eseguita:
+            lista_macchine2.append(macchina)
             lista_macchine.remove(macchina)
 
     #Si ricostituisce la lista delle macchine    
-    lista_macchine = lista_macchine_copy_eur
+    lista_macchine = lista_macchine2
+    lista_macchine2 = []
+
 
     commesse_da_schedulare = commesse_da_schedulare + commesse_scartate
 
@@ -270,10 +280,11 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                 commesse_da_schedulare.remove(commessa)
                 break
         if not schedulazione_eseguita:
+            lista_macchine2.append(macchina)
             lista_macchine.remove(macchina)
 
     #Si ricostituisce la lista delle macchine per le ricerche locali
-    lista_macchine = lista_macchine_copy_eur
+    lista_macchine = lista_macchine2
 
     return schedulazione, f_obj, causa_fallimento, lista_macchine
 
@@ -318,29 +329,31 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,partenze:dict,con
     for i in range(1, len(schedula1)):
         for j in range(1, len(schedula2)):
             commessa = schedula1[i]
+            commessa2 = schedula2[j]
+            #if commessa.tassativita != "X" and commessa2.tassativita != "X"
             if commessa.compatibilita[macchina2.nome_macchina]==1:
                 posizione = j
                 ultima_lavorazione1=macchina1.ultima_lavorazione
                 ultima_lavorazione2=macchina2.ultima_lavorazione
                 if i+1<len(schedula1) and j+1<len(schedula2):
                     delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])-macchina1.calcolo_tempi_setup(schedula1[i],schedula1[i+1])+\
-                          -macchina2.calcolo_tempi_setup(schedula2[j-1],schedula2[j])+\
-                          +macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i+1])+\
-                          +macchina2.calcolo_tempi_setup(schedula2[j-1],schedula1[i])+macchina2.calcolo_tempi_setup(schedula1[i],schedula2[j])
+                        -macchina2.calcolo_tempi_setup(schedula2[j-1],schedula2[j])+\
+                        +macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i+1])+\
+                        +macchina2.calcolo_tempi_setup(schedula2[j-1],schedula1[i])+macchina2.calcolo_tempi_setup(schedula1[i],schedula2[j])
 
                 if i+1==len(schedula1) and j+1<len(schedula2):
                     delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])+\
-                          -macchina2.calcolo_tempi_setup(schedula2[j-1],schedula2[j])+\
-                          +macchina2.calcolo_tempi_setup(schedula2[j-1],schedula1[i])+macchina2.calcolo_tempi_setup(schedula1[i],schedula2[j])
+                        -macchina2.calcolo_tempi_setup(schedula2[j-1],schedula2[j])+\
+                        +macchina2.calcolo_tempi_setup(schedula2[j-1],schedula1[i])+macchina2.calcolo_tempi_setup(schedula1[i],schedula2[j])
 
                 if i+1==len(schedula1) and j+1==len(schedula2):
                     delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])+ \
-                          +macchina2.calcolo_tempi_setup(schedula2[j],schedula1[i])
+                        +macchina2.calcolo_tempi_setup(schedula2[j],schedula1[i])
 
                 if i+1<len(schedula1) and j+1==len(schedula2):
                     delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])-macchina1.calcolo_tempi_setup(schedula1[i],schedula1[i+1])+\
-                          +macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i+1])+\
-                          +macchina2.calcolo_tempi_setup(schedula2[j],schedula1[i])
+                        +macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i+1])+\
+                        +macchina2.calcolo_tempi_setup(schedula2[j],schedula1[i])
 
                 if delta<-eps:
                     s1=[]
@@ -362,10 +375,10 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,partenze:dict,con
                         return_schedulazione(schedula1[k],macchina1,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione1,inizio_schedulazione,s1)
                         if s1[-1]['fine_lavorazione'] < schedula1[k].release_date:
                             check1=False
-                        if schedula1[k].veicolo not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and s1[-1]['fine_lavorazione'] > partenze[schedula1[k].veicolo]:
-                            check1=False
-                        if schedula1[k].tassativita == "X":
-                            check3 = False
+                        veicolo_id = schedula1[k].veicolo
+                        if veicolo_id not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and veicolo_id in partenze: #i.e. se c'è un veicolo, ed è tra quelli su cui ottimizzare (e non assegnati)
+                            if s1[-1]['fine_lavorazione'] > partenze[veicolo_id]:
+                                check1=False
                         ultima_lavorazione1=ultima_lavorazione1+tempo_setup_commessa+tempo_processamento_commessa
                     check2 = True
                     check3 = True
@@ -375,10 +388,12 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,partenze:dict,con
                         return_schedulazione(schedula2[k], macchina2, tempo_setup_commessa,tempo_processamento_commessa, ultima_lavorazione2, inizio_schedulazione,s2)
                         if s2[-1]['fine_lavorazione'] < schedula2[k].release_date:
                             check2 = False
-                        if schedula2[k].veicolo not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and s2[-1]['fine_lavorazione'] > partenze[schedula2[k].veicolo]:
-                            check2 = False
-                        if schedula2[k].tassativita == "X":
-                            check3 = False
+                        veicolo_id = schedula2[k].veicolo
+                        if veicolo_id not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and veicolo_id in partenze:
+                            if s2[-1]['fine_lavorazione'] > partenze[veicolo_id]:
+                                check2 = False
+                        #if schedula2[k].tassativita == "X":
+                        #    check3 = False
                         ultima_lavorazione2=ultima_lavorazione2+tempo_setup_commessa+tempo_processamento_commessa
                     if check1 and check2 and check3: #faccio il check sulle date di partenza dei veicoli
                         improved=True #miglioramento trovato
