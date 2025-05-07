@@ -11,14 +11,14 @@ from datetime import datetime
 from colorama import Fore, Style, init
 
 ##INPUT
-file_macchine_excel="PS-VRP/Dati_input/Estrazione macchine 3.xlsx" # metto il nome del file all'interno di una variabile
-file_commesse_excel="PS-VRP/Dati_input/Estrazione commesse 3 - prova.xlsx" # metto il nome del file all'interno di una variabile
+file_macchine_excel="PS-VRP/Dati_input/Estrazione macchine 4.xlsx" # metto il nome del file all'interno di una variabile
+file_commesse_excel="PS-VRP/Dati_input/Estrazione commesse 4.xlsx" # metto il nome del file all'interno di una variabile
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) # creo una lista di oggetti macchina
 read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
 inizio_schedulazione=lista_macchine[0].data_inizio_schedulazione
 lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedulazione) # creo una lista di oggetti commessa
 read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse)
-lista_veicoli=read_excel.read_excel_veicoli("PS-VRP/Dati_input/Estrazione veicoli 3.xlsx")
+lista_veicoli=read_excel.read_excel_veicoli("PS-VRP/Dati_input/Estrazione veicoli 4.xlsx")
 lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
 #for commessa in lista_commesse:
 #    print(f'Commessa: {commessa.id_commessa}, Compatibilità: {commessa.compatibilita}')#print(f'Lista macchine {lista_macchine}, Lista veicoli {lista_veicoli}, Lista_commesse {lista_commesse}')

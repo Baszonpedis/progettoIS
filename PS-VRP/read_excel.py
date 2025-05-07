@@ -11,10 +11,10 @@ import warnings
 #CAMPI DI LETTURA DEI FILE DI INPUT
 campi_input_macchine=['Nome macchina','disponibilita','setup','velocità media','tipologia taglio','dt ultima lavorazione','ora ultima lavorazione','tempo setup cambio alberi','tempo setup prima fila coltelli','tempo setup coltelli','tempo carico bobina','tempo avvio taglio','tempo scarico bobina','tempo confezionamento sacchetti']
 campi_attrezzaggio=['numero file ult lavoro','diam tubo ult lavoro']
-campi_input_commesse=['commessa','data fine stampa per schedulatore','stato stampa calc','Commesse::DATA CONSEGNA','Commesse::Priorita cliente','qta da tagliare metri per schedulatore','qta da tagliare per schedulatore','Commesse::CODICE DI ZONA','Anagrafica incarti::tipologia taglio','Commesse::FASCIA','Commesse::FASCIA UTILE','Commesse::Diam int tubo','compatibilità macchine taglio::check dati','Commesse::categoria materiale', 'Commesse::tassativita', 'Commesse::id_tassativo']
+campi_input_commesse=['commessa','data fine stampa per schedulatore','stato stampa calc','Commesse::DATA CONSEGNA','Commesse::Priorita cliente','qta da tagliare metri per schedulatore','qta da tagliare per schedulatore','Commesse::CODICE DI ZONA','Anagrafica incarti::tipologia taglio','Commesse::FASCIA','Commesse::FASCIA UTILE','Commesse::Diam int tubo','compatibilità macchine taglio::check dati','Commesse::categoria materiale', 'flag tassativo taglio per schedulatore', 'id spedizione']
 campi_compatibilita=campi_input_commesse+['compatibilità macchine taglio::compat macc taglio 1','compatibilità macchine taglio::compat macc taglio 2','compatibilità macchine taglio::compat macc taglio 3','compatibilità macchine taglio::compat macc taglio 4','compatibilità macchine taglio::compat macc taglio 5','compatibilità macchine taglio::compat macc taglio 6','compatibilità macchine taglio::compat macc taglio 7','compatibilità macchine taglio::compat macc taglio 8','compatibilità macchine taglio::compat macc taglio 9','compatibilità macchine taglio::compat macc taglio 10','compatibilità macchine taglio::compat macc taglio 11','compatibilità macchine taglio::compat macc taglio 12','compatibilità macchine taglio::compat macc taglio 13','compatibilità macchine taglio::compat macc taglio 14','compatibilità macchine taglio::compat macc taglio 15','compatibilità macchine taglio::compat macc taglio 16','compatibilità macchine taglio::compat macc taglio 17']
 #campi_veicoli=['Nome veicolo','Data e ora disponibilita','Disponibilita','Capacita','Zone coperte']
-campi_veicoli=['id sped', 'dt sped', 'zona spedizione', 'spedizioni condivise::kg_rimanenti']
+campi_veicoli=['id sped', 'dt sped', 'zona spedizione', 'spedizioni condivise::kg_rimanenti per schedulatore']
 
 def read_excel_macchine(nome_file):
     """
@@ -79,12 +79,12 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
     colonne_commesse_foglio=['Commesse::FASCIA','Commesse::Diam int tubo']
     for col in colonne_commesse_foglio:
         df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col] = df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col].fillna(0)
-    output.write_error_output(df,"PS-VRP\Dati_output\error_read_file.xlsx")
+    output.write_error_output(df,"PS-VRP/Dati_output/error_read_file.xlsx")
 
     #Campi riempiti per evitare che vengano rimossi dal .dropna (campi "facoltativi")
     df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].fillna(0)
-    df['Commesse::tassativita'] = df['Commesse::tassativita'].fillna(0)
-    df['Commesse::id_tassativo'] = df['Commesse::id_tassativo'].fillna(0)
+    df['flag tassativo taglio per schedulatore'] = df['flag tassativo taglio per schedulatore'].fillna(0)
+    df['id spedizione'] = df['id spedizione'].fillna(0)
 
     df = df.dropna()
     lista_commesse=[] #lista commesse inizialmente vuota
@@ -100,7 +100,7 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
                         'Commesse::Priorita cliente', 'qta da tagliare metri per schedulatore',
                         'qta da tagliare per schedulatore', 'Commesse::CODICE DI ZONA',
                         'Anagrafica incarti::tipologia taglio','Commesse::FASCIA UTILE','Commesse::FASCIA',
-                        'Commesse::Diam int tubo','data_inizio_schedulazione','Commesse::categoria materiale', 'Commesse::tassativita', 'Commesse::id_tassativo'] #stabilisco il nuovo ordine delle colonne del df
+                        'Commesse::Diam int tubo','data_inizio_schedulazione','Commesse::categoria materiale', 'flag tassativo taglio per schedulatore', 'id spedizione'] #stabilisco il nuovo ordine delle colonne del df
     df=df[ordine_colonne_df] #assegno il nuovo ordine di colonne
     for (_,f) in df.iterrows():  # iterrows() ritorna una pd.Series per ogni riga nel dataframe, "_" prende l'indice (usato quando non mi importa il valore di tale indice) e "f" è la riga/pd.Series
         lista_commesse.append(Commessa(*f))
@@ -119,8 +119,8 @@ def read_compatibilita(nome_file,lista_commesse):
     
     #Campi riempiti per evitare che vengano rimossi dal .dropna (campi "facoltativi")
     df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].fillna(0)
-    df['Commesse::tassativita'] = df['Commesse::tassativita'].fillna(0)
-    df['Commesse::id_tassativo'] = df['Commesse::id_tassativo'].fillna(0)
+    df['flag tassativo taglio per schedulatore'] = df['flag tassativo taglio per schedulatore'].fillna(0)
+    df['id spedizione'] = df['id spedizione'].fillna(0)
 
     df=df.dropna()
     df=df[~df['compatibilità macchine taglio::check dati'].str.startswith('ERR')]

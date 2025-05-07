@@ -148,7 +148,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     causa_fallimento={} #dizionario con formato "commessa_fallita:motivo"
 
     #Commesse tassative (i.e. veicolo predeterminato e obbligato)
-    lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == 1]
+    lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
     #Commesse da schedulare non tassative (i.e. tutte le commesse schedulabili su veicolo / filtrate ma non tassative)
     commesse_da_schedulare = [c for c in commesse_da_schedulare if c not in lista_commesse_tassative]
 
@@ -390,7 +390,7 @@ def move_inter_macchina(macchina1:Macchina,macchina2:Macchina,partenze:dict,cont
                                     check2 = False
 
                                 #Check3:
-                                if schedula2[k].tassativita == 1: #and fine_lavorazione > schedula2[k].due_date
+                                if schedula2[k].tassativita == "X": #and fine_lavorazione > schedula2[k].due_date
                                     check3 = False
 
                                 ultima_lavorazione2 = ultima_lavorazione2 + tempo_setup_commessa + tempo_processamento_commessa
@@ -494,7 +494,7 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     ):
                                         check1 = False
 
-                                    if schedula[k].tassativita == 1:
+                                    if schedula[k].tassativita == "X":
                                         check2 = False
 
                                     ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
@@ -607,7 +607,7 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     check1 = False
 
                                 # Check2: rispetto due_date per zona_cliente == 0
-                                if schedula[k].tassativita == 1:
+                                if schedula[k].tassativita == "X":
                                     check2 = False
 
                                 ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
@@ -710,5 +710,5 @@ def grafico_schedulazione(schedulazione):
     handles.append(mpatches.Patch(color='gray', alpha=0.3, label='Non produzione'))
     plt.legend(handles=handles, title="Legenda", loc='upper left', bbox_to_anchor=(1, 1))
     plt.tight_layout()
-    plt.savefig("PS-VRP\Dati_output\schedulazione.jpg")
+    plt.savefig("PS-VRP/Dati_output/schedulazione.jpg")
     plt.show()
