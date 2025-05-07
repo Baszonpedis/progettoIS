@@ -52,6 +52,9 @@ tot_time_eur = end_time_eur - start_time_eur
 print(f"{Fore.GREEN}COMMESSE LETTE CORRETTAMENTE: {len(lista_commesse)}")
 print(f"{Fore.GREEN}COMMESSE DA SCHEDULARE (FILTRATE): {len(commesse_da_schedulare)}")
 print(f"{Fore.GREEN}COMMESSE SCHEDULATE: {len(schedulazione3)}\n")
+ 
+for macchina in lista_macchine:
+    print(f'La macchina {macchina.nome_macchina} ha {len(macchina.lista_commesse_processate)-1} commesse processate')
 
 solver.grafico_schedulazione(schedulazione3)
 
