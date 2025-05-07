@@ -357,7 +357,7 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,partenze:dict,con
                         return_schedulazione(schedula1[k],macchina1,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione1,inizio_schedulazione,s1)
                         if s1[-1]['fine_lavorazione'] < schedula1[k].release_date:
                             check1=False
-                        if schedula1[k].veicolo is not None and not isinstance(schedula1[k].veicolo, str) and s1[-1]['fine_lavorazione'] > partenze[schedula1[k].veicolo]:
+                        if schedula1[k].veicolo not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and s1[-1]['fine_lavorazione'] > partenze[schedula1[k].veicolo]:
                             check1=False
                         if schedula1[k].tassativita == "X":
                             check3 = False
@@ -370,7 +370,7 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,partenze:dict,con
                         return_schedulazione(schedula2[k], macchina2, tempo_setup_commessa,tempo_processamento_commessa, ultima_lavorazione2, inizio_schedulazione,s2)
                         if s2[-1]['fine_lavorazione'] < schedula2[k].release_date:
                             check2 = False
-                        if schedula2[k].veicolo is not None and not isinstance(schedula2[k].veicolo, str) and s2[-1]['fine_lavorazione'] > partenze[schedula2[k].veicolo]:
+                        if schedula2[k].veicolo not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and s2[-1]['fine_lavorazione'] > partenze[schedula2[k].veicolo]:
                             check2 = False
                         if schedula2[k].tassativita == "X":
                             check3 = False
@@ -500,6 +500,11 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
         else:
             soluzione_move.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
     #print('Mosse eseguite =',contatore)
+        all_output_ids = {s['commessa'] for machine_sched in soluzione_move for s in machine_sched}
+    all_input_ids = {s['commessa'] for s in schedulazione}
+    missing = all_input_ids - all_output_ids
+    print(f"Missing commesse: {missing}")
+    print(f"Missing commesse len {len(missing)}")
     return soluzione_move,f_best,contatoreLS2
 
 ##SWAP INTRA-MACCHINA (Ricerca locale 3)
@@ -581,7 +586,7 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                 # Check1: rispetto release_date e partenze veicoli
                                 if fine_lavorazione < schedula[k].release_date:
                                     check1 = False
-                                if schedula[k].veicolo is not None and schedula[k].veicolo is not "NESSUN VEICOLO (interno)" and schedula[k].veicolo is not "NESSUN VEICOLO (esterno)" and fine_lavorazione > partenze[schedula[k].veicolo]:
+                                if schedula[k].veicolo is not None and schedula[k].veicolo != "NESSUN VEICOLO (interno)" and schedula[k].veicolo != "NESSUN VEICOLO (esterno)" and fine_lavorazione > partenze[schedula[k].veicolo]:
                                     check1 = False
 
                                 # Check2: rispetto alla tassativita
@@ -617,6 +622,7 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
     all_input_ids = {s['commessa'] for s in schedulazione}
     missing = all_input_ids - all_output_ids
     print(f"Missing commesse: {missing}")
+    print(f"Missing commesse len {len(missing)}")
     return soluzione_swap,f_best, contatoreLS3
 
 #GRAFICAZIONE
