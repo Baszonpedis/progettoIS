@@ -47,7 +47,7 @@ def aggiungi_minuti(minuti,data):
 #             #veicolo.set_data_partenza(lista_filtrata[0].due_date) #la data di partenza del veicolo diventa la due date delle commessa più ravvicinata della zona
 #             veicolo.set_data_partenza(data_partenza) #la data di partenza del veicolo diventa la due date delle commessa più ravvicinata della zona
 
-def aggiorna_schedulazione1(commessa: Commessa ,macchina: Macchina, tempo_setup, tempo_processamento, inizio_schedulazione, schedulazione: dict, minuti_inizio_lavorazione):
+def aggiorna_schedulazione1(commessa: Commessa ,macchina: Macchina, tempo_setup, tempo_processamento, inizio_schedulazione, schedulazione: list, minuti_inizio_lavorazione):
     schedulazione.append({"commessa": commessa.id_commessa,
                           "macchina": macchina.nome_macchina,
                           "minuti setup": tempo_setup,
@@ -301,6 +301,11 @@ def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj, schedulazio
                 tempo_processamento_commessa=m.lista_commesse_processate[pos].metri_da_tagliare/m.velocita_taglio_media
                 return_schedulazione(m.lista_commesse_processate[pos],m, tempo_setup_commessa, tempo_processamento_commessa,ultima_lavorazione,inizio_schedulazione,soluzione_move)
                 ultima_lavorazione = ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa
+    all_output_ids = { entry['commessa'] for entry in soluzione_move }
+    all_input_ids  = { entry['commessa'] for entry in schedulazione }
+    missing = all_input_ids - all_output_ids
+    print(f"Missing commesse: {missing}")
+    print(f"Missing commesse len {len(missing)}")
     return soluzione_move,f_best,contatoreLS1
 
 #Usato da move_2_macchine (Ricerca locale 1)
@@ -500,7 +505,7 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
         else:
             soluzione_move.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
     #print('Mosse eseguite =',contatore)
-        all_output_ids = {s['commessa'] for machine_sched in soluzione_move for s in machine_sched}
+    all_output_ids = {s['commessa'] for machine_sched in soluzione_move for s in machine_sched}
     all_input_ids = {s['commessa'] for s in schedulazione}
     missing = all_input_ids - all_output_ids
     print(f"Missing commesse: {missing}")
@@ -641,7 +646,20 @@ def grafico_schedulazione(schedulazione):
 
     veicoli = list(set(schedula["veicolo"] for schedula in schedulazione))
     colori = list(mcolors.TABLEAU_COLORS.values())
-    colori_veicoli = {veicolo: colori[i % len(colori)] for i, veicolo in enumerate(veicoli)}
+
+    green_shades = [
+            '#006400', '#228B22', '#2E8B57', '#3CB371', '#66CDAA', '#8FBC8F', '#98FB98', '#90EE90'
+        ]
+    colori_veicoli = {}
+    green_index = 0
+    for veicolo in veicoli:
+        if veicolo == "NESSUN VEICOLO (esterno)":
+            colori_veicoli[veicolo] = '#d9b904'
+        elif veicolo == "NESSUN VEICOLO (interno)":
+            colori_veicoli[veicolo] = 'orange'
+        else:
+            colori_veicoli[veicolo] = green_shades[green_index % len(green_shades)]
+            green_index += 1
 
     for schedula in schedulazione:
         asse_x_setup.append((schedula["inizio_setup"], schedula["fine_setup"]))
