@@ -53,7 +53,6 @@ print(f"{Fore.GREEN}COMMESSE LETTE CORRETTAMENTE: {len(lista_commesse)}")
 print(f"{Fore.GREEN}COMMESSE DA SCHEDULARE (FILTRATE): {len(commesse_da_schedulare)}")
 print(f"{Fore.GREEN}COMMESSE SCHEDULATE: {len(schedulazione3)}\n")
 
-
 solver.grafico_schedulazione(schedulazione3)
 
 
