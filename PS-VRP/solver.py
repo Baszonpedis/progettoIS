@@ -184,7 +184,8 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
             lista_macchine.remove(macchina)
 
     #Si ricostituisce la lista delle macchine    
-    lista_macchine = lista_macchine2
+    lista_macchine = set(lista_macchine2+lista_macchine)
+    list(lista_macchine)
     for m in lista_macchine:
         print(f'MACCHINA {m}')
         for c in m.lista_commesse_processate:
@@ -249,7 +250,8 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
             lista_macchine.remove(macchina)
 
     #Si ricostituisce la lista delle macchine    
-    lista_macchine = lista_macchine2
+    lista_macchine = set(lista_macchine2+lista_macchine)
+    list(lista_macchine)
     lista_macchine2 = []
 
 
@@ -284,7 +286,8 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
             lista_macchine.remove(macchina)
 
     #Si ricostituisce la lista delle macchine per le ricerche locali
-    lista_macchine = lista_macchine2
+    lista_macchine = set(lista_macchine2+lista_macchine)
+    lista_macchine = list(lista_macchine)
     for m in lista_macchine:
         print (m.nome_macchina)
 
