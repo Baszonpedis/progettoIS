@@ -735,7 +735,7 @@ def grafico_schedulazione(schedulazione):
         current_time += timedelta(days=1)
 
     # Creazione della legenda
-    handles = [mpatches.Patch(color=colore, label=f't taglio commessa associata al veicolo {veicolo}')
+    handles = [mpatches.Patch(color=colore, label=f'commessa associata al veicolo {veicolo}')
                for veicolo, colore in colori_veicoli.items()]
     handles.append(mpatches.Patch(color='red', label='t setup'))
     handles.append(mpatches.Patch(color='gray', alpha=0.3, label='Non produzione'))
