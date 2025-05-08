@@ -85,6 +85,7 @@ print(f"{Fore.YELLOW}Funzione obiettivo LS1: {f1} minuti di setup")
 print(f"Mosse LS1: {contatoreLS1}")
 output.write_output_soluzione_euristica(soluzione1, "PS-VRP/OUTPUT_TEST/insert_inter.xlsx")
 tot1 = time.time() - start1
+solver.grafico_schedulazione(soluzione1)  # TEMP
 
 # M
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -97,6 +98,8 @@ print(f"{Fore.YELLOW}Funzione obiettivo LS2: {f2} minuti di setup")
 print(f"Mosse LS2: {contatoreLS2}")
 output.write_output_soluzione_euristica(soluzione_move, "PS-VRP/OUTPUT_TEST/insert_intra.xlsx")
 tot2 = time.time() - start_time_move
+solver.grafico_schedulazione(soluzione_move)  # TEMP
+
 
 # S
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -109,6 +112,8 @@ print(f"{Fore.YELLOW}Funzione obiettivo LS3: {f3} minuti di setup")
 print(f"Mosse LS3: {contatoreLS3}")
 output.write_output_soluzione_euristica(soluzione_swap, "PS-VRP/OUTPUT_TEST/swap_intra.xlsx")
 tot3 = time.time() - start_time_swap
+solver.grafico_schedulazione(soluzione_swap)  # TEMP
+
 
 # SEQUENZA PARZIALE
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")

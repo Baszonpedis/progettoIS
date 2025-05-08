@@ -375,9 +375,9 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,partenze:dict,con
                         return_schedulazione(schedula1[k],macchina1,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione1,inizio_schedulazione,s1)
                         if s1[-1]['fine_lavorazione'] < schedula1[k].release_date:
                             check1=False
-                        veicolo_id = schedula1[k].veicolo
-                        if veicolo_id not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and veicolo_id in partenze: #i.e. se c'è un veicolo, ed è tra quelli su cui ottimizzare (e non assegnati)
-                            if s1[-1]['fine_lavorazione'] > partenze[veicolo_id]:
+                        veicolo = schedula1[k].veicolo
+                        if veicolo not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and veicolo in partenze: #i.e. se c'è un veicolo, ed è tra quelli su cui ottimizzare (e non assegnati)
+                            if s1[-1]['fine_lavorazione'] > partenze[veicolo]:
                                 check1=False
                         ultima_lavorazione1=ultima_lavorazione1+tempo_setup_commessa+tempo_processamento_commessa
                     check2 = True
@@ -388,9 +388,9 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,partenze:dict,con
                         return_schedulazione(schedula2[k], macchina2, tempo_setup_commessa,tempo_processamento_commessa, ultima_lavorazione2, inizio_schedulazione,s2)
                         if s2[-1]['fine_lavorazione'] < schedula2[k].release_date:
                             check2 = False
-                        veicolo_id = schedula2[k].veicolo
-                        if veicolo_id not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and veicolo_id in partenze:
-                            if s2[-1]['fine_lavorazione'] > partenze[veicolo_id]:
+                        veicolo = schedula2[k].veicolo
+                        if veicolo not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and veicolo in partenze:
+                            if s2[-1]['fine_lavorazione'] > partenze[veicolo]:
                                 check2 = False
                         #if schedula2[k].tassativita == "X":
                         #    check3 = False
@@ -486,15 +486,16 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     return_schedulazione(schedula[k], macchina, tempo_setup_commessa, tempo_processamento_commessa, ultima_lavorazione, inizio_schedulazione, s)
 
                                     fine_lavorazione = s[-1]['fine_lavorazione']
-
-                                    if (
-                                        fine_lavorazione < schedula[k].release_date or
-                                        (schedula[k].veicolo not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and fine_lavorazione > partenze[schedula[k].veicolo])
-                                    ):
+                                    if fine_lavorazione < schedula[k].release_date:
                                         check1 = False
+                                    
+                                    veicolo = schedula[k].veicolo
+                                    if veicolo not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and veicolo in partenze:
+                                        if s[-1]['fine_lavorazione'] > partenze[veicolo]:
+                                            check2 = False
 
-                                    if schedula[k].tassativita == "X":
-                                        check2 = False
+                                    #if schedula[k].tassativita == "X":
+                                    #    check3 = False
 
                                     ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
                                 if check1 and check2 and F < f_macchina: #and check2
@@ -606,12 +607,16 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                 # Check1: rispetto release_date e partenze veicoli
                                 if fine_lavorazione < schedula[k].release_date:
                                     check1 = False
-                                if schedula[k].veicolo is not None and schedula[k].veicolo != "NESSUN VEICOLO (interno)" and schedula[k].veicolo != "NESSUN VEICOLO (esterno)" and fine_lavorazione > partenze[schedula[k].veicolo]:
-                                    check1 = False
+                                
+                                # Check2: rispetto partenza (se il veicolo ne ha una)
+                                veicolo = schedula[k].veicolo
+                                if veicolo not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)") and veicolo in partenze:
+                                    if s[-1]['fine_lavorazione'] > partenze[veicolo]:
+                                        check2 = False
 
-                                # Check2: rispetto alla tassativita
-                                if schedula[k].tassativita == "X":
-                                    check2 = False
+                                # Check3: rispetto alla tassativita
+                                #if schedula[k].tassativita == "X":
+                                #    check2 = False
 
                                 ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
                             if check1 and check2 and F<f_macchina:
