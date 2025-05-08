@@ -14,6 +14,8 @@ from colorama import Fore, Style, init
 file_macchine_excel="PS-VRP/Dati_input/Estrazione macchine 4.xlsx"
 file_commesse_excel="PS-VRP/Dati_input/Estrazione commesse 4.xlsx"
 file_veicoli_excel="PS-VRP/Dati_input/Estrazione veicoli 4.xlsx"
+
+##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
 read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
 inizio_schedulazione=lista_macchine[0].data_inizio_schedulazione
