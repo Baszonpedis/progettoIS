@@ -72,12 +72,15 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
     zone_aperte = set([veicolo.zone_coperte for veicolo in lista_veicoli])  # set contenente tutte le zone aperte (una lista può contenere duplicati, mentre un set ha elementi unici)
     commesse_da_tagliare = [] #commesse assegnabili in base alle zone
     commesse_da_schedulare = [] #commesse assegnabili in base ai veicoli
+    commesse_esterne_non_tassative = [] 
     #commesse_oltre_data = {} #commesse da tagliare non schedulate perché oltre data partenza massima veicolo; formato dizionario per unirlo al resto
     
     for commessa in lista_commesse:
         intersezione = set(commessa.zona_cliente).intersection(zone_aperte)  # calcolo l'intersezione tra l'insieme delle zone della commessa e le zone aperte
-        if commessa.tassativita == "X" or 0 in commessa.zona_cliente: #anzitutto si verifica non si tratti di un caso "speciale" (i.e. da non ottimizzare lato veicoli)
+        if commessa.tassativita == "X": #or 0 in commessa.zona_cliente: #anzitutto si verifica non si tratti di un caso "speciale"
             commesse_da_schedulare.append(commessa)
+        elif 0 in commessa.zona_cliente:
+            commesse_esterne_non_tassative.append(commessa)
         elif intersezione:  # se l'intersezione contiene elementi (è diversa dall'insieme vuoto)
             commesse_da_tagliare.append(commessa)  # aggiungo alla lista la commessa
     for commessa in commesse_da_tagliare:
@@ -102,7 +105,7 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
         #liste per tenere traccia delle commesse scartate da reinserire solo sulle macchine (anche se non schedulabili sui veicoli)
         commesse_zona_chiusa = [c for c in lista_commesse if c not in commesse_da_tagliare and 0 not in c.zona_cliente and c.tassativita != "X"]
         commesse_veicolo_incompatibile = [c for c in commesse_da_tagliare if c not in commesse_da_schedulare]
-        commesse_scartate = commesse_zona_chiusa + commesse_veicolo_incompatibile
+        commesse_scartate = commesse_zona_chiusa + commesse_veicolo_incompatibile + commesse_esterne_non_tassative
     
     return commesse_da_schedulare, commesse_filtro_zone, commesse_filtro_veicoli, commesse_scartate
 
@@ -143,24 +146,21 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
 ##EURISTICO COSTRUTTIVO (Greedy)
 def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, lista_veicoli:list, commesse_scartate: list):
 
-    causa_fallimento={} #dizionario con formato "commessa_fallita:motivo"
+    #INIZIALIZZAZIONI
+    causa_fallimento={} #Dizionario con formato "commessa_fallita:motivo"
+    lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"] #Commesse tassative interne ed esterne (i.e. veicolo predeterminato e obbligato)
+    commesse_da_schedulare = [c for c in commesse_da_schedulare if c not in lista_commesse_tassative]  #Commesse da schedulare non tassative (i.e.commesse schedulabili su veicolo, ergo filtrate, ma non tassative)
+    f_obj = 0  #Funzione obiettivo (somma pesata dei tempi di setup)
+    schedulazione = []  #Lista di dizionari (le singole schedulazioni)
 
-    #Commesse tassative (i.e. veicolo predeterminato e obbligato)
-    lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
-    print(len(lista_commesse_tassative))
-    #Commesse da schedulare non tassative (i.e. tutte le commesse schedulabili su veicolo / filtrate ma non tassative)
-    commesse_da_schedulare = [c for c in commesse_da_schedulare if c not in lista_commesse_tassative]
-
-    f_obj = 0  # funzione obiettivo (somma pesata dei tempi di setup)
-    schedulazione = []  # è una lista che conterrà tutte le schedulazioni
-
-    #Inizializzazioni schedulazione
+    #Inizializzazione macchine
     for i in lista_macchine:
         Macchina.inizializza_lista_commesse(i)  # inizializzo ogni macchina con una commessa dummy
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # è il primo lunedi disponibile che è uguale per tutte le macchine
     lista_macchine2 = []
 
-    #Primo ciclo While: si assegnano per prime tutte le commesse tassative - alle macchine e al loro veicolo indicato (id_tassativo)
+    #PRIMO CICLO WHILE
+    #Si assegnano per prime tutte le commesse tassative - alle macchine e al loro veicolo indicato (id_tassativo)
     while len(lista_commesse_tassative)>0 and len(lista_macchine)>0:
         schedulazione_eseguita=False
         lista_macchine=sorted(lista_macchine,key=lambda macchina: macchina._minuti_fine_ultima_lavorazione)
@@ -183,7 +183,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
             lista_macchine2.append(macchina)
             lista_macchine.remove(macchina)
 
-    #Si ricostituisce la lista delle macchine    
+    #Si ricostituisce la lista delle macchine per il prossimo ciclo  
     lista_macchine = set(lista_macchine2+lista_macchine)
     list(lista_macchine)
     for m in lista_macchine:
@@ -192,28 +192,28 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
             print(c.id_commessa)
     lista_macchine2 = []
 
-
     #Sorting preliminare dell'input al secondo ciclo While
     commesse_da_schedulare.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente sulla due date
 
-    #Secondo ciclo While: provo a inserire tutte le commesse interne (su macchine e veicoli)
+    #SECONDO CICLO WHILE
+    #Provo a inserire tutte le commesse interne a zona aperta (su macchine e veicoli)
     while len(commesse_da_schedulare)>0 and len(lista_macchine)>0:
         schedulazione_eseguita=False
         lista_macchine=sorted(lista_macchine,key=lambda macchina: macchina._minuti_fine_ultima_lavorazione)
         macchina=lista_macchine[0]
         for commessa in commesse_da_schedulare:
-            if 0 in commessa.zona_cliente:
-                if macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1 and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
-                    tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
-                    tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
-                    tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
-                    tempo_fine_lavorazione = tempo_inizio_taglio + tempo_processamento + tempo_setup
-                    data_fine_lavorazione = aggiungi_minuti(tempo_fine_lavorazione, inizio_schedulazione)
-                    schedulazione_eseguita=True
-                    f_obj+=tempo_setup
-                    commessa.veicolo = "NESSUN VEICOLO (esterno)"
-                    aggiorna_schedulazione1(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione)
-            elif macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1 and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
+            #if 0 in commessa.zona_cliente:
+            #    if macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1 and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
+            #        tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
+            #        tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
+            #        tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
+            #        tempo_fine_lavorazione = tempo_inizio_taglio + tempo_processamento + tempo_setup
+            #        data_fine_lavorazione = aggiungi_minuti(tempo_fine_lavorazione, inizio_schedulazione)
+            #        schedulazione_eseguita=True
+            #        f_obj+=tempo_setup
+            #        commessa.veicolo = "NESSUN VEICOLO (esterno)" 
+            #        aggiorna_schedulazione1(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione)
+            if macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1 and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
                 #tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
                 #tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
                 #tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
@@ -249,25 +249,25 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
             lista_macchine2.append(macchina)
             lista_macchine.remove(macchina)
 
-    #Si ricostituisce la lista delle macchine    
+    #Si ricostituisce la lista delle macchine per il prossimo ciclo
     lista_macchine = set(lista_macchine2+lista_macchine)
     list(lista_macchine)
     lista_macchine2 = []
 
-
-    commesse_da_schedulare = commesse_da_schedulare + commesse_scartate
+    commesse_da_schedulare = commesse_da_schedulare + commesse_scartate #Tutte quelle non schedulate per vari motivi nel secondo ciclo + le scartate dal filtro
 
     #Sorting preliminare dell'input al terzo ciclo While
     commesse_da_schedulare.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente sulla due date
 
-    #Terzo ciclo While: inserisco solo sulle macchine tutte le commesse mancanti 
+    #TERZO CICLO WHILE
+    #Inserisco solo sulle macchine tutte le commesse mancanti (Interne zona chiusa, Esterne non tassative)
     while len(commesse_da_schedulare)>0 and len(lista_macchine)>0:
         schedulazione_eseguita=False
         lista_macchine=sorted(lista_macchine,key=lambda macchina: macchina._minuti_fine_ultima_lavorazione)
         macchina=lista_macchine[0]
         for commessa in commesse_da_schedulare:
-            if commessa.id_commessa == 251456:
-                print(f'La commessa è qui presente in virtù del fatto che il suo veicolo assegnato è {commessa.veicolo}')
+            #if commessa.id_commessa == 251456:
+            #    print(f'La commessa è qui presente in virtù del fatto che il suo veicolo assegnato è {commessa.veicolo}')
             if macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1 and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
                 tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
                 tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
@@ -276,7 +276,10 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                 data_fine_lavorazione = aggiungi_minuti(tempo_fine_lavorazione, inizio_schedulazione)
                 schedulazione_eseguita=True
                 f_obj+=tempo_setup
-                commessa.veicolo = "NESSUN VEICOLO (interno)"
+                if 0 in commessa.zona_cliente:
+                    commessa.veicolo = "NESSUN VEICOLO (interno)"
+                else:
+                    commessa.veicolo = "NESSUN VEICOLO (esterno)"
                 aggiorna_schedulazione1(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione)
             if schedulazione_eseguita:
                 commesse_da_schedulare.remove(commessa)
@@ -288,8 +291,6 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     #Si ricostituisce la lista delle macchine per le ricerche locali
     lista_macchine = set(lista_macchine2+lista_macchine)
     lista_macchine = list(lista_macchine)
-    #for m in lista_macchine:
-    #    print (m.nome_macchina)
 
     return schedulazione, f_obj, causa_fallimento, lista_macchine
 
