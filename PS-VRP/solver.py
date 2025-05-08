@@ -288,8 +288,8 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     #Si ricostituisce la lista delle macchine per le ricerche locali
     lista_macchine = set(lista_macchine2+lista_macchine)
     lista_macchine = list(lista_macchine)
-    for m in lista_macchine:
-        print (m.nome_macchina)
+    #for m in lista_macchine:
+    #    print (m.nome_macchina)
 
     return schedulazione, f_obj, causa_fallimento, lista_macchine
 
@@ -330,7 +330,7 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,partenze:dict,con
     schedula2=macchina2.lista_commesse_processate #copia profonda della lista di commesse schedulate
     eps = 0.00001  # parametro per stabilire se il delta è conveniente
     improved=False
-    print(macchina1.nome_macchina,macchina2.nome_macchina)
+    #print(macchina1.nome_macchina,macchina2.nome_macchina)
     for i in range(1, len(schedula1)):
         for j in range(1, len(schedula2)):
             commessa = schedula1[i]
@@ -403,10 +403,10 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,partenze:dict,con
                     if check1 and check2 and check3: #faccio il check sulle date di partenza dei veicoli
                         improved=True #miglioramento trovato
                         f_best+=delta #aggiorno funzione obiettivo
-                        print(f'metto {commessa.id_commessa} da macchina {macchina1.nome_macchina} in posizione {posizione} su macchina {macchina2.nome_macchina} con delta={delta}')
+                        #print(f'metto {commessa.id_commessa} da macchina {macchina1.nome_macchina} in posizione {posizione} su macchina {macchina2.nome_macchina} con delta={delta}')
                         contatore+=1
                     else:
-                        print('not')
+                        #print('not')
                         schedula1=copia1
                         schedula2=copia2
             if improved:
