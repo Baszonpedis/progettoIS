@@ -285,6 +285,8 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
 
     #Si ricostituisce la lista delle macchine per le ricerche locali
     lista_macchine = lista_macchine2
+    for m in lista_macchine:
+        print (m.nome_macchina)
 
     return schedulazione, f_obj, causa_fallimento, lista_macchine
 
