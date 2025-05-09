@@ -1,13 +1,8 @@
-#from commessa import Commessa
-#from macchina import Macchina
-#from veicolo import Veicolo
 import read_excel
 import solver
 import output
 from copy import deepcopy
 import time
-#from datetime import timedelta
-#from datetime import datetime
 from colorama import Fore, Style, init
 
 ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
@@ -23,8 +18,6 @@ lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedul
 read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse)
 lista_veicoli=read_excel.read_excel_veicoli(file_veicoli_excel) #Lista base oggetti veicolo
 lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
-#for commessa in lista_commesse:
-#    print(f'Commessa: {commessa.id_commessa}, Compatibilità: {commessa.compatibilita}')#print(f'Lista macchine {lista_macchine}, Lista veicoli {lista_veicoli}, Lista_commesse {lista_commesse}')
 
 init(autoreset=True)  # Ripristina i colori dopo ogni print
 
@@ -59,8 +52,6 @@ lista_veicoli_copy1 = deepcopy(lista_veicoli)
 lista_macchine_copy1 = deepcopy(lista_macchine)
 lista_commesse_copy1 = deepcopy(lista_commesse)
 lista_veicoli_copy2 = deepcopy(lista_veicoli)
-#for macchina in lista_macchine:
-#    print(f'La macchina {macchina.nome_macchina} ha {len(macchina.lista_commesse_processate)} commesse processate')
 lista_macchine_copy2 = deepcopy(lista_macchine)
 lista_commesse_copy2 = deepcopy(lista_commesse)
 
@@ -73,18 +64,19 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS1 (Insert inter-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+
 start1 = time.time()
 soluzione1, f1, contatoreLS1 = solver.move_2_macchine(lista_macchine_copy2, lista_veicoli_copy2, f_obj3, schedulazione3)
 print(f"{Fore.YELLOW}Funzione obiettivo LS1: {f1} minuti di setup")
 print(f"Mosse LS1: {contatoreLS1}")
 output.write_output_soluzione_euristica(soluzione1, "PS-VRP/OUTPUT_TEST/insert_inter.xlsx")
 tot1 = time.time() - start1
-solver.grafico_schedulazione(soluzione1)  # TEMP
 
 # M
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS2 (Insert intra-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+
 start_time_move = time.time()
 soluzione2, f2, contatoreLS2 = solver.move_no_delta(lista_macchine_copy1, lista_veicoli_copy1, f_obj3, schedulazione3)
 soluzione_move = [b for a in soluzione2 for b in a]
@@ -92,12 +84,12 @@ print(f"{Fore.YELLOW}Funzione obiettivo LS2: {f2} minuti di setup")
 print(f"Mosse LS2: {contatoreLS2}")
 output.write_output_soluzione_euristica(soluzione_move, "PS-VRP/OUTPUT_TEST/insert_intra.xlsx")
 tot2 = time.time() - start_time_move
-solver.grafico_schedulazione(soluzione_move)  # TEMP
 
 # S
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS3 (Swap intra-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+
 start_time_swap = time.time()
 soluzione3, f3, contatoreLS3 = solver.swap_no_delta(lista_macchine_copy, lista_veicoli_copy, f_obj3, schedulazione3)
 soluzione_swap = [b for a in soluzione3 for b in a]
@@ -105,7 +97,6 @@ print(f"{Fore.YELLOW}Funzione obiettivo LS3: {f3} minuti di setup")
 print(f"Mosse LS3: {contatoreLS3}")
 output.write_output_soluzione_euristica(soluzione_swap, "PS-VRP/OUTPUT_TEST/swap_intra.xlsx")
 tot3 = time.time() - start_time_swap
-solver.grafico_schedulazione(soluzione_swap)  # TEMP
 
 # SEQUENZA PARZIALE
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")

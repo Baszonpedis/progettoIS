@@ -43,7 +43,6 @@ class Macchina():
         if str(self.bobina_foglio).lower()=='bobina':
             commessa_dummy=Commessa(-1,pd.to_datetime('03/07/2024'),pd.to_datetime('03/07/2024'),1,0,0,-1,None,1,1,self.attrezzaggio['diametro_tubo'],self.data_inizio_schedulazione,'', 0, 0) #commessa fittizia che viene inserita su ogni macchina
             commessa_dummy.numero_coltelli=self.attrezzaggio['numero_coltelli']
-            #print(self.nome_macchina,' ',self.attrezzaggio['numero_coltelli'],' ',self.attrezzaggio['diametro_tubo'])
             self.lista_commesse_processate.append(commessa_dummy) #si aggiunge la commessa alla lista delle commesse processate dalla macchina
         else:
             commessa_dummy = Commessa(-1, pd.to_datetime('03/07/2024'), pd.to_datetime('03/07/2024'), 1, 0, 0, -1,None, 1, 0, 0, self.data_inizio_schedulazione,'', 0, 0)
