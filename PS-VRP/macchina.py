@@ -1,6 +1,4 @@
 from commessa import Commessa
-from datetime import datetime
-from datetime import timedelta
 import pandas as pd
 
 class Macchina():

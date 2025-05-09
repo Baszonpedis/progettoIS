@@ -1,4 +1,3 @@
-
 class Veicolo():
     def __init__(self,nome,data_partenza,zone_coperte,capacita):
         self.nome=nome

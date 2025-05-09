@@ -188,10 +188,10 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     #Si ricostituisce la lista delle macchine per il prossimo ciclo  
     lista_macchine = set(lista_macchine2+lista_macchine)
     list(lista_macchine)
-    for m in lista_macchine:
-        print(f'MACCHINA {m}')
-        for c in m.lista_commesse_processate:
-            print(c.id_commessa)
+    #for m in lista_macchine:
+    #    print(f'MACCHINA {m}')
+    #    for c in m.lista_commesse_processate:
+    #        print(c.id_commessa)
     lista_macchine2 = []
 
     #Sorting preliminare dell'input al secondo ciclo While
@@ -318,11 +318,11 @@ def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj, schedulazio
                 tempo_processamento_commessa=m.lista_commesse_processate[pos].metri_da_tagliare/m.velocita_taglio_media
                 return_schedulazione(m.lista_commesse_processate[pos],m, tempo_setup_commessa, tempo_processamento_commessa,ultima_lavorazione,inizio_schedulazione,soluzione_move)
                 ultima_lavorazione = ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa
-    all_output_ids = { entry['commessa'] for entry in soluzione_move }
-    all_input_ids  = { entry['commessa'] for entry in schedulazione }
-    missing = all_input_ids - all_output_ids
-    print(f"Missing commesse: {missing}")
-    print(f"Missing commesse len {len(missing)}")
+    #all_output_ids = { entry['commessa'] for entry in soluzione_move }
+    #all_input_ids  = { entry['commessa'] for entry in schedulazione }
+    #missing = all_input_ids - all_output_ids
+    #print(f"Missing commesse: {missing}")
+    #print(f"Missing commesse len {len(missing)}")
     return soluzione_move,f_best,contatoreLS1
 
 #Usato da move_2_macchine (Ricerca locale 1)
@@ -528,11 +528,11 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
         else:
             soluzione_move.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
     #print('Mosse eseguite =',contatore)
-    all_output_ids = {s['commessa'] for machine_sched in soluzione_move for s in machine_sched}
-    all_input_ids = {s['commessa'] for s in schedulazione}
-    missing = all_input_ids - all_output_ids
-    print(f"Missing commesse: {missing}")
-    print(f"Missing commesse len {len(missing)}")
+    #all_output_ids = {s['commessa'] for machine_sched in soluzione_move for s in machine_sched}
+    #all_input_ids = {s['commessa'] for s in schedulazione}
+    #missing = all_input_ids - all_output_ids
+    #print(f"Missing commesse: {missing}")
+    #print(f"Missing commesse len {len(missing)}")
     return soluzione_move,f_best,contatoreLS2
 
 ##SWAP INTRA-MACCHINA (Ricerca locale 3)
@@ -650,11 +650,11 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
         else:
             soluzione_swap.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
     #print('Swap eseguiti =',contatore)
-    all_output_ids = {s['commessa'] for machine_sched in soluzione_swap for s in machine_sched}
-    all_input_ids = {s['commessa'] for s in schedulazione}
-    missing = all_input_ids - all_output_ids
-    print(f"Missing commesse: {missing}")
-    print(f"Missing commesse len {len(missing)}")
+    #all_output_ids = {s['commessa'] for machine_sched in soluzione_swap for s in machine_sched}
+    #all_input_ids = {s['commessa'] for s in schedulazione}
+    #missing = all_input_ids - all_output_ids
+    #print(f"Missing commesse: {missing}")
+    #print(f"Missing commesse len {len(missing)}")
     return soluzione_swap,f_best, contatoreLS3
 
 #GRAFICAZIONE
