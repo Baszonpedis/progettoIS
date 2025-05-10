@@ -399,12 +399,13 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,partenze:dict,con
                         tempo_processamento_commessa = schedula2[k].metri_da_tagliare / macchina2.velocita_taglio_media
                         return_schedulazione(schedula2[k], macchina2, tempo_setup_commessa,tempo_processamento_commessa, ultima_lavorazione2, inizio_schedulazione,s2)
 
+                        veicolo = schedula2[k].veicolo
+
                         if s2[-1]['fine_lavorazione'] < schedula2[k].release_date:
                             check2 = False
-                        veicolo = schedula2[k].veicolo
-                        if veicolo in partenze:
-                            if s2[-1]['fine_lavorazione'] > partenze[veicolo]:
-                                check2 = False
+                        if veicolo in partenze and s2[-1]['fine_lavorazione'] > partenze[veicolo]:
+                            #print(f'Il veicolo {veicolo} parte prima (i.e. {partenze[veicolo]}) della commessa {s2[-1]}')
+                            check2 = False
                         elif veicolo not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)"):
                             if s2[-1]['fine_lavorazione'] > s2[-1]['due date']:
                                 check2 = False
@@ -499,12 +500,12 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                     F += tempo_setup_commessa
                                     tempo_processamento_commessa = schedula[k].metri_da_tagliare / macchina.velocita_taglio_media
                                     return_schedulazione(schedula[k], macchina, tempo_setup_commessa, tempo_processamento_commessa, ultima_lavorazione, inizio_schedulazione, s)
-
+                                    
                                     fine_lavorazione = s[-1]['fine_lavorazione']
+                                    veicolo = schedula[k].veicolo
+
                                     if fine_lavorazione < schedula[k].release_date:
                                         check1 = False
-                                    
-                                    veicolo = schedula[k].veicolo
                                     if veicolo in partenze:
                                         if s[-1]['fine_lavorazione'] > partenze[veicolo]:
                                             check2 = False
@@ -628,8 +629,7 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
                                 
                                 # Check2: rispetto partenza (se il veicolo ne ha una)
                                 veicolo = schedula[k].veicolo
-                                if veicolo in partenze:
-                                    if s[-1]['fine_lavorazione'] > partenze[veicolo]:
+                                if veicolo in partenze and s[-1]['fine_lavorazione'] > partenze[veicolo]:
                                         check2 = False
                                 elif veicolo not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)"):
                                     if s[-1]['fine_lavorazione'] > s[-1]['due date']:
