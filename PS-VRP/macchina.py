@@ -5,7 +5,7 @@ class Macchina():
     def __init__(self,nome_macchina,disponibilita,tempo_setup_medio,velocita_taglio_media,bobina_foglio,setup_cambio_albero,setup_coltelli_fisso,setup_cambio_coltelli,tempo_carico_bobina,tempo_avvio_taglio,tempo_scarico_bobina,tempo_confezionamento,data_ora_disponibilita,data_inizio_schedulazione):
         self.nome_macchina=nome_macchina
         self.disponibilita=disponibilita
-        self.tempo_setup_medio=tempo_setup_medio
+        #self.tempo_setup_medio=tempo_setup_medio
         self.velocita_taglio_media=velocita_taglio_media
         self.bobina_foglio=bobina_foglio
         self.attrezzaggio=None
