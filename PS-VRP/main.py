@@ -30,7 +30,7 @@ print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE SENZA CAMPI MANCANTI (LETTE CORRETTAM
 start_time_eur = time.time()
 
 commesse_da_schedulare, commesse_filtro_zone, commesse_filtro_veicoli, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
-schedulazione3, f_obj3, causa_fallimento, lista_macchine = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli, commesse_scartate)
+schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli, commesse_scartate)
 output.write_output_soluzione_euristica(schedulazione3, "PS-VRP/OUTPUT_TEST/euristico_costruttivo.xlsx")
 print(f'Fallimenti euristico costruttivo {len(causa_fallimento)}; Filtrate per zone {len(commesse_filtro_zone)}; Filtrate per veicoli {len(commesse_filtro_veicoli)}')
 commesse_non_schedulate = causa_fallimento | commesse_filtro_zone | commesse_filtro_veicoli #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
@@ -43,6 +43,15 @@ end_time_eur = time.time()
 tot_time_eur = end_time_eur - start_time_eur
 
 solver.grafico_schedulazione(schedulazione3)
+
+# EURISTICO POST-RICERCHE LOCALI
+start_time_post = time.time()
+soluzionepost, fpost = solver.euristico_post(schedulazione3, commesse_residue, lista_macchine, lista_veicoli, commesse_scartate)
+print(f'Soluzione euristico post: +{fpost}')
+print(f'Soluzione euristico totale: {fpost + f_obj3}')
+output.write_output_soluzione_euristica(soluzionepost, "PS-VRP/OUTPUT_TEST/euristico_post.xlsx")
+solver.grafico_schedulazione(soluzionepost)
+post_time = time.time() - start_time_post
 
 ## DEEPCOPIES PER RICERCHE LOCALI
 lista_veicoli_copy = deepcopy(lista_veicoli)
