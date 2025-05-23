@@ -390,8 +390,8 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,partenze:dict,con
                         #    if s1[-1]['fine_lavorazione'] > partenze[veicolo]:
                         #        check1=False
                         #elif veicolo not in (None, "NESSUN VEICOLO (esterno)", "NESSUN VEICOLO (interno)"):
-                        #if s1[-1]['fine_lavorazione'] > s1[-1]['due date']:
-                        #        check1 = False
+                        if s1[-1]['fine_lavorazione'] > s1[-1]['due date']:
+                            check1 = False
                         ultima_lavorazione1=ultima_lavorazione1+tempo_setup_commessa+tempo_processamento_commessa
                     check2 = True
                     check3 = True
