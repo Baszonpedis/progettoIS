@@ -29,13 +29,18 @@ print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE SENZA CAMPI MANCANTI (LETTE CORRETTAM
 
 start_time_eur = time.time()
 
-commesse_da_schedulare, commesse_filtro_zone, commesse_filtro_veicoli, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
+commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
+lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
+solver.associa_veicoli_tassativi(lista_commesse_tassative, lista_veicoli)
 schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli, commesse_scartate)
 output.write_output_soluzione_euristica(schedulazione3, "PS-VRP/OUTPUT_TEST/euristico_costruttivo.xlsx")
-print(f'Fallimenti euristico costruttivo {len(causa_fallimento)}; Filtrate per zone {len(commesse_filtro_zone)}; Filtrate per veicoli {len(commesse_filtro_veicoli)}')
-commesse_non_schedulate = causa_fallimento | commesse_filtro_zone | commesse_filtro_veicoli #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
+print(f'SCARTATI DAL PRIMO EURISTICO - Direttamente al Gruppo tre: {len(dizionario_filtri)}')
+print(f'INPUT AL PRIMO EURISTICO: {len(lista_commesse) - len(dizionario_filtri)}')
+print(f'FALLIMENTI PRIMO EURISTICO: {len(causa_fallimento)}')
+print(f'ASSEGNATI PRIMO EURISTICO: {len(lista_commesse) - len(dizionario_filtri) - len(causa_fallimento)}')
+commesse_non_schedulate = causa_fallimento | dizionario_filtri #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
 
-print(f"\n{Fore.RED}{Style.BRIGHT}COMMESSE NON SCHEDULATE (su veicoli): {len(commesse_non_schedulate)}")
+print(f"\n{Fore.RED}{Style.BRIGHT}COMMESSE NON SCHEDULATE AL PRIMO EURISTICO (su veicoli): {len(commesse_non_schedulate)}")
 print(f"{Fore.RED}Dettaglio motivi: {commesse_non_schedulate}")
 print(f"\n{Fore.YELLOW}Funzione obiettivo euristico: {f_obj3} minuti di setup\n")
 

@@ -81,7 +81,7 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
         df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col] = df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col].fillna(0)
     output.write_error_output(df,"PS-VRP/Dati_output/error_read_file.xlsx")
 
-    #Campi riempiti per evitare che vengano rimossi dal .dropna (campi "facoltativi")
+    #Campi riempiti per evitare che vengano rimossi dal .dropna (campi "facoltativi")zz
     df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].fillna(0)
     df['flag tassativo taglio per schedulatore'] = df['flag tassativo taglio per schedulatore'].fillna(0)
     df['id spedizione'] = df['id spedizione'].fillna(0)

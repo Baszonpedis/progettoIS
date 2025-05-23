@@ -31,6 +31,9 @@ class Macchina():
         #self.minuti_processamenti=[self._minuti_fine_ultima_lavorazione]
         #self.minuti_processamenti=self._minuti_fine_ultima_lavorazione
         self.ultima_lavorazione=self._minuti_fine_ultima_lavorazione
+        #Ritardo aggiunto in euristico
+        #(idem veicolo)
+
 
     def inizializza_lista_commesse(self):
         """
