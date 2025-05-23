@@ -49,7 +49,7 @@ tot_time_eur = end_time_eur - start_time_eur
 
 solver.grafico_schedulazione(schedulazione3)
 
-# EURISTICO POST-RICERCHE LOCALI
+# EURISTICO ESCLUSO DALLE RICERCHE LOCALI
 start_time_post = time.time()
 soluzionepost, fpost = solver.euristico_post(schedulazione3, commesse_residue, lista_macchine, lista_veicoli, commesse_scartate)
 print(f'Soluzione euristico post: +{fpost}')

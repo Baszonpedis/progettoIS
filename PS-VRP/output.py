@@ -40,6 +40,8 @@ def write_output_soluzione_euristica(schedulazione,nome_file):
                 valore=" ;".join(valore)
             if type(valore)==pd.Timestamp: #se sto considerando un campo contenente una data pandas devo convertirla
                 valore=valore.strftime("%Y-%m-%d %H:%M:%S") #converto in data (giorno-mese-anno)
+            if chiave=='veicolo' and valore != None and not isinstance(valore, str):
+                valore = valore.nome
             ws1.cell(row=start_row,column=start_column,value=valore) #assegno il valore in questione alla cella
             start_column+=1 #se non sono finiti i campi avanzo di una colonna
         start_row+=1 #quando sono finiti i campi passo alla riga successiva
