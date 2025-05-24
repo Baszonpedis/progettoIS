@@ -125,6 +125,7 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
     return commesse_da_schedulare, dizionario_filtri, commesse_scartate
 
 #Serve a ricostruire le soluzioni nelle ricerche locali
+#NB: Funzione modificata introducento il concetto di ritardo e ritardomossa
 def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, minuti_processamento, minuti_fine_ultima_commessa, inizio_schedulazione, schedulazione):
     id=commessa.id_commessa
     macchina_lavorazione=macchina.nome_macchina
@@ -145,16 +146,19 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
     due_date=commessa.due_date
     #ritardo=commessa.ritardo
     veicolo = commessa.veicolo
-    if commessa.tassativita == "X":
-        if 0 in commessa.zona_cliente:
+
+    #A seguito, si differenzia tra i vari tipi di commesse (in ordine: tassative esterne, tassative interne corrette, tassative interne scorrette, interne zona aperta, altre)
+    #Questo a fine di calcolare il "ritardomossa" - ovvero il ritardo associato alla mossa nella soluzione ricostruita
+    if commessa.tassativita == "X": #tassative
+        if 0 in commessa.zona_cliente: #tassative esterne
             ritardomossa = min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0))
-        elif veicolo.data_partenza != 0:
+        elif veicolo.data_partenza != 0: #tassative interne corrette
             ritardomossa = min(veicolo.data_partenza - data_fine_lavorazione, timedelta(days = 0))
-        else:
+        else: #tassative internne  scorrette
             ritardomossa = timedelta(days = 0)
-    elif veicolo != None:
+    elif veicolo != None: #interne zona aperta
         ritardomossa = min(max(veicolo.data_partenza,commessa.due_date) - data_fine_lavorazione, timedelta(days = 0))
-    else:
+    else: #altre (serve se la funzione dovesse essere mai chiamata anche su commesse solo su macchina, del gruppo 3)
         ritardomossa = timedelta(days = 0)
     schedulazione.append({"commessa": id,
                           "macchina": macchina_lavorazione,
@@ -653,40 +657,23 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
     #print(f"Missing commesse len {len(missing)}")
     return soluzione_swap,f_best, contatoreLS3
 
+#Nuova funzione utility per fare i check di validità nelle varie ricerche locali
 def check_LS(check, commessa1, commessa):
-    counter_tass = 0
-    counter_tass_ext = 0
-    counter_tass_int = 0
-    counter_aliud = 0
-    #veicolo = commessa_propria.veicolo
-    #if commessa.id_commessa == 251547:
-    #    print("251547")
-    #    print(commessa.ritardo)
-    #    print(commessa1["ritardo mossa"])
-    #    if commessa1["inizio_lavorazione"] < commessa.release_date:
-    #        check = False
-    #    if commessa1["ritardo"] > commessa1["ritardo mossa"]:
-    #        check = False
-    #    print(check)
-    if commessa.tassativita == "X":
-        counter_tass += 1
+    if commessa.tassativita == "X": #tassative
         if 0 in commessa.zona_cliente: #tassative esterne
-            counter_tass_ext += 1
             if commessa1["inizio_lavorazione"] < commessa.release_date:
                 check = False
-            if commessa1["ritardo"] > commessa1["ritardo mossa"]:
+            if commessa.ritardo > commessa1["ritardo mossa"]:
                 check = False
         else: #tassative interne
-            counter_tass_int += 1
             if commessa1["inizio_lavorazione"] < commessa.release_date:
                 check = False
-            if commessa1["ritardo"] > commessa1["ritardo mossa"]:
+            if commessa.ritardo > commessa1["ritardo mossa"]:
                 check = False
-    else:
-        counter_aliud += 1
+    else: #non tassative
         if commessa1["inizio_lavorazione"] < commessa.release_date:
             check = False
-        if commessa1["ritardo"] > commessa1["ritardo mossa"]:
+        if commessa.ritardo > commessa1["ritardo mossa"]:
             check = False
     #print(f'tassative: {counter_tass}, tassative interne: {counter_tass_int}, tassative esterne: {counter_tass_ext}, altre: {counter_aliud}')
     return check
