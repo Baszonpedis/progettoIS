@@ -35,12 +35,12 @@ def associa_veicoli_tassativi(lista_commesse_tassative, lista_veicoli):
             commessa.veicolo = mappa_veicoli[commessa.id_tassativo]
         else: #se l'id tassativo punta ad un veicolo fuori dalla mappa veicolo (e dunque furoi dall'estrazione)
             if 0 in commessa.zona_cliente: #veicoli fuori dall'estrazione esterni (comportamento corretto)
-                veicolo_non_in_estrazione = Veicolo(str(int(commessa.id_tassativo))+" (esterno)", 0, None, pd.Timedelta(0))
+                veicolo_non_in_estrazione = Veicolo(str(int(commessa.id_tassativo))+" (esterno)", 0, None, None)
                 print(f'Il veicolo {veicolo_non_in_estrazione.nome} non è in estrazione! Aggiunto alla lista')
                 lista_veicoli.append(veicolo_non_in_estrazione)
                 commessa.veicolo = veicolo_non_in_estrazione
             else: #veicoli fuori dall'estrazione interni (comportamento scorretto)
-                veicolo_non_in_estrazione = Veicolo(str(int(commessa.id_tassativo))+" (non in estrazione)", 0, None, pd.Timedelta(0))
+                veicolo_non_in_estrazione = Veicolo(str(int(commessa.id_tassativo))+" (non in estrazione)", 0, None, None)
                 print(f'Il veicolo {veicolo_non_in_estrazione.nome} non è in estrazione! Aggiunto alla lista')
                 lista_veicoli.append(veicolo_non_in_estrazione)
                 commessa.veicolo = veicolo_non_in_estrazione
@@ -53,16 +53,16 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
     if commessa.tassativita == "X":
         if 0 in commessa.zona_cliente: #commesse esterne tassative
             print(veicolo.data_partenza)
-            commessa.ritardo = min(commessa.due_date - fine_lavorazione, pd.Timedelta(0))
+            commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
             print(commessa.ritardo)
         elif veicolo.data_partenza != 0: #commesse interne tassative correttamente inserite in estrazione
-            commessa.ritardo = min(veicolo.data_partenza - fine_lavorazione, pd.Timedelta(0))
+            commessa.ritardo = min(veicolo.data_partenza - fine_lavorazione, timedelta(days = 0))
         else: #commesse interne tassative senza data di partenza / non in estrazione
-            commessa.ritardo = pd.Timedelta(0)
+            commessa.ritardo = timedelta(days = 0)
     elif commessa.veicolo != None: #commesse interne zona aperta
-        commessa.ritardo = min(max(veicolo.data_partenza,commessa.due_date) - fine_lavorazione, pd.Timedelta(0))
+        commessa.ritardo = min(max(veicolo.data_partenza,commessa.due_date) - fine_lavorazione, timedelta(days = 0))
     else: #commesse rimanenti (senza veicolo assegnato / gruppo 3)
-        commessa.ritardo = pd.Timedelta(0) #non hanno ritardo
+        commessa.ritardo = timedelta(days = 0) #non hanno ritardo
     schedulazione.append({"commessa": commessa.id_commessa, # dizionario che contiene le informazioni sulla schedula
                           "macchina": macchina.nome_macchina,
                           "minuti setup": tempo_setup,
@@ -147,15 +147,15 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
     veicolo = commessa.veicolo
     if commessa.tassativita == "X":
         if 0 in commessa.zona_cliente:
-            ritardomossa = min(commessa.due_date - data_fine_lavorazione, pd.Timedelta(0))
+            ritardomossa = min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0))
         elif veicolo.data_partenza != 0:
-            ritardomossa = min(veicolo.data_partenza - data_fine_lavorazione, pd.Timedelta(0))
+            ritardomossa = min(veicolo.data_partenza - data_fine_lavorazione, timedelta(days = 0))
         else:
-            ritardomossa = pd.Timedelta(0)
+            ritardomossa = timedelta(days = 0)
     elif veicolo != None:
-        ritardomossa = min(max(veicolo.data_partenza,commessa.due_date) - data_fine_lavorazione, pd.Timedelta(0))
+        ritardomossa = min(max(veicolo.data_partenza,commessa.due_date) - data_fine_lavorazione, timedelta(days = 0))
     else:
-        ritardomossa = pd.Timedelta(0)
+        ritardomossa = timedelta(days = 0)
     schedulazione.append({"commessa": id,
                           "macchina": macchina_lavorazione,
                           "minuti setup": tempo_setup,
