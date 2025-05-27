@@ -278,11 +278,11 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     return schedulazione, f_obj, causa_fallimento, lista_macchine, commesse_residue
 
 ##EURISTICO POST (Greedy 2)
-def euristico_post(soluzione_sequenza, commesse_residue:list, lista_macchine:list, commesse_scartate: list):
+def euristico_post(soluzione_sequenza, commesse_residue:list, lista_macchine:list, commesse_scartate: list, f_obj_base):
     
     commesse_da_schedulare = commesse_residue + commesse_scartate #Tutte quelle non schedulate per vari motivi nel secondo ciclo + le scartate dal filtro
 
-    f_obj = 0  #Funzione obiettivo (somma pesata dei tempi di setup)
+    f_obj = f_obj_base  #Funzione obiettivo (somma pesata dei tempi di setup)
     soluzionepost = soluzione_sequenza #si parte con la schedulazione già effettuata (euristico + ricerche locali)
     lista_macchine2 = []
 
@@ -418,6 +418,7 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,contatore:int,ini
                         #print(f'----------------------------------------------------------------------------------------------------------------------------')
                         improved=True #miglioramento trovato
                         f_best+=delta #aggiorno funzione obiettivo
+                        print(f_best)
                         contatore+=1
                     else:
                         schedula1=copia1

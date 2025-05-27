@@ -129,9 +129,8 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G3)".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
 start_time_post = time.time()
-soluzionepost, fpost = solver.euristico_post(soluzione_sequenza, commesse_residue, lista_macchine, commesse_scartate)
-print(f"{Fore.YELLOW}Funzione obiettivo euristico post (G3): {fpost} minuti di setup")
-print(f"{Fore.YELLOW}Funzione obiettivo euristico totale (LS[G1+G2]+G3): {fpost+f5} minuti di setup\n")
+soluzionepost, fpost = solver.euristico_post(soluzione_sequenza, commesse_residue, lista_macchine, commesse_scartate, f5)
+print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3): {fpost} minuti di setup")
 output.write_output_soluzione_euristica(soluzionepost, "PS-VRP/OUTPUT_TEST/euristico_post.xlsx")
 solver.grafico_schedulazione(soluzionepost)
 post_time = time.time() - start_time_post
@@ -188,7 +187,7 @@ print(f"{Fore.MAGENTA}{Style.BRIGHT}\n{'='*40}")
 print(f"{Fore.MAGENTA}{Style.BRIGHT}RISULTATI FINALI".center(40))
 print(f"{Fore.MAGENTA}{Style.BRIGHT}{'='*40}\n")
 
-print(f"{Fore.YELLOW}RISULTATO FINALE: {f5post+f5} minuti di setup\n")
+print(f"{Fore.YELLOW}RISULTATO FINALE: {f5post} minuti di setup\n")
 print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (NB: dato impreciso): {-f_obj3+f5-fpost+f5post} minuti di setup\n")
 
 
