@@ -418,7 +418,6 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,contatore:int,ini
                         #print(f'----------------------------------------------------------------------------------------------------------------------------')
                         improved=True #miglioramento trovato
                         f_best+=delta #aggiorno funzione obiettivo
-                        print(f_best)
                         contatore+=1
                     else:
                         schedula1=copia1

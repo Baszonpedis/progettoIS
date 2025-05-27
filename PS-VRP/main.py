@@ -190,7 +190,6 @@ print(f"{Fore.MAGENTA}{Style.BRIGHT}{'='*40}\n")
 print(f"{Fore.YELLOW}RISULTATO FINALE: {f5post-f5+f_obj3} minuti di setup\n")
 print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO: {-fpost+f5post} minuti di setup\n")
 
-
 print(f"{Fore.GREEN}COMMESSE LETTE CORRETTAMENTE: {len(lista_commesse)}")
 print(f"{Fore.GREEN}COMMESSE POST FILTRO ZONE E FILTRO VEICOLI (Interne a zona aperta + tassative): {len(commesse_da_schedulare)}")
 print(f"{Fore.GREEN}COMMESSE SCARTATE (RELEGATE A TERZO CICLO): {len(commesse_scartate)}")
