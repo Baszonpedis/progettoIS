@@ -72,7 +72,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start1 = time.time()
 soluzione1, f1, contatoreLS1 = solver.move_2_macchine(lista_macchine_copy2, lista_veicoli_copy2, f_obj3)
-print(f"{Fore.YELLOW}Funzione obiettivo LS1: {f1} minuti di setup")
+print(f"{Fore.YELLOW}Funzione obiettivo LS1 - risparmio: {f1-f_obj3} minuti di setup")
 print(f"Mosse LS1: {contatoreLS1}")
 output.write_output_soluzione_euristica(soluzione1, "PS-VRP/OUTPUT_TEST/insert_inter.xlsx")
 tot1 = time.time() - start1
@@ -85,7 +85,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_move = time.time()
 soluzione2, f2, contatoreLS2 = solver.move_no_delta(lista_macchine_copy1, lista_veicoli_copy1, f_obj3, schedulazione3)
 soluzione_move = [b for a in soluzione2 for b in a]
-print(f"{Fore.YELLOW}Funzione obiettivo LS2: {f2} minuti di setup")
+print(f"{Fore.YELLOW}Funzione obiettivo LS2 - risparmio: {f2-f_obj3} minuti di setup")
 print(f"Mosse LS2: {contatoreLS2}")
 output.write_output_soluzione_euristica(soluzione_move, "PS-VRP/OUTPUT_TEST/insert_intra.xlsx")
 tot2 = time.time() - start_time_move
@@ -98,7 +98,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_swap = time.time()
 soluzione3, f3, contatoreLS3 = solver.swap_no_delta(lista_macchine_copy, lista_veicoli_copy, f_obj3, schedulazione3)
 soluzione_swap = [b for a in soluzione3 for b in a]
-print(f"{Fore.YELLOW}Funzione obiettivo LS3: {f3} minuti di setup")
+print(f"{Fore.YELLOW}Funzione obiettivo LS3 - risparmio: {f3-f_obj3} minuti di setup")
 print(f"Mosse LS3: {contatoreLS3}")
 output.write_output_soluzione_euristica(soluzione_swap, "PS-VRP/OUTPUT_TEST/swap_intra.xlsx")
 tot3 = time.time() - start_time_swap
@@ -111,7 +111,7 @@ start_time_tot = time.time()
 soluzione4, f4, contatoreLS2 = solver.move_no_delta(lista_macchine_copy2, lista_veicoli_copy2, f1, soluzione1)
 print(f'Mosse LS1+LS2: {contatoreLS1+contatoreLS2}')
 soluzione_move = [b for a in soluzione4 for b in a]
-print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2: {f4} minuti di setup")
+print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2 - risparmio: {f4-f1} minuti di setup")
 
 # SEQUENZA COMPLETA
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -120,7 +120,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 soluzione5, f5, contatoreLS3 = solver.swap_no_delta(lista_macchine_copy2, lista_veicoli_copy2, f4, soluzione_move)
 print(f'Mosse LS1+LS2+LS3: {contatoreLS1+contatoreLS2+contatoreLS3}')
 soluzione_sequenza = [b for a in soluzione5 for b in a]
-print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2+LS3: {f5} minuti di setup")
+print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2+LS3 - risparmio: {f5-f4} minuti di setup")
 output.write_output_soluzione_euristica(soluzione_swap, "PS-VRP/OUTPUT_TEST/sequenza.xlsx")
 tot_tot = time.time() - start_time_tot
 
@@ -156,29 +156,29 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start1_post = time.time()
 soluzione1post, f1post, contatoreLS1post = solver.move_2_macchine(lista_macchine_copy2, lista_veicoli_copy2, fpost)
-print(f"{Fore.YELLOW}Funzione obiettivo LS1[G3]: {f1post} minuti di setup")
+print(f"{Fore.YELLOW}Funzione obiettivo LS1[LS[G1+G2]+G3] - risparmio: {f1post-fpost} minuti di setup")
 print(f"Mosse LS1 - post: {contatoreLS1post}")
 output.write_output_soluzione_euristica(soluzione1post, "PS-VRP/OUTPUT_TEST/insert_inter_post.xlsx")
 tot1_post = time.time() - start1_post
 
 # SEQUENZA PARZIALE
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}LS1+LS2[G3] (sequenza parziale)")
+print(f"{Fore.CYAN}{Style.BRIGHT}LS1+LS2[LS[G1+G2]+G3] (sequenza parziale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_tot_post = time.time()
 soluzione4post, f4post, contatoreLS2post = solver.move_no_delta(lista_macchine_copy2, lista_veicoli_copy2, f1post, soluzione1post)
 print(f'Mosse LS1+LS2 - post: {contatoreLS1post+contatoreLS2post}')
 soluzione_move_post = [b for a in soluzione4post for b in a]
-print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2 - post: {f4post} minuti di setup")
+print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2 - risparmio: {f4post-f1post} minuti di setup")
 
 # SEQUENZA COMPLETA
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}LS1+LS2+LS3[G3] (sequenza finale)")
+print(f"{Fore.CYAN}{Style.BRIGHT}LS[LS[G1+G2]+G3] (sequenza finale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 soluzione5post, f5post, contatoreLS3post = solver.swap_no_delta(lista_macchine_copy2, lista_veicoli_copy2, f4post, soluzione_move_post)
 print(f'Mosse LS1+LS2+LS3 - post: {contatoreLS1post+contatoreLS2post+contatoreLS3post}')
 soluzione_sequenza_post = [b for a in soluzione5post for b in a]
-print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2+LS3 - post: {f5post} minuti di setup")
+print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2+LS3 - risparmio: {f5post-f4post} minuti di setup")
 output.write_output_soluzione_euristica(soluzione_sequenza_post, "PS-VRP/OUTPUT_TEST/sequenza_post.xlsx")
 tot_tot_post = time.time() - start_time_tot_post
 
@@ -187,8 +187,8 @@ print(f"{Fore.MAGENTA}{Style.BRIGHT}\n{'='*40}")
 print(f"{Fore.MAGENTA}{Style.BRIGHT}RISULTATI FINALI".center(40))
 print(f"{Fore.MAGENTA}{Style.BRIGHT}{'='*40}\n")
 
-print(f"{Fore.YELLOW}RISULTATO FINALE: {f5post} minuti di setup\n")
-print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (NB: dato impreciso): {-f_obj3+f5-fpost+f5post} minuti di setup\n")
+print(f"{Fore.YELLOW}RISULTATO FINALE: {f5post-f5+f_obj3} minuti di setup\n")
+print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO: {-fpost+f5post} minuti di setup\n")
 
 
 print(f"{Fore.GREEN}COMMESSE LETTE CORRETTAMENTE: {len(lista_commesse)}")
