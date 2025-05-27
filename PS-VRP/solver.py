@@ -682,6 +682,7 @@ def grafico_schedulazione(schedulazione):
     :param schedulazione: lista di dizionari che contiene le informazioni relative ad una schedulazione
     :return: plot del grafico relativo alla schedulazione
     """
+    plt.clf()
     macchine = list(set(schedula["macchina"] for schedula in schedulazione))
     macchine.sort(reverse=True)
     asse_x_setup = []
@@ -701,8 +702,8 @@ def grafico_schedulazione(schedulazione):
     for veicolo in veicoli:
         if veicolo == None:
             colori_veicoli[veicolo] = '#d9b904'
-        elif veicolo == "NESSUN VEICOLO (interno)":
-            colori_veicoli[veicolo] = 'orange'
+        #elif veicolo == "NESSUN VEICOLO (interno)":
+        #    colori_veicoli[veicolo] = 'orange'
         else:
             colori_veicoli[veicolo] = green_shades[green_index % len(green_shades)]
             green_index += 1
