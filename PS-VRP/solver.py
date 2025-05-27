@@ -278,12 +278,12 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     return schedulazione, f_obj, causa_fallimento, lista_macchine, commesse_residue
 
 ##EURISTICO POST (Greedy 2)
-def euristico_post(schedulazione3, commesse_residue:list, lista_macchine:list, commesse_scartate: list):
+def euristico_post(soluzione_sequenza, commesse_residue:list, lista_macchine:list, commesse_scartate: list):
     
     commesse_da_schedulare = commesse_residue + commesse_scartate #Tutte quelle non schedulate per vari motivi nel secondo ciclo + le scartate dal filtro
 
     f_obj = 0  #Funzione obiettivo (somma pesata dei tempi di setup)
-    soluzionepost = schedulazione3 #si parte con la schedulazione già effettuata
+    soluzionepost = soluzione_sequenza #si parte con la schedulazione già effettuata (euristico + ricerche locali)
     lista_macchine2 = []
 
     #Sorting preliminare dell'input al terzo ciclo While
@@ -682,7 +682,6 @@ def grafico_schedulazione(schedulazione):
     :param schedulazione: lista di dizionari che contiene le informazioni relative ad una schedulazione
     :return: plot del grafico relativo alla schedulazione
     """
-    plt.clf()
     macchine = list(set(schedula["macchina"] for schedula in schedulazione))
     macchine.sort(reverse=True)
     asse_x_setup = []

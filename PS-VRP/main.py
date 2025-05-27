@@ -23,7 +23,7 @@ init(autoreset=True)  # Ripristina i colori dopo ogni print
 
 ## EURISTICO COSTRUTTIVO
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO".center(40))
+print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G1+G2)".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
 print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE SENZA CAMPI MANCANTI (LETTE CORRETTAMENTE): {len(lista_commesse)}")
 
@@ -49,16 +49,7 @@ tot_time_eur = end_time_eur - start_time_eur
 
 solver.grafico_schedulazione(schedulazione3)
 
-# EURISTICO NUOVO (gruppo3)
-start_time_post = time.time()
-soluzionepost, fpost = solver.euristico_post(schedulazione3, commesse_residue, lista_macchine, commesse_scartate)
-print(f'Soluzione euristico post: +{fpost}')
-print(f'Soluzione euristico totale: {fpost + f_obj3}')
-output.write_output_soluzione_euristica(soluzionepost, "PS-VRP/OUTPUT_TEST/euristico_post.xlsx")
-solver.grafico_schedulazione(soluzionepost)
-post_time = time.time() - start_time_post
-
-## DEEPCOPIES PER RICERCHE LOCALI
+## DEEPCOPIES PER RICERCHE LOCALI (prima fase)
 lista_veicoli_copy = deepcopy(lista_veicoli)
 lista_macchine_copy = deepcopy(lista_macchine)
 lista_commesse_copy = deepcopy(lista_commesse)
@@ -128,29 +119,52 @@ print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2+LS3 (sequenza finale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 soluzione5, f5, contatoreLS3 = solver.swap_no_delta(lista_macchine_copy2, lista_veicoli_copy2, f4, soluzione_move)
 print(f'Mosse LS1+LS2+LS3: {contatoreLS1+contatoreLS2+contatoreLS3}')
-soluzione_swap = [b for a in soluzione5 for b in a]
+soluzione_sequenza = [b for a in soluzione5 for b in a]
 print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2+LS3: {f5} minuti di setup")
 output.write_output_soluzione_euristica(soluzione_swap, "PS-VRP/OUTPUT_TEST/sequenza.xlsx")
 tot_tot = time.time() - start_time_tot
 
+# EURISTICO NUOVO (gruppo3)
+print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
+print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G3)".center(40))
+print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
+start_time_post = time.time()
+soluzionepost, fpost = solver.euristico_post(soluzione_sequenza, commesse_residue, lista_macchine, commesse_scartate)
+print(f"{Fore.YELLOW}Funzione obiettivo euristico post (G3): {fpost} minuti di setup")
+print(f"{Fore.YELLOW}Funzione obiettivo euristico totale (LS[G1+G2]+G3): {fpost+f5} minuti di setup\n")
+output.write_output_soluzione_euristica(soluzionepost, "PS-VRP/OUTPUT_TEST/euristico_post.xlsx")
+solver.grafico_schedulazione(soluzionepost)
+post_time = time.time() - start_time_post
+
 
 ## RICERCHE LOCALI (su secondo euristico)
 
-# M2M2
+## DEEPCOPIES PER RICERCHE LOCALI (seconda fase)
+lista_veicoli_copy = deepcopy(lista_veicoli)
+lista_macchine_copy = deepcopy(lista_macchine)
+lista_commesse_copy = deepcopy(lista_commesse)
+lista_veicoli_copy1 = deepcopy(lista_veicoli)
+lista_macchine_copy1 = deepcopy(lista_macchine)
+lista_commesse_copy1 = deepcopy(lista_commesse)
+lista_veicoli_copy2 = deepcopy(lista_veicoli)
+lista_macchine_copy2 = deepcopy(lista_macchine)
+lista_commesse_copy2 = deepcopy(lista_commesse)
+
+# M2M - Bis
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS1 (Insert inter-macchina)")
+print(f"{Fore.CYAN}{Style.BRIGHT}LS1[G3] (Insert inter-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start1_post = time.time()
 soluzione1post, f1post, contatoreLS1post = solver.move_2_macchine(lista_macchine_copy2, lista_veicoli_copy2, fpost)
-print(f"{Fore.YELLOW}Funzione obiettivo LS1 - post: {f1post} minuti di setup")
+print(f"{Fore.YELLOW}Funzione obiettivo LS1[G3]: {f1post} minuti di setup")
 print(f"Mosse LS1 - post: {contatoreLS1post}")
 output.write_output_soluzione_euristica(soluzione1post, "PS-VRP/OUTPUT_TEST/insert_inter_post.xlsx")
 tot1_post = time.time() - start1_post
 
 # SEQUENZA PARZIALE
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2 (sequenza parziale) - post")
+print(f"{Fore.CYAN}{Style.BRIGHT}LS1+LS2[G3] (sequenza parziale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_tot_post = time.time()
 soluzione4post, f4post, contatoreLS2post = solver.move_no_delta(lista_macchine_copy2, lista_veicoli_copy2, f1post, soluzione1post)
@@ -160,15 +174,14 @@ print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2 - post: {f4post} minuti di setup
 
 # SEQUENZA COMPLETA
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2+LS3 (sequenza finale)")
+print(f"{Fore.CYAN}{Style.BRIGHT}LS1+LS2+LS3[G3] (sequenza finale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 soluzione5post, f5post, contatoreLS3post = solver.swap_no_delta(lista_macchine_copy2, lista_veicoli_copy2, f4post, soluzione_move_post)
 print(f'Mosse LS1+LS2+LS3 - post: {contatoreLS1post+contatoreLS2post+contatoreLS3post}')
-soluzione_swap_post = [b for a in soluzione5post for b in a]
+soluzione_sequenza_post = [b for a in soluzione5post for b in a]
 print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2+LS3 - post: {f5post} minuti di setup")
-output.write_output_soluzione_euristica(soluzione_swap_post, "PS-VRP/OUTPUT_TEST/sequenza_post.xlsx")
+output.write_output_soluzione_euristica(soluzione_sequenza_post, "PS-VRP/OUTPUT_TEST/sequenza_post.xlsx")
 tot_tot_post = time.time() - start_time_tot_post
-
 
 ## STAMPE FINALI
 print(f"{Fore.MAGENTA}{Style.BRIGHT}\n{'='*40}")
@@ -176,7 +189,7 @@ print(f"{Fore.MAGENTA}{Style.BRIGHT}RISULTATI FINALI".center(40))
 print(f"{Fore.MAGENTA}{Style.BRIGHT}{'='*40}\n")
 
 print(f"{Fore.YELLOW}RISULTATO FINALE: {f5post+f5} minuti di setup\n")
-print(f"{Fore.YELLOW}EFFETTO RICERCHE LOCALI: {f5post+f5-fpost-f_obj3} minuti di setup\n")
+print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (NB: dato impreciso): {-f_obj3+f5-fpost+f5post} minuti di setup\n")
 
 
 print(f"{Fore.GREEN}COMMESSE LETTE CORRETTAMENTE: {len(lista_commesse)}")
@@ -195,4 +208,4 @@ print(f"{Fore.BLUE}TEMPO Greedy (G3): {post_time:.2f}s")
 print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS1 post: {post_time + tot1_post:.2f}s")
 print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS1+LS2+LS3 post: {post_time + tot1 + tot_tot_post:.2f}s")
 
-solver.grafico_schedulazione(soluzione_swap)  # Soluzione finale
+solver.grafico_schedulazione(soluzione_sequenza_post)  # Soluzione finale totale
