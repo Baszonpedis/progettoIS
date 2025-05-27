@@ -415,8 +415,6 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,contatore:int,ini
                     
                     if check1 and check2:
                         print("INSERT = OK")
-                        #print(f'La commessa {schedula2[k].id_commessa}, che aveva ritardo {schedula2[k].ritardo}, ha ora ritardo {s2[-1]['ritardo mossa']}')
-                        #print(f'La commessa {schedula1[k].id_commessa}, che aveva ritardo {schedula1[k].ritardo}, ha ora ritardo {s1[-1]['ritardo mossa']}')
                         #print(f'----------------------------------------------------------------------------------------------------------------------------')
                         improved=True #miglioramento trovato
                         f_best+=delta #aggiorno funzione obiettivo
