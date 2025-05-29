@@ -79,7 +79,7 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
     colonne_commesse_foglio=['Commesse::FASCIA','Commesse::Diam int tubo']
     for col in colonne_commesse_foglio:
         df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col] = df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col].fillna(0)
-    output.write_error_output(df,"PS-VRP/Dati_output/error_read_file.xlsx")
+    output.write_error_output(df,"PS-VRP/Dati_output/errori_lettura.xlsx")
 
     #Campi riempiti per evitare che vengano rimossi dal .dropna (campi "facoltativi")zz
     df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].fillna(0)

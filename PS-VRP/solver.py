@@ -27,7 +27,9 @@ def aggiungi_minuti(minuti,data):
     return data_copy + timedelta(days = numero_giorni + numero_settimana * 2, minutes = numero_minuti)
 
 #Associa ad ogni commessa tassativa il proprio veicolo tassativo
-def associa_veicoli_tassativi(lista_commesse_tassative, lista_veicoli):
+def associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli):
+    lista_veicoli_errati = []
+    commesse_veicoli_errati = {}
     mappa_veicoli = {veicolo.nome: veicolo for veicolo in lista_veicoli} #dizionario oggetti 'veicolo'
     for commessa in lista_commesse_tassative: #ciclo for per assegnazione dei veicoli alle commesse tassative tramite corrispondenza id_tassativo e dizionario mappa_veicoli
         if commessa.id_tassativo in mappa_veicoli:
@@ -40,9 +42,19 @@ def associa_veicoli_tassativi(lista_commesse_tassative, lista_veicoli):
                 commessa.veicolo = veicolo_non_in_estrazione
             else: #veicoli fuori dall'estrazione interni (comportamento scorretto)
                 veicolo_non_in_estrazione = Veicolo(str(int(commessa.id_tassativo))+" (non in estrazione)", 0, None, None)
-                print(f'Il veicolo {veicolo_non_in_estrazione.nome} non è in estrazione! Aggiunto alla lista')
-                lista_veicoli.append(veicolo_non_in_estrazione)
-                commessa.veicolo = veicolo_non_in_estrazione
+                print(f'Il veicolo {veicolo_non_in_estrazione.nome} non è in estrazione! Rimuovo commesse associate')
+                #lista_veicoli.append(veicolo_non_in_estrazione)
+                commesse_da_schedulare.remove(commessa) #tolgo la commessa dalle schedulande
+                commesse_veicoli_errati[commessa.id_commessa] = "Il veicolo associato alla commessa dovrebbe essere in estrazione, ma non c'è" #aggiungo la commessa ad un dizionario da assorbire con gli altri dizionari di errore
+                lista_veicoli_errati.append(veicolo_non_in_estrazione) #lista per dataframe per la creazione di un file di errore
+    df_errati = pd.DataFrame([{
+        'nome': v.nome,
+        'peso': v.capacita,
+        'zone': v.zone_coperte,
+        'partenza': v.data_partenza
+    } for v in lista_veicoli_errati])
+    return(df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati)
+
 
 #Aggiorna la schedulazione nell'euristico dopo ogni assegnazione
 #NB: Funzione modificata con l'inclusione del concetto di ritardo
@@ -54,11 +66,11 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
             #print(veicolo.data_partenza)
             commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
             #print(commessa.ritardo)
-        elif veicolo.data_partenza != 0: #commesse interne tassative correttamente inserite in estrazione
+        else: #commesse interne tassative correttamente inserite in estrazione
             commessa.ritardo = min(veicolo.data_partenza - fine_lavorazione, timedelta(days = 0))
-        else: #commesse interne tassative senza data di partenza / non in estrazione; fix temporaneo
+        #else: #commesse interne tassative senza data di partenza / non in estrazione; fix temporaneo
             #commessa.ritardo = timedelta(days = 0)
-            commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
+            #commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
     elif commessa.veicolo != None: #commesse interne zona aperta
         commessa.ritardo = min(max(veicolo.data_partenza,commessa.due_date) - fine_lavorazione, timedelta(days = 0))
     else: #commesse rimanenti (senza veicolo assegnato / gruppo 3)
@@ -95,7 +107,7 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
     
     for commessa in lista_commesse:
         intersezione = set(commessa.zona_cliente).intersection(zone_aperte)  # calcolo l'intersezione tra l'insieme delle zone della commessa e le zone aperte
-        if commessa.tassativita == "X": #or 0 in commessa.zona_cliente: #anzitutto si verifica non si tratti di un caso "speciale"
+        if commessa.tassativita == "X": #or 0 in commessa.zona_cliente:"
             commesse_da_schedulare.append(commessa)
         elif 0 in commessa.zona_cliente:
             commesse_esterne_non_tassative.append(commessa)
@@ -152,11 +164,11 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
     if commessa.tassativita == "X": #tassative
         if 0 in commessa.zona_cliente: #tassative esterne
             ritardomossa = min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0))
-        elif veicolo.data_partenza != 0: #tassative interne corrette
+        else: #tassative interne corrette
             ritardomossa = min(veicolo.data_partenza - data_fine_lavorazione, timedelta(days = 0))
-        else: #tassative internne  scorrette
+        #else: #tassative internne  scorrette
             #ritardomossa = timedelta(days = 0)
-            ritardomossa = min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0))
+        #    ritardomossa = min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0))
     elif veicolo != None: #interne zona aperta
         ritardomossa = min(max(veicolo.data_partenza,commessa.due_date) - data_fine_lavorazione, timedelta(days = 0))
     else: #altre (serve se la funzione dovesse essere mai chiamata anche su commesse solo su macchina, del gruppo 3)
@@ -430,7 +442,7 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,contatore:int,ini
     return schedula1,schedula2,f_best,contatore
 
 ##INSERT INTRA-MACCHINA (Ricerca locale 2)
-def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
+def move_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
     """
     :param lista_macchine: lista contenente oggetti macchina
     :param lista_veicoli: lista contenente oggetti veicolo
@@ -543,7 +555,7 @@ def move_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
     return soluzione_move,f_best,contatoreLS2
 
 ##SWAP INTRA-MACCHINA (Ricerca locale 3)
-def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
+def swap_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
     """
     :param lista_macchine: lista contenente oggetti macchina
     :param lista_veicoli: lista contenente oggetti veicolo

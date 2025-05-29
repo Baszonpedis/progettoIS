@@ -91,3 +91,29 @@ def write_error_output(df,nome_file):
         start_row+=1
     wb.save(nome_file) #salvo il file excel con il nome che passo come parametro
 
+def write_veicoli_error_output(df, nome_file):
+    wb = pyxl.Workbook()
+    ws1 = wb.active
+    ws1.title = 'Errori Veicoli'
+    
+    # Titoli colonne
+    nomi_colonne = list(df.columns)
+    ws1.append(nomi_colonne)
+    
+    # Imposta larghezza colonne dinamicamente
+    for i, col in enumerate(nomi_colonne, start=1):
+        ws1.column_dimensions[chr(64 + i)].width = 30
+    
+    fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    
+    start_row = 2
+    df = df.fillna("CAMPO VUOTO")
+    
+    for index, row in df.iterrows():
+        for col_index, value in enumerate(row):
+            cell = ws1.cell(row=start_row, column=col_index + 1, value=value)
+            if value == "CAMPO VUOTO":
+                cell.fill = fill
+        start_row += 1
+    
+    wb.save(nome_file)
