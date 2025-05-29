@@ -351,7 +351,7 @@ def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj):
     #print(f"Missing commesse len {len(missing)}")
     return soluzione_move,f_best,contatoreLS1
 
-#Usato da move_2_macchine (Ricerca locale 1)
+#Usato da move_2_macchine (Ricerca locale 1 - utility)
 def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,contatore:int,inizio_schedulazione,f_best):
     schedula1=macchina1.lista_commesse_processate #copia profonda della lista di commesse schedulate
     schedula2=macchina2.lista_commesse_processate #copia profonda della lista di commesse schedulate
