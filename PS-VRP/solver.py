@@ -3,8 +3,7 @@ import pandas as pd
 from veicolo import Veicolo
 from datetime import timedelta
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-import matplotlib.patches as mpatches
+from matplotlib.text import Annotation
 from commessa import Commessa
 from macchina import Macchina
 from copy import deepcopy
@@ -679,8 +678,7 @@ def check_LS(check, commessa1, commessa):
     return check
         
 #GRAFICAZIONE
-import mplcursors
-from matplotlib.text import Annotation
+#import mplcursors
 def grafico_schedulazione(schedulazione):
     """
     :param schedulazione: lista di dizionari che contiene le informazioni relative ad una schedulazione
