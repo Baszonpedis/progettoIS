@@ -33,7 +33,7 @@ commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_com
 lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
 solver.associa_veicoli_tassativi(lista_commesse_tassative, lista_veicoli)
 schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
-output.write_output_soluzione_euristica(schedulazione3, "PS-VRP/OUTPUT_TEST/euristico_costruttivo.xlsx")
+output.write_output_soluzione_euristica(schedulazione3, "PS-VRP/Dati_output/euristico_costruttivo.xlsx")
 print(f'SCARTATI DAL PRIMO EURISTICO - Direttamente al Gruppo tre: {len(dizionario_filtri)}')
 print(f'INPUT AL PRIMO EURISTICO: {len(lista_commesse) - len(dizionario_filtri)}')
 print(f'FALLIMENTI PRIMO EURISTICO: {len(causa_fallimento)}')
@@ -74,7 +74,7 @@ start1 = time.time()
 soluzione1, f1, contatoreLS1 = solver.move_2_macchine(lista_macchine_copy2, lista_veicoli_copy2, f_obj3)
 print(f"{Fore.YELLOW}Funzione obiettivo LS1 - risparmio: {f1-f_obj3} minuti di setup")
 print(f"Mosse LS1: {contatoreLS1}")
-output.write_output_soluzione_euristica(soluzione1, "PS-VRP/OUTPUT_TEST/insert_inter.xlsx")
+output.write_output_soluzione_euristica(soluzione1, "PS-VRP/Dati_output/insert_inter.xlsx")
 tot1 = time.time() - start1
 
 # M
@@ -87,7 +87,7 @@ soluzione2, f2, contatoreLS2 = solver.move_no_delta(lista_macchine_copy1, lista_
 soluzione_move = [b for a in soluzione2 for b in a]
 print(f"{Fore.YELLOW}Funzione obiettivo LS2 - risparmio: {f2-f_obj3} minuti di setup")
 print(f"Mosse LS2: {contatoreLS2}")
-output.write_output_soluzione_euristica(soluzione_move, "PS-VRP/OUTPUT_TEST/insert_intra.xlsx")
+output.write_output_soluzione_euristica(soluzione_move, "PS-VRP/Dati_output/insert_intra.xlsx")
 tot2 = time.time() - start_time_move
 
 # S
@@ -100,7 +100,7 @@ soluzione3, f3, contatoreLS3 = solver.swap_no_delta(lista_macchine_copy, lista_v
 soluzione_swap = [b for a in soluzione3 for b in a]
 print(f"{Fore.YELLOW}Funzione obiettivo LS3 - risparmio: {f3-f_obj3} minuti di setup")
 print(f"Mosse LS3: {contatoreLS3}")
-output.write_output_soluzione_euristica(soluzione_swap, "PS-VRP/OUTPUT_TEST/swap_intra.xlsx")
+output.write_output_soluzione_euristica(soluzione_swap, "PS-VRP/Dati_output/swap_intra.xlsx")
 tot3 = time.time() - start_time_swap
 
 # SEQUENZA PARZIALE
@@ -121,7 +121,7 @@ soluzione5, f5, contatoreLS3 = solver.swap_no_delta(lista_macchine_copy2, lista_
 print(f'Mosse LS1+LS2+LS3: {contatoreLS1+contatoreLS2+contatoreLS3}')
 soluzione_sequenza = [b for a in soluzione5 for b in a]
 print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2+LS3 - risparmio: {f5-f4} minuti di setup")
-output.write_output_soluzione_euristica(soluzione_swap, "PS-VRP/OUTPUT_TEST/sequenza.xlsx")
+output.write_output_soluzione_euristica(soluzione_swap, "PS-VRP/Dati_output/sequenza.xlsx")
 tot_tot = time.time() - start_time_tot
 
 # EURISTICO NUOVO (gruppo3)
@@ -131,7 +131,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
 start_time_post = time.time()
 soluzionepost, fpost = solver.euristico_post(soluzione_sequenza, commesse_residue, lista_macchine, commesse_scartate, f5)
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3): {fpost} minuti di setup")
-output.write_output_soluzione_euristica(soluzionepost, "PS-VRP/OUTPUT_TEST/euristico_post.xlsx")
+output.write_output_soluzione_euristica(soluzionepost, "PS-VRP/Dati_output/euristico_post.xlsx")
 solver.grafico_schedulazione(soluzionepost)
 post_time = time.time() - start_time_post
 
@@ -158,7 +158,7 @@ start1_post = time.time()
 soluzione1post, f1post, contatoreLS1post = solver.move_2_macchine(lista_macchine_copy2, lista_veicoli_copy2, fpost)
 print(f"{Fore.YELLOW}Funzione obiettivo LS1[LS[G1+G2]+G3] - risparmio: {f1post-fpost} minuti di setup")
 print(f"Mosse LS1 - post: {contatoreLS1post}")
-output.write_output_soluzione_euristica(soluzione1post, "PS-VRP/OUTPUT_TEST/insert_inter_post.xlsx")
+output.write_output_soluzione_euristica(soluzione1post, "PS-VRP/Dati_output/insert_inter_post.xlsx")
 tot1_post = time.time() - start1_post
 
 # SEQUENZA PARZIALE
@@ -179,7 +179,7 @@ soluzione5post, f5post, contatoreLS3post = solver.swap_no_delta(lista_macchine_c
 print(f'Mosse LS1+LS2+LS3 - post: {contatoreLS1post+contatoreLS2post+contatoreLS3post}')
 soluzione_sequenza_post = [b for a in soluzione5post for b in a]
 print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2+LS3 - risparmio: {f5post-f4post} minuti di setup")
-output.write_output_soluzione_euristica(soluzione_sequenza_post, "PS-VRP/OUTPUT_TEST/sequenza_post.xlsx")
+output.write_output_soluzione_euristica(soluzione_sequenza_post, "PS-VRP/Dati_output/sequenza_post.xlsx")
 tot_tot_post = time.time() - start_time_tot_post
 
 ## STAMPE FINALI

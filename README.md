@@ -10,8 +10,8 @@ Contenuti:
 - solver - originale.py (solver originale - backup)
 - Dati_input (dati reali)
 - Dati_ouput (output reali)
-- INPUT_TEST (input ad hoc)
-- OUTPUT_TEST (output ad hoc)
+- INPUT_TEST (input ad hoc / testing)
+- OUTPUT_TEST (output ad hoc / testing)
 
 Per il funzionamento del main sono chiamate solamente le funzioni
 - filtro_commesse (da solver.py)
