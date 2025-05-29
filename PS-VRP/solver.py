@@ -52,9 +52,9 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
     veicolo = commessa.veicolo
     if commessa.tassativita == "X":
         if 0 in commessa.zona_cliente: #commesse esterne tassative
-            print(veicolo.data_partenza)
+            #print(veicolo.data_partenza)
             commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
-            print(commessa.ritardo)
+            #print(commessa.ritardo)
         elif veicolo.data_partenza != 0: #commesse interne tassative correttamente inserite in estrazione
             commessa.ritardo = min(veicolo.data_partenza - fine_lavorazione, timedelta(days = 0))
         else: #commesse interne tassative senza data di partenza / non in estrazione
@@ -414,7 +414,7 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,contatore:int,ini
                         check2 = check_LS(check2, s2[-1], schedula2[k]) #check validità schedula 2
                     
                     if check1 and check2:
-                        print("INSERT = OK")
+                        #print("INSERT = OK")
                         #print(f'----------------------------------------------------------------------------------------------------------------------------')
                         improved=True #miglioramento trovato
                         f_best+=delta #aggiorno funzione obiettivo
