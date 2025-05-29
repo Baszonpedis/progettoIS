@@ -660,7 +660,7 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
 def check_LS(check, commessa1, commessa):
     if commessa.tassativita == "X": #tassative
         if 0 in commessa.zona_cliente: #tassative esterne
-            if commessa1["fine_lavorazione"] < commessa.release_date:
+            if commessa1["inizio_lavorazione"] < commessa.release_date:
                 check = False
             if commessa.ritardo > commessa1["ritardo mossa"]:
                 check = False
@@ -670,7 +670,7 @@ def check_LS(check, commessa1, commessa):
             if commessa.ritardo > commessa1["ritardo mossa"]:
                 check = False
     else: #non tassative
-        if commessa1["fine_lavorazione"] < commessa.release_date:
+        if commessa1["inizio_lavorazione"] < commessa.release_date:
             check = False
         if commessa.ritardo > commessa1["ritardo mossa"]:
             check = False
