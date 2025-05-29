@@ -57,8 +57,9 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
             #print(commessa.ritardo)
         elif veicolo.data_partenza != 0: #commesse interne tassative correttamente inserite in estrazione
             commessa.ritardo = min(veicolo.data_partenza - fine_lavorazione, timedelta(days = 0))
-        else: #commesse interne tassative senza data di partenza / non in estrazione
-            commessa.ritardo = timedelta(days = 0)
+        else: #commesse interne tassative senza data di partenza / non in estrazione; fix temporaneo
+            #commessa.ritardo = timedelta(days = 0)
+            commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
     elif commessa.veicolo != None: #commesse interne zona aperta
         commessa.ritardo = min(max(veicolo.data_partenza,commessa.due_date) - fine_lavorazione, timedelta(days = 0))
     else: #commesse rimanenti (senza veicolo assegnato / gruppo 3)
@@ -155,7 +156,8 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
         elif veicolo.data_partenza != 0: #tassative interne corrette
             ritardomossa = min(veicolo.data_partenza - data_fine_lavorazione, timedelta(days = 0))
         else: #tassative internne  scorrette
-            ritardomossa = timedelta(days = 0)
+            #ritardomossa = timedelta(days = 0)
+            ritardomossa = min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0))
     elif veicolo != None: #interne zona aperta
         ritardomossa = min(max(veicolo.data_partenza,commessa.due_date) - data_fine_lavorazione, timedelta(days = 0))
     else: #altre (serve se la funzione dovesse essere mai chiamata anche su commesse solo su macchina, del gruppo 3)
@@ -659,7 +661,7 @@ def swap_no_delta(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione:
 def check_LS(check, commessa1, commessa):
     if commessa.tassativita == "X": #tassative
         if 0 in commessa.zona_cliente: #tassative esterne
-            if commessa1["inizio_lavorazione"] < commessa.release_date:
+            if commessa1["fine_lavorazione"] < commessa.release_date:
                 check = False
             if commessa.ritardo > commessa1["ritardo mossa"]:
                 check = False
@@ -669,7 +671,7 @@ def check_LS(check, commessa1, commessa):
             if commessa.ritardo > commessa1["ritardo mossa"]:
                 check = False
     else: #non tassative
-        if commessa1["inizio_lavorazione"] < commessa.release_date:
+        if commessa1["fine_lavorazione"] < commessa.release_date:
             check = False
         if commessa.ritardo > commessa1["ritardo mossa"]:
             check = False
@@ -677,95 +679,122 @@ def check_LS(check, commessa1, commessa):
     return check
         
 #GRAFICAZIONE
+import mplcursors
+from matplotlib.text import Annotation
 def grafico_schedulazione(schedulazione):
     """
     :param schedulazione: lista di dizionari che contiene le informazioni relative ad una schedulazione
     :return: plot del grafico relativo alla schedulazione
     """
-    macchine = list(set(schedula["macchina"] for schedula in schedulazione))
+    macchine = list(set(s["macchina"] for s in schedulazione))
     macchine.sort(reverse=True)
-    asse_x_setup = []
-    asse_y_setup = []
-    asse_x_lavorazione = []
-    asse_y_lavorazione = []
-    identificativi_commesse = []
 
-    veicoli = list(set(schedula["veicolo"] for schedula in schedulazione))
-    colori = list(mcolors.TABLEAU_COLORS.values())
-
-    green_shades = [
-            '#006400', '#228B22', '#2E8B57', '#3CB371', '#66CDAA', '#8FBC8F', '#98FB98', '#90EE90'
-        ]
+    veicoli = list(set(s["veicolo"] for s in schedulazione))
+    green_shades = ['#006400', '#228B22', '#2E8B57', '#3CB371', '#66CDAA', '#8FBC8F', '#98FB98', '#90EE90']
     colori_veicoli = {}
     green_index = 0
     for veicolo in veicoli:
-        if veicolo == None:
-            colori_veicoli[veicolo] = '#d9b904'
-        #elif veicolo == "NESSUN VEICOLO (interno)":
-        #    colori_veicoli[veicolo] = 'orange'
-        else:
-            colori_veicoli[veicolo] = green_shades[green_index % len(green_shades)]
+        colori_veicoli[veicolo] = '#d9b904' if veicolo is None else green_shades[green_index % len(green_shades)]
+        if veicolo is not None:
             green_index += 1
 
-    for schedula in schedulazione:
-        asse_x_setup.append((schedula["inizio_setup"], schedula["fine_setup"]))
-        asse_y_setup.append(macchine.index(schedula["macchina"]))
-        asse_x_lavorazione.append((schedula["inizio_lavorazione"], schedula["fine_lavorazione"]))
-        asse_y_lavorazione.append(macchine.index(schedula["macchina"]))
-        identificativi_commesse.append(schedula["commessa"])
+    fig, ax = plt.subplots(figsize=(12, 6))
+    bars = []
+    schedula_by_bar = {}
 
-    for i in range(len(asse_x_setup)):
-        plt.barh(y=asse_y_setup[i], width=asse_x_setup[i][1] - asse_x_setup[i][0],
-                 left=asse_x_setup[i][0], height=0.5, color='red', edgecolor='black')
+    inizi = [s["inizio_setup"] for s in schedulazione] + [s["inizio_lavorazione"] for s in schedulazione]
+    fine = [s["fine_setup"] for s in schedulazione] + [s["fine_lavorazione"] for s in schedulazione]
+    inizio_timeline = min(inizi)
+    fine_timeline = max(fine)
 
-    for i in range(len(asse_x_lavorazione)):
-        veicolo = next(
-            schedula["veicolo"] for schedula in schedulazione if schedula["commessa"] == identificativi_commesse[i])
-        colore = colori_veicoli[veicolo]
-        plt.barh(y=asse_y_lavorazione[i], width=asse_x_lavorazione[i][1] - asse_x_lavorazione[i][0],
-                 left=asse_x_lavorazione[i][0], height=0.5, color=colore, edgecolor='black')
-        plt.text(x=asse_x_lavorazione[i][0] + (asse_x_lavorazione[i][1] - asse_x_lavorazione[i][0]) / 2,
-                 y=asse_y_lavorazione[i], s=identificativi_commesse[i], ha='center', va='center', color='black')
-
-    plt.yticks(range(len(macchine)), macchine)
-    inizi = [schedula["inizio_setup"] for schedula in schedulazione] + [schedula["inizio_lavorazione"] for schedula in schedulazione]
-    fine = [schedula["fine_setup"] for schedula in schedulazione] + [schedula["fine_lavorazione"] for schedula in schedulazione]
-
-    plt.xlim(min(inizi + fine), max(inizi + fine))
-    plt.gca().set_ylim(-0.5, len(macchine) - 0.5)
-    plt.gcf().autofmt_xdate()
-    plt.xlabel('Tempo')
-    plt.ylabel('Macchina')
-    plt.title('Schedulazione')
-
-    # Aggiunta delle fasce di non produzione (15:00 -> 07:00)
-    inizio_timeline = min(inizi + fine)
-    fine_timeline = max(inizi + fine)
+    intervalli_non_produzione = []
     current_time = inizio_timeline.replace(hour=0, minute=0, second=0, microsecond=0)
-
     while current_time < fine_timeline:
-        non_work_start = current_time + timedelta(hours=15)  # 15:00
-        non_work_end = current_time + timedelta(days=1, hours=7)  # 07:00 del giorno dopo
-
-        start = max(non_work_start, inizio_timeline)
-        end = min(non_work_end, fine_timeline)
-
+        np_start = current_time + timedelta(hours=15)
+        np_end = current_time + timedelta(days=1, hours=7)
+        start, end = max(np_start, inizio_timeline), min(np_end, fine_timeline)
         if start < end:
-            plt.axvspan(start, end, color='gray', alpha=0.3, label='Non produzione' if current_time == inizio_timeline else "")
-
+            intervalli_non_produzione.append((start, end))
+            ax.axvspan(start, end, color='gray', alpha=0.3)
         current_time += timedelta(days=1)
 
-    # Creazione della legenda
-    handles = [
-        mpatches.Patch(
-            color=colore,
-            label=f'commessa associata al veicolo {veicolo.nome}' if veicolo is not None and veicolo is not str else 'commessa senza veicolo associato'
-        )
-        for veicolo, colore in colori_veicoli.items()
-    ]
-    handles.append(mpatches.Patch(color='red', label='t setup'))
-    handles.append(mpatches.Patch(color='gray', alpha=0.3, label='Non produzione'))
-    plt.legend(handles=handles, title="Legenda", loc='upper left', bbox_to_anchor=(1, 1))
+    def calcola_durata_netto(start, end, blocchi_np):
+        durata = timedelta(0)
+        cursor = start
+        while cursor < end:
+            prossimo_stop = end
+            for np_start, np_end in blocchi_np:
+                if cursor < np_start < end:
+                    prossimo_stop = min(prossimo_stop, np_start)
+                elif np_start <= cursor < np_end:
+                    cursor = np_end
+                    break
+            else:
+                durata += prossimo_stop - cursor
+                cursor = prossimo_stop
+        return durata
+
+    for s in schedulazione:
+        y = macchine.index(s["macchina"])
+
+        # Setup
+        setup_durata = s["fine_setup"] - s["inizio_setup"]
+        setup_bar = ax.barh(y, setup_durata, left=s["inizio_setup"], height=0.5, color='red', edgecolor='black')[0]
+        bars.append(setup_bar)
+        schedula_by_bar[setup_bar] = {
+            'type': 'setup',
+            'data': s,
+            'durata_netto': calcola_durata_netto(s["inizio_setup"], s["fine_setup"], intervalli_non_produzione)
+        }
+
+        # Lavorazione
+        colore = colori_veicoli[s["veicolo"]]
+        lav_durata = s["fine_lavorazione"] - s["inizio_lavorazione"]
+        lav_bar = ax.barh(y, lav_durata, left=s["inizio_lavorazione"], height=0.5, color=colore, edgecolor='black')[0]
+        bars.append(lav_bar)
+        schedula_by_bar[lav_bar] = {
+            'type': 'lavorazione',
+            'data': s
+        }
+
+    ax.set_yticks(range(len(macchine)))
+    ax.set_yticklabels(macchine)
+    ax.set_xlim(inizio_timeline, fine_timeline)
+    ax.set_ylim(-0.5, len(macchine) - 0.5)
+    fig.autofmt_xdate()
+    ax.set_xlabel('Tempo')
+    ax.set_ylabel('Macchina')
+    ax.set_title('Schedulazione')
+
+    tooltip = Annotation('', xy=(0, 0), xytext=(15, 15), textcoords='offset points',
+                         bbox=dict(boxstyle="round", fc="w", ec="k"),
+                         arrowprops=dict(arrowstyle="->"))
+    tooltip.set_visible(False)
+    ax.add_artist(tooltip)
+
+    def on_motion(event):
+        visibile = False
+        for bar in bars:
+            contains, _ = bar.contains(event)
+            if contains:
+                info = schedula_by_bar[bar]
+                s = info['data']
+                tooltip.xy = (event.xdata, event.ydata)
+                if info['type'] == 'setup':
+                    testo = f"TEMPO DI SETUP\nCommessa: {s['commessa']}\nDurata utile: {info['durata_netto']}"
+                else:
+                    veicolo = s["veicolo"]
+                    nome_veicolo = veicolo.nome if veicolo is not None else "Senza veicolo"
+                    testo = f"Commessa: {s['commessa']}\nVeicolo: {nome_veicolo}"
+                tooltip.set_text(testo)
+                tooltip.set_visible(True)
+                visibile = True
+                break
+        if not visibile:
+            tooltip.set_visible(False)
+        fig.canvas.draw_idle()
+
+    fig.canvas.mpl_connect("motion_notify_event", on_motion)
+
     plt.tight_layout()
-    plt.savefig("PS-VRP/Dati_output/schedulazione.jpg")
     plt.show()
