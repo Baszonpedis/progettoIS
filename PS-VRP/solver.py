@@ -55,7 +55,6 @@ def associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, 
     } for v in lista_veicoli_errati])
     return(df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati)
 
-
 #Aggiorna la schedulazione nell'euristico dopo ogni assegnazione
 #NB: Funzione modificata con l'inclusione del concetto di ritardo
 def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, tempo_processamento, inizio_schedulazione, schedulazione: list, minuti_inizio_lavorazione):
@@ -455,7 +454,7 @@ def move_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: li
     partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli} #dizionario in cui ad ogni veicolo viene associata la sua data di partenza
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione #data in cui inizia la schedulazione
     f_best = f_obj #funzione obiettivo
-    #eps = 0.00001 #parametro per stabilire se il delta è conveniente
+    eps = 0.00001 #parametro per stabilire se il delta è conveniente
     soluzione_move=[] #lista contenente tutte le schedule
 
     #CICLO PRINCIPALE
@@ -472,35 +471,31 @@ def move_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: li
                 for i in range(1,len(schedula)): #scorro tutte le possibili posizioni
                     for j in range(1,len(schedula)): #idem
                         if i!=j: #evito il reinserimento in stessa posizione
-                            delta=math.inf
+                            delta_setup=math.inf
                             ultima_lavorazione = macchina.ultima_lavorazione #imposto la variabile al tempo in cui la macchina diventa disponibile per la prima volta
                             #veicolo_i = schedula[i].veicolo #prendo il veicolo associato alla commessa i
-                            #effettuo il calcolo del delta
-                            """
+                            
                             a=0
-                            if i+1<len(schedula) and j+1<len(schedula) and i+1!=j and i-1!=j and j-1!=i and j+1!=i:
+                            if i+1<len(schedula) and j+1<len(schedula) and i+1!=j and i-1!=j and j-1!=i and j+1!=i: #commesse non consecutive, i e j non in ultima posizione
                                 a=1
-                                delta=macchina.calcolo_tempi_setup(schedula[i-1],schedula[i+1])+macchina.calcolo_tempi_setup(schedula[j-1],schedula[i])+\
+                                delta_setup=macchina.calcolo_tempi_setup(schedula[i-1],schedula[i+1])+macchina.calcolo_tempi_setup(schedula[j-1],schedula[i])+\
                                       macchina.calcolo_tempi_setup(schedula[i],schedula[j]) +\
                                       -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[i],schedula[i+1])+ \
                                       -macchina.calcolo_tempi_setup(schedula[j-1],schedula[j])
 
-                            if i+1==len(schedula) and j+1<len(schedula):
+                            if i+1==len(schedula) and j+1<len(schedula): #commesse non consecutive con i in ultima posizione
                                 #print('if2')
                                 a=2
-                                delta=macchina.calcolo_tempi_setup(schedula[j-1],schedula[i])+macchina.calcolo_tempi_setup(schedula[i],schedula[j])+\
+                                deltasetup=macchina.calcolo_tempi_setup(schedula[j-1],schedula[i])+macchina.calcolo_tempi_setup(schedula[i],schedula[j])+\
                                       -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[j-1],schedula[j])
 
                             if i+1<len(schedula) and j+1==len(schedula) : #commesse non consecutive con j in ultima posizione
                                 #print('if3')
                                 a=3
-                                delta=macchina.calcolo_tempi_setup(schedula[i-1],schedula[i+1])+macchina.calcolo_tempi_setup(schedula[j],schedula[i])+\
+                                delta_setup=macchina.calcolo_tempi_setup(schedula[i-1],schedula[i+1])+macchina.calcolo_tempi_setup(schedula[j],schedula[i])+\
                                       -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[i],schedula[i+1])
-                            #print(delta)
-                            #for s1 in schedula:
-                                #print(s1.id_commessa)
-                            """
-                            if True: #delta<-eps: #se la swap è migliorativo
+                            
+                            if delta_setup<-eps: #se la swap è migliorativo
                                 s=[] #imposto nuova schedula inizialmente vuota
                                 comm_i=schedula[i] #commessa i
                                 #eseguo temporaneamente il move
