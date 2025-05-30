@@ -337,10 +337,10 @@ def euristico_post(soluzione_sequenza, commesse_residue:list, lista_macchine:lis
     lista_macchine = set(lista_macchine2+lista_macchine)
     lista_macchine = list(lista_macchine)
 
-    return soluzionepost, f_obj, fpost_ritardo
+    return soluzionepost, f_obj, int(fpost_ritardo)
 
 ##INSERT INTER-MACCHINA (Ricerca locale 1)
-def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj):
+def insert_inter_macchina(lista_macchine: list, lista_veicoli:list, f_obj):
     partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli}  # dizionario in cui ad ogni veicolo viene associata la sua data di partenza
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # data in cui inizia la schedulazione
     f_best = f_obj  # funzione obiettivo
@@ -351,7 +351,7 @@ def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj):
             #print(lista_macchine[m1].nome_macchina,len(lista_macchine[m1].lista_commesse_processate))
             #print(lista_macchine[m2].nome_macchina,len(lista_macchine[m2].lista_commesse_processate))
             if m1!=m2 and len(lista_macchine[m1].lista_commesse_processate)>2 and len(lista_macchine[m2].lista_commesse_processate)>2:
-                schedula1,schedula2,f_best,contatoreLS1=move_inter_macchina1(lista_macchine[m1],lista_macchine[m2],contatoreLS1,inizio_schedulazione,f_best)
+                schedula1,schedula2,f_best,contatoreLS1=insert_inter_macchina_utility(lista_macchine[m1],lista_macchine[m2],contatoreLS1,inizio_schedulazione,f_best)
                 lista_macchine[m1].lista_commesse_processate=schedula1
                 lista_macchine[m2].lista_commesse_processate=schedula2
     #print('Mosse =',contatore)
@@ -370,8 +370,8 @@ def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj):
     #print(f"Missing commesse len {len(missing)}")
     return soluzione_move,f_best,contatoreLS1
 
-#Usato da move_2_macchine (Ricerca locale 1 - utility)
-def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,contatore:int,inizio_schedulazione,f_best):
+#Usato da insert_inter_macchina (Ricerca locale 1 - utility)
+def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contatore:int,inizio_schedulazione,f_best):
     schedula1=macchina1.lista_commesse_processate #copia profonda della lista di commesse schedulate
     schedula2=macchina2.lista_commesse_processate #copia profonda della lista di commesse schedulate
     eps = 0.00001  # parametro per stabilire se il delta è conveniente
@@ -449,7 +449,7 @@ def move_inter_macchina1(macchina1:Macchina,macchina2:Macchina,contatore:int,ini
     return schedula1,schedula2,f_best,contatore
 
 ##INSERT INTRA-MACCHINA (Ricerca locale 2)
-def move_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
+def insert_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
     """
     :param lista_macchine: lista contenente oggetti macchina
     :param lista_veicoli: lista contenente oggetti veicolo
