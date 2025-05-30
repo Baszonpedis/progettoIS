@@ -15,7 +15,7 @@ class Commessa():
         self.metri_da_tagliare=metri_da_tagliare
         self.kg_da_tagliare=kg_da_tagliare
         self.zona_cliente=zona_cliente
-        self.priorita_cliente=priorita_cliente
+        self.priorita_cliente=priorita_cliente+1 #+1 per evitare divisioni per zero
         #De-commentare a seguito se serve settare priorita_cliente in base alla zona (prioritizzando così "zona zero")
         # if isinstance(zona_cliente, list): #necessario per come viene letto poi in modo diverso nel codice
         #    self.priorita_cliente = 50 if 0 in zona_cliente else priorita_cliente

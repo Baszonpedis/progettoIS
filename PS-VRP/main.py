@@ -90,6 +90,7 @@ print(f"{Fore.YELLOW}Funzione obiettivo LS2 - risparmio: {f2-f_obj3} minuti di s
 print(f"Mosse LS2: {contatoreLS2}")
 output.write_output_soluzione_euristica(soluzione_move, "PS-VRP/Dati_output/insert_intra.xlsx")
 tot2 = time.time() - start_time_move
+solver.grafico_schedulazione(soluzione_move)
 
 # S
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
