@@ -200,6 +200,7 @@ print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (SETUP): {-fpost+f5post} minuti di set
 print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (CONSEGNE): {-f5_ritardo+f4_ritardo + -f4_ritardo+fpost_ritardo} ore di ritardo\n")
 
 print(f"{Fore.GREEN}COMMESSE LETTE CORRETTAMENTE: {len(lista_commesse)}")
+print(f"{Fore.GREEN}COMMESSE ESCLUSE PER ERRORE NELL'ESTRAZIONE VEICOLI: {len(commesse_veicoli_errati)}")
 print(f"{Fore.GREEN}COMMESSE POST FILTRO ZONE E FILTRO VEICOLI (Interne a zona aperta + tassative): {len(commesse_da_schedulare)}")
 print(f"{Fore.GREEN}COMMESSE SCARTATE (RELEGATE A TERZO CICLO): {len(commesse_scartate)}")
 print(f"{Fore.GREEN}COMMESSE CORRETTAMENTE SCHEDULATE SU MACCHINA: {len(soluzione_sequenza_post)}\n")
