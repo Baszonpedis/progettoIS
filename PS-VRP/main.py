@@ -87,7 +87,7 @@ start_time_move = time.time()
 soluzione2, f2, contatoreLS2, f2_ritardo = solver.insert_intra(lista_macchine_copy1, lista_veicoli_copy1, f_obj3, schedulazione3)
 soluzione_move = [b for a in soluzione2 for b in a]
 print(f"{Fore.YELLOW}Risultato LS2 (setup): ottenuto {f2-f_obj3} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS2 (consegna): ottenuto {-f2_ritardo-f_obj3_ritardo} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS2 (consegna): ottenuto {-f2_ritardo+f_obj3_ritardo} ore di ritardo")
 print(f"Mosse LS2: {contatoreLS2}")
 output.write_output_soluzione_euristica(soluzione_move, "PS-VRP/Dati_output/insert_intra.xlsx")
 tot2 = time.time() - start_time_move
@@ -99,7 +99,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS3 (Swap intra-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start_time_swap = time.time()
-soluzione3, f3, contatoreLS3 = solver.swap_intra(lista_macchine_copy, lista_veicoli_copy, f_obj3, schedulazione3)
+soluzione3, f3, contatoreLS3, f3_ritardo = solver.swap_intra(lista_macchine_copy, lista_veicoli_copy, f_obj3, schedulazione3)
 soluzione_swap = [b for a in soluzione3 for b in a]
 print(f"{Fore.YELLOW}Funzione obiettivo LS3: {f3-f_obj3} minuti di setup")
 print(f"Mosse LS3: {contatoreLS3}")
@@ -120,7 +120,7 @@ print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2: {f4-f1} minuti di setup")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2+LS3 (sequenza finale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-soluzione5, f5, contatoreLS3 = solver.swap_intra(lista_macchine_copy2, lista_veicoli_copy2, f4, soluzione_move)
+soluzione5, f5, contatoreLS3, f5_ritardo = solver.swap_intra(lista_macchine_copy2, lista_veicoli_copy2, f4, soluzione_move)
 print(f'Mosse LS1+LS2+LS3: {contatoreLS1+contatoreLS2+contatoreLS3}')
 soluzione_sequenza = [b for a in soluzione5 for b in a]
 print(f"{Fore.YELLOW}Funzione obiettivo LS1+LS2+LS3 : {f5-f4} minuti di setup")
@@ -173,18 +173,20 @@ soluzione4post, f4post, contatoreLS2post, f4_ritardo = solver.insert_intra(lista
 print(f'Mosse LS1+LS2 - post: {contatoreLS1post+contatoreLS2post}')
 soluzione_move_post = [b for a in soluzione4post for b in a]
 solver.grafico_schedulazione(soluzione_move_post)
-print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto: {f4post-f1post} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): ottenuto: {-f4_ritardo-fpost_ritardo} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (setup): ottenuto: {f4post-f1post} minuti di setup")
+print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (consegna): ottenuto: {-f4_ritardo+fpost_ritardo} ore di ritardo")
 
 
 # SEQUENZA COMPLETA
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}LS[LS[G1+G2]+G3] (sequenza finale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-soluzione5post, f5post, contatoreLS3post = solver.swap_intra(lista_macchine_copy2, lista_veicoli_copy2, f4post, soluzione_move_post)
+soluzione5post, f5post, contatoreLS3post, f5_ritardo = solver.swap_intra(lista_macchine_copy2, lista_veicoli_copy2, f4post, soluzione_move_post)
 print(f'Mosse LS1+LS2+LS3 - post: {contatoreLS1post+contatoreLS2post+contatoreLS3post}')
 soluzione_sequenza_post = [b for a in soluzione5post for b in a]
-print(f"{Fore.YELLOW}Risultati LS[LS[G1+G2]+G3]: ottenuto {f5post-f4post} minuti di setup")
+print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (setup): ottenuto {f5post-f4post} minuti di setup")
+print(f'f5 {f5_ritardo}, f4 {f4_ritardo}')
+print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-f5_ritardo+f4_ritardo} ore di ritardo")
 output.write_output_soluzione_euristica(soluzione_sequenza_post, "PS-VRP/Dati_output/sequenza_post.xlsx")
 tot_tot_post = time.time() - start_time_tot_post
 
@@ -194,7 +196,8 @@ print(f"{Fore.MAGENTA}{Style.BRIGHT}RISULTATI FINALI".center(40))
 print(f"{Fore.MAGENTA}{Style.BRIGHT}{'='*40}\n")
 
 print(f"{Fore.YELLOW}RISULTATO FINALE: {f5post-f5+f_obj3} minuti di setup\n")
-print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO: {-fpost+f5post} minuti di setup\n")
+print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (SETUP): {-fpost+f5post} minuti di setup\n")
+print(f"{Fore.YELLOW}RISPARMIO CUMULATIV (CONSEGNE): {-f5_ritardo+f4_ritardo + -f4_ritardo+fpost_ritardo} ore di ritardo\n")
 
 print(f"{Fore.GREEN}COMMESSE LETTE CORRETTAMENTE: {len(lista_commesse)}")
 print(f"{Fore.GREEN}COMMESSE POST FILTRO ZONE E FILTRO VEICOLI (Interne a zona aperta + tassative): {len(commesse_da_schedulare)}")
