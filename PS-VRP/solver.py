@@ -73,7 +73,8 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
     elif commessa.veicolo != None: #commesse interne zona aperta
         commessa.ritardo = min(max(veicolo.data_partenza,commessa.due_date) - fine_lavorazione, timedelta(days = 0))
     else: #commesse rimanenti (senza veicolo assegnato / gruppo 3)
-        commessa.ritardo = timedelta(days = 0) #non hanno ritardo
+        commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0)) 
+        #commessa.ritardo = timedelta(days = 0) #se non si considera il loro ritardo
     schedulazione.append({"commessa": commessa.id_commessa, # dizionario che contiene le informazioni sulla schedula
                           "macchina": macchina.nome_macchina,
                           "minuti setup": tempo_setup,
@@ -172,7 +173,8 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
     elif veicolo != None: #interne zona aperta
         ritardomossa = min(max(veicolo.data_partenza,commessa.due_date) - data_fine_lavorazione, timedelta(days = 0))
     else: #altre (serve se la funzione dovesse essere mai chiamata anche su commesse solo su macchina, del gruppo 3)
-        ritardomossa = timedelta(days = 0)
+        ritardomossa = min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0))
+        #ritardomossa = timedelta(days = 0)
     schedulazione.append({"commessa": id,
                           "macchina": macchina_lavorazione,
                           "minuti setup": tempo_setup,
@@ -202,6 +204,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"] #Commesse tassative interne ed esterne (i.e. veicolo predeterminato e obbligato)
     commesse_da_schedulare = [c for c in commesse_da_schedulare if c not in lista_commesse_tassative]  #Commesse da schedulare non tassative (i.e.commesse schedulabili su veicolo, ergo filtrate, ma non tassative)
     f_obj = 0  #Funzione obiettivo (somma pesata dei tempi di setup)
+    f_obj_ritardo = 0 #Funzione obiettivo ritardi
     schedulazione = []  #Lista di dizionari (le singole schedulazioni)
 
     #Inizializzazione macchine
@@ -230,6 +233,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                 f_obj+=tempo_setup
                 #commessa.veicolo = int(commessa.id_tassativo) #da fare prima dell'aggiornamento
                 aggiorna_schedulazione(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione)
+                f_obj_ritardo+=-(commessa.ritardo.total_seconds()/3600)    
                 lista_commesse_tassative.remove(commessa)
             if schedulazione_eseguita:
                 #print(f'La commessa {commessa.id_commessa} è associata al veicolo {commessa.veicolo} //////////')
@@ -267,6 +271,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                         schedulazione_eseguita=True
                         f_obj+=tempo_setup
                         aggiorna_schedulazione(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione)
+                        f_obj_ritardo+=-(commessa.ritardo.total_seconds()/3600)
                         commesse_da_schedulare.remove(commessa)
                     elif veicolo.capacita < commessa.kg_da_tagliare:
                         causa_fallimento[commessa.id_commessa] = (
@@ -288,15 +293,15 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     #Si ricostituisce la lista delle macchine per future chiamate
     lista_macchine = set(lista_macchine2+lista_macchine)
     lista_macchine = list(lista_macchine)
-
-    return schedulazione, f_obj, causa_fallimento, lista_macchine, commesse_residue
+    return schedulazione, f_obj, causa_fallimento, lista_macchine, commesse_residue, int(f_obj_ritardo)
 
 ##EURISTICO POST (Greedy 2)
-def euristico_post(soluzione_sequenza, commesse_residue:list, lista_macchine:list, commesse_scartate: list, f_obj_base):
+def euristico_post(soluzione_sequenza, commesse_residue:list, lista_macchine:list, commesse_scartate: list, f_obj_base, f_obj_ritardo):
     
     commesse_da_schedulare = commesse_residue + commesse_scartate #Tutte quelle non schedulate per vari motivi nel secondo ciclo + le scartate dal filtro
 
     f_obj = f_obj_base  #Funzione obiettivo (somma pesata dei tempi di setup)
+    fpost_ritardo = f_obj_ritardo
     soluzionepost = soluzione_sequenza #si parte con la schedulazione già effettuata (euristico + ricerche locali)
     lista_macchine2 = []
 
@@ -320,6 +325,7 @@ def euristico_post(soluzione_sequenza, commesse_residue:list, lista_macchine:lis
                 schedulazione_eseguita=True
                 f_obj+=tempo_setup
                 aggiorna_schedulazione(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,soluzionepost,macchina._minuti_fine_ultima_lavorazione)
+                fpost_ritardo+=-(commessa.ritardo.total_seconds()/3600)
                 commesse_da_schedulare.remove(commessa)
             if schedulazione_eseguita:
                 break
@@ -331,7 +337,7 @@ def euristico_post(soluzione_sequenza, commesse_residue:list, lista_macchine:lis
     lista_macchine = set(lista_macchine2+lista_macchine)
     lista_macchine = list(lista_macchine)
 
-    return soluzionepost, f_obj
+    return soluzionepost, f_obj, fpost_ritardo
 
 ##INSERT INTER-MACCHINA (Ricerca locale 1)
 def move_2_macchine(lista_macchine: list, lista_veicoli:list, f_obj):
@@ -455,6 +461,7 @@ def move_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: li
     contatoreLS2=0 #contatore mosse eseguite
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione #data in cui inizia la schedulazione
     f_best = f_obj #funzione obiettivo (dei setup)
+    f_best_ritardo = 0 #funzione obiettivo (dei ritardi)
     eps = 0.00001 #parametro per stabilire se il delta è conveniente
     soluzione_move=[] #lista contenente tutte le schedule
 
@@ -490,14 +497,9 @@ def move_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: li
                                       -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[i],schedula[i+1])
  
                             #Inizializzazioni
-                            delta_ritardo_vecchio = 0
-                            delta_ritardo_nuovo = 0
+                            delta_ritardo = 0
                             s=[] #imposto nuova schedula inizialmente vuota
                             comm_i=schedula[i] #commessa i spostata a j
-
-                            #Calcolo prima del cambiamento del ritardo
-                            for k in range(1,len(schedula)):
-                                delta_ritardo_vecchio += -int(schedula[k].ritardo.total_seconds() // 60) // schedula[k].priorita_cliente
 
                             #Effettuo l'insert
                             schedula.remove(comm_i)
@@ -510,17 +512,14 @@ def move_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: li
                                 return_schedulazione(schedula[k], macchina, tempo_setup_commessa, tempo_processamento_commessa, ultima_lavorazione, inizio_schedulazione, s)
                                 ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
                             for k in range(1,len(s)): #calcolo il ritardo totale della mossa
-                                delta_ritardo_nuovo += -(int(s[k]['ritardo mossa'].total_seconds() // 60)  + int(s[k]['ritardo'].total_seconds() // 60)) // s[k]['priorita']
-                            delta_ritardo = delta_ritardo_nuovo - delta_ritardo_vecchio #calcolo il ritardo della mossa rispetto a prima
+                                delta_ritardo += -(s[k]['ritardo mossa'].total_seconds() / 3600)  +(s[k]['ritardo'].total_seconds() / 3600) // s[k]['priorita']
+                                #delta_ritardo risulterà cumulativamente positivo se i ritardi delle mosse sono cumulativamente > dei ritardi precedenti
 
                             ##CONDIZIONE DI MIGLIORAMENTO
                             delta = calcolo_delta(delta_setup,delta_ritardo) #calcolo della funzione obiettivo della ricerca locale
-                            if delta < -eps:                        
+                            if delta < -eps:
                                 for k in range(1,len(s)): #aggiorno i ritardi per la soluzione ricostruita
                                     s[k]['ritardo'] = s[k]['ritardo mossa']
-                                #if hasattr(schedula, 'ritardomossa'): #aggiorno i ritardi per la lista di commesse processate / oggetti commessa propri
-                                #    for k in range(1,len(schedula)):
-                                #        schedula[k].ritardo = schedula[k].ritardomossa
                                 f_best+=delta_setup #aggiorno funzione obiettivo (dei setup)
                                 macchina_schedula=s #aggiorno le schedule associate alla macchina
                                 contatoreLS2+=1
@@ -537,7 +536,13 @@ def move_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: li
             soluzione_move.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
         else:
             soluzione_move.append(macchina_schedula) #aggiungo la schedula (invariata) della macchina alla lista delle schedule
-    return soluzione_move,f_best,contatoreLS2
+
+    ritardo_totale_ore = 0
+    for macchina_schedula in soluzione_move:
+        for commessa in macchina_schedula:
+            ritardo_ore = (commessa['ritardo'].total_seconds() / 3600)
+            ritardo_totale_ore += ritardo_ore
+    return soluzione_move,f_best,contatoreLS2,int(ritardo_totale_ore)
 
 ##SWAP INTRA-MACCHINA (Ricerca locale 3)
 def swap_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
@@ -674,14 +679,16 @@ def check_LS(check, commessa1, commessa):
     #print(f'tassative: {counter_tass}, tassative interne: {counter_tass_int}, tassative esterne: {counter_tass_ext}, altre: {counter_aliud}')
     return check
 
-def calcolo_delta_ritardo(schedula):
-    if schedula.ritardomossa is not None:
-        for k in range(1,len(schedula)):
-            delta_ritardo = (schedula[k].ritardomossa - schedula[k].ritardo)//schedula[k].priorita
-    else:
-        for k in range(1,len(schedula)):
-            delta_ritardo = (schedula[k].ritardo)//schedula[k].priorita
-    return delta_ritardo
+#def calcolo_delta_ritardo(schedula):
+#    if schedula.ritardomossa is not None:
+#        for k in range(1,len(schedula)):
+#            delta_ritardo = (schedula[k].ritardomossa - schedula[k].ritardo)//schedula[k].priorita
+#            delta_ritardo_non_pesato = (schedula[k].ritardomossa - schedula[k].ritardo)
+#    else:
+#        for k in range(1,len(schedula)):
+#            delta_ritardo = (schedula[k].ritardo)//schedula[k].priorita
+#            delta_ritardo_non_pesato = (schedula[k].ritardomossa - schedula[k].ritardo)
+#    return delta_ritardo, delta_ritardo_non_pesato
 
 def calcolo_delta(delta_setup,delta_ritardo):
     alfa = 0 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
