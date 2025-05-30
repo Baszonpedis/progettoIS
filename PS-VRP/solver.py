@@ -707,7 +707,7 @@ def grafico_schedulazione(schedulazione):
     macchine.sort(reverse=True)
 
     veicoli = list(set(s["veicolo"] for s in schedulazione))
-    green_shades = ['#006400', '#228B22', '#2E8B57', '#3CB371', '#66CDAA', '#8FBC8F', '#98FB98', '#90EE90']
+    green_shades = ['#006400']
     colori_veicoli = {}
     green_index = 0
     for veicolo in veicoli:
