@@ -44,6 +44,8 @@ commesse_non_schedulate = causa_fallimento | dizionario_filtri | commesse_veicol
 print(f"\n{Fore.RED}{Style.BRIGHT}COMMESSE NON SCHEDULATE AL PRIMO EURISTICO (su veicoli): {len(commesse_non_schedulate)}")
 print(f"{Fore.RED}Dettaglio motivi: {commesse_non_schedulate}")
 print(f"\n{Fore.YELLOW}Funzione obiettivo euristico: {f_obj3} minuti di setup\n")
+print(f"\n{Fore.YELLOW}Ritardo cumulato {f_obj3_ritardo} minuti di setup\n")
+
 
 end_time_eur = time.time()
 tot_time_eur = end_time_eur - start_time_eur
@@ -87,7 +89,7 @@ start_time_move = time.time()
 soluzione2, f2, contatoreLS2, f2_ritardo = solver.insert_intra(lista_macchine_copy1, lista_veicoli_copy1, f_obj3, schedulazione3)
 soluzione_move = [b for a in soluzione2 for b in a]
 print(f"{Fore.YELLOW}Risultato LS2 (setup): ottenuto {f2-f_obj3} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS2 (consegna): ottenuto {-f2_ritardo-f_obj3_ritardo} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS2 (consegna): ottenuto {-f2_ritardo} ore di ritardo")
 print(f"Mosse LS2: {contatoreLS2}")
 output.write_output_soluzione_euristica(soluzione_move, "PS-VRP/Dati_output/insert_intra.xlsx")
 tot2 = time.time() - start_time_move
@@ -173,6 +175,7 @@ soluzione4post, f4post, contatoreLS2post, f4_ritardo = solver.insert_intra(lista
 print(f'Mosse LS1+LS2 - post: {contatoreLS1post+contatoreLS2post}')
 soluzione_move_post = [b for a in soluzione4post for b in a]
 solver.grafico_schedulazione(soluzione_move_post)
+output.write_output_soluzione_euristica(soluzione_move_post, "PS-VRP/Dati_output/sequenza_post_int.xlsx")
 print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto: {f4post-f1post} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): ottenuto: {-f4_ritardo-fpost_ritardo} ore di ritardo")
 
