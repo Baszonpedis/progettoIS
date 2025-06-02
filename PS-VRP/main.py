@@ -159,9 +159,16 @@ post_time = time.time() - start_time_post
 ## RICERCHE LOCALI (su secondo euristico)
 
 ## DEEPCOPIES PER RICERCHE LOCALI (seconda fase)
-lista_veicoli_copy = deepcopy(lista_veicoli)
+lista_veicoli_copy = deepcopy(lista_veicoli_copy2)
 lista_macchine_copy = deepcopy(lista_macchine_copy2)
-lista_commesse_copy = deepcopy(lista_commesse)
+lista_commesse_copy = deepcopy(lista_commesse_copy2)
+lista_veicoli_copy1 = deepcopy(lista_veicoli_copy2)
+lista_macchine_copy1 = deepcopy(lista_macchine_copy2)
+lista_commesse_copy1 = deepcopy(lista_commesse_copy2)
+lista_veicoli_copy2 = deepcopy(lista_veicoli_copy2)
+lista_macchine_copy2 = deepcopy(lista_macchine_copy2)
+lista_commesse_copy2 = deepcopy(lista_commesse_copy2)
+
 
 # M2M - Bis
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -183,27 +190,27 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}LS1+LS2[LS[G1+G2]+G3] (sequenza parziale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_tot_post = time.time()
-soluzione4post, f4post, contatoreLS2post, f4_ritardo_post = solver.insert_intra(lista_macchine_copy, lista_veicoli_copy, f1post, soluzione1post)
+soluzione4post, f4post, contatoreLS2post, f4_ritardo_post = solver.insert_intra(lista_macchine_copy1, lista_veicoli_copy1, fpost, soluzionepost)
 print(f'Mosse LS1+LS2 - post: {contatoreLS1post+contatoreLS2post}')
 soluzione_move_post = [b for a in soluzione4post for b in a]
 solver.grafico_schedulazione(soluzione_move_post)
 print(f4_ritardo_post)
 print(f1_ritardo_post)
 output.write_output_soluzione_euristica(soluzione_move_post, "PS-VRP/Dati_output/sequenza_parziale_post.xlsx")
-print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (setup): ottenuto {f4post-f1post} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f4_ritardo_post+f1_ritardo_post} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (setup): ottenuto {f4post-fpost} minuti di setup")
+print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f4_ritardo_post+fpost_ritardo} ore di ritardo")
 
 
 # SEQUENZA COMPLETA
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}LS[LS[G1+G2]+G3] (sequenza finale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-soluzione5post, f5post, contatoreLS3post, f5_ritardo_post = solver.swap_intra(lista_macchine_copy, lista_veicoli_copy, f4post, soluzione_move_post)
+soluzione5post, f5post, contatoreLS3post, f5_ritardo_post = solver.swap_intra(lista_macchine_copy2, lista_veicoli_copy2, fpost, soluzionepost)
 print(f'Mosse LS1+LS2+LS3 - post: {contatoreLS1post+contatoreLS2post+contatoreLS3post}')
 soluzione_sequenza_post = [b for a in soluzione5post for b in a]
-print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (setup): ottenuto {f5post-f4post} minuti di setup")
+print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (setup): ottenuto {f5post-fpost} minuti di setup")
 print(f'f5 {f5_ritardo_post}, f4 {f4_ritardo_post}')
-print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-f5_ritardo_post+f4_ritardo_post} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-f5_ritardo_post+fpost_ritardo} ore di ritardo")
 output.write_output_soluzione_euristica(soluzione_sequenza_post, "PS-VRP/Dati_output/sequenza_post.xlsx")
 tot_tot_post = time.time() - start_time_tot_post
 
@@ -213,8 +220,8 @@ print(f"{Fore.MAGENTA}{Style.BRIGHT}RISULTATI FINALI".center(40))
 print(f"{Fore.MAGENTA}{Style.BRIGHT}{'='*40}\n")
 
 print(f"{Fore.YELLOW}RISULTATO FINALE: {f5post-f5+f_obj3} minuti di setup\n")
-print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (entrambe le ricerche locali) (SETUP): {f5post - fpost + f5 - f3} minuti di setup")
-print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (entrambe le ricerche locali) (CONSEGNE): {-f5_ritardo_post+fpost_ritardo -f5_ritardo+f_obj3_ritardo} ore di ritardo\n")
+#print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (entrambe le ricerche locali) (SETUP): {f5post - fpost + f5 - f3} minuti di setup")
+#print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (entrambe le ricerche locali) (CONSEGNE): {-f5_ritardo_post+fpost_ritardo -f5_ritardo+f_obj3_ritardo} ore di ritardo\n")
 
 print(f"{Fore.GREEN}COMMESSE LETTE CORRETTAMENTE: {len(lista_commesse)}")
 print(f"{Fore.GREEN}COMMESSE ESCLUSE PER ERRORE NELL'ESTRAZIONE VEICOLI: {len(commesse_veicoli_errati)}")
