@@ -74,7 +74,7 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
         commessa.ritardo = min(max(veicolo.data_partenza,commessa.due_date) - fine_lavorazione, timedelta(days = 0))
     else: #commesse rimanenti (senza veicolo assegnato / gruppo 3)
         commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0)) 
-        #commessa.ritardo = timedelta(days = 0) #se non si considera il loro ritardo
+        commessa.ritardo = timedelta(days = 0) #se non si considera il loro ritardo
     schedulazione.append({"commessa": commessa.id_commessa, # dizionario che contiene le informazioni sulla schedula
                           "macchina": macchina.nome_macchina,
                           "minuti setup": tempo_setup,
@@ -139,7 +139,7 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
 
 #Serve a ricostruire le soluzioni nelle ricerche locali
 #NB: Funzione modificata introducento il concetto di ritardo e ritardomossa
-def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, minuti_processamento, minuti_fine_ultima_commessa, inizio_schedulazione, schedulazione):
+def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, minuti_processamento, minuti_fine_ultima_commessa, inizio_schedulazione, schedulazione, tipo):
     id=commessa.id_commessa
     macchina_lavorazione=macchina.nome_macchina
     tempo_setup=minuti_setup
@@ -174,7 +174,7 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
         ritardomossa = min(max(veicolo.data_partenza,commessa.due_date) - data_fine_lavorazione, timedelta(days = 0))
     else: #altre (serve se la funzione dovesse essere mai chiamata anche su commesse solo su macchina, del gruppo 3)
         ritardomossa = min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0))
-        #ritardomossa = timedelta(days = 0)
+        ritardomossa = timedelta(days = 0)
     schedulazione.append({"commessa": id,
                           "macchina": macchina_lavorazione,
                           "minuti setup": tempo_setup,
@@ -271,7 +271,6 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                         schedulazione_eseguita=True
                         f_obj+=tempo_setup
                         aggiorna_schedulazione(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione)
-                        f_obj_ritardo+=-(commessa.ritardo.total_seconds()/3600)
                         commesse_da_schedulare.remove(commessa)
                     elif veicolo.capacita < commessa.kg_da_tagliare:
                         causa_fallimento[commessa.id_commessa] = (
@@ -282,6 +281,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                         f'La commessa non viene schedulata in quanto la lavorazione non finisce in tempo per la partenza veicolo {veicolo.nome}'
                         )
             if schedulazione_eseguita:
+                f_obj_ritardo+=(commessa.ritardo.total_seconds()/3600) 
                 causa_fallimento.pop(commessa.id_commessa, None) #rimuovo la commessa da quelle non schedulate; potrebbe succedere che alcune non siano schedulate subito ma in seguito sì
                 break
         if not schedulazione_eseguita:
@@ -341,34 +341,31 @@ def euristico_post(soluzione_sequenza, commesse_residue:list, lista_macchine:lis
 
 ##INSERT INTER-MACCHINA (Ricerca locale 1)
 def insert_inter_macchina(lista_macchine: list, lista_veicoli:list, f_obj):
-    partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli}  # dizionario in cui ad ogni veicolo viene associata la sua data di partenza
+    #partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli}  # dizionario in cui ad ogni veicolo viene associata la sua data di partenza
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # data in cui inizia la schedulazione
     f_best = f_obj  # funzione obiettivo
     soluzione_move = []  # lista contenente tutte le schedule
     contatoreLS1=0 # contatore mosse insert
+    ritardo_totale_ore = 0
     for m1 in range(len(lista_macchine)):
         for m2 in range(len(lista_macchine)):
             #print(lista_macchine[m1].nome_macchina,len(lista_macchine[m1].lista_commesse_processate))
             #print(lista_macchine[m2].nome_macchina,len(lista_macchine[m2].lista_commesse_processate))
             if m1!=m2 and len(lista_macchine[m1].lista_commesse_processate)>2 and len(lista_macchine[m2].lista_commesse_processate)>2:
-                schedula1,schedula2,f_best,contatoreLS1=insert_inter_macchina_utility(lista_macchine[m1],lista_macchine[m2],contatoreLS1,inizio_schedulazione,f_best)
-                lista_macchine[m1].lista_commesse_processate=schedula1
-                lista_macchine[m2].lista_commesse_processate=schedula2
-    #print('Mosse =',contatore)
+                schedula1,schedula2,f_best,contatoreLS1,ritardo_totale_ore=insert_inter_macchina_utility(lista_macchine[m1],lista_macchine[m2],contatoreLS1,inizio_schedulazione,f_best)
+                lista_macchine[m1].lista_commesse_processate = schedula1
+                lista_macchine[m2].lista_commesse_processate = schedula2
     for m in lista_macchine:
         if len(m.lista_commesse_processate)>1:
             ultima_lavorazione=m.ultima_lavorazione
             for pos in range(1,len(m.lista_commesse_processate)):
                 tempo_setup_commessa=m.calcolo_tempi_setup(m.lista_commesse_processate[pos-1],m.lista_commesse_processate[pos])
                 tempo_processamento_commessa=m.lista_commesse_processate[pos].metri_da_tagliare/m.velocita_taglio_media
-                return_schedulazione(m.lista_commesse_processate[pos],m, tempo_setup_commessa, tempo_processamento_commessa,ultima_lavorazione,inizio_schedulazione,soluzione_move)
+                #ritardo_totale_ore += int(m.lista_commesse_processate[pos].ritardo.total_seconds() / 3600)
+                return_schedulazione(m.lista_commesse_processate[pos],m,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione,inizio_schedulazione,soluzione_move, 0)
                 ultima_lavorazione = ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa
-    #all_output_ids = { entry['commessa'] for entry in soluzione_move }
-    #all_input_ids  = { entry['commessa'] for entry in schedulazione }
-    #missing = all_input_ids - all_output_ids
-    #print(f"Missing commesse: {missing}")
-    #print(f"Missing commesse len {len(missing)}")
-    return soluzione_move,f_best,contatoreLS1
+                print(f'In posizione {pos} sulla macchina {m.nome_macchina} si ha la commessa {m.lista_commesse_processate[pos].id_commessa}, che aggiunge un ritardo di ben {int(m.lista_commesse_processate[pos].ritardo.total_seconds() / 3600)}')
+    return soluzione_move,f_best,contatoreLS1,int(ritardo_totale_ore)
 
 #Usato da insert_inter_macchina (Ricerca locale 1 - utility)
 def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contatore:int,inizio_schedulazione,f_best):
@@ -376,77 +373,105 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
     schedula2=macchina2.lista_commesse_processate #copia profonda della lista di commesse schedulate
     eps = 0.00001  # parametro per stabilire se il delta è conveniente
     improved=False
-    #print(macchina1.nome_macchina,macchina2.nome_macchina)
+    risparmio_tot = 0
     for i in range(1, len(schedula1)):
         for j in range(1, len(schedula2)):
             commessa = schedula1[i]
-            commessa2 = schedula2[j]
+            #commessa2 = schedula2[j]
             #if commessa.tassativita != "X" and commessa2.tassativita != "X"
             if commessa.compatibilita[macchina2.nome_macchina]==1:
                 posizione = j
                 ultima_lavorazione1=macchina1.ultima_lavorazione
                 ultima_lavorazione2=macchina2.ultima_lavorazione
+                delta_setup = math.inf
+
                 if i+1<len(schedula1) and j+1<len(schedula2):
-                    delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])-macchina1.calcolo_tempi_setup(schedula1[i],schedula1[i+1])+\
+                    delta_setup=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])-macchina1.calcolo_tempi_setup(schedula1[i],schedula1[i+1])+\
                         -macchina2.calcolo_tempi_setup(schedula2[j-1],schedula2[j])+\
                         +macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i+1])+\
                         +macchina2.calcolo_tempi_setup(schedula2[j-1],schedula1[i])+macchina2.calcolo_tempi_setup(schedula1[i],schedula2[j])
 
                 if i+1==len(schedula1) and j+1<len(schedula2):
-                    delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])+\
+                    delta_setup=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])+\
                         -macchina2.calcolo_tempi_setup(schedula2[j-1],schedula2[j])+\
                         +macchina2.calcolo_tempi_setup(schedula2[j-1],schedula1[i])+macchina2.calcolo_tempi_setup(schedula1[i],schedula2[j])
 
                 if i+1==len(schedula1) and j+1==len(schedula2):
-                    delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])+ \
+                    delta_setup=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])+ \
                         +macchina2.calcolo_tempi_setup(schedula2[j],schedula1[i])
 
                 if i+1<len(schedula1) and j+1==len(schedula2):
-                    delta=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])-macchina1.calcolo_tempi_setup(schedula1[i],schedula1[i+1])+\
+                    delta_setup=-macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i])-macchina1.calcolo_tempi_setup(schedula1[i],schedula1[i+1])+\
                         +macchina1.calcolo_tempi_setup(schedula1[i-1],schedula1[i+1])+\
                         +macchina2.calcolo_tempi_setup(schedula2[j],schedula1[i])
 
-                if delta<-eps:
-                    s1=[]
-                    s2=[]
-                    copia1=deepcopy(schedula1)
-                    copia2=deepcopy(schedula2)
-                    schedula1.remove(commessa)
-                    if j+1==len(schedula2):
-                        schedula2.append(commessa)
-                    else:
-                        schedula2.insert(posizione,commessa)
+                #Inizializzazioni
+                delta_ritardo = 0
+                s1=[]
+                s2=[]
+                copia1=deepcopy(schedula1)
+                copia2=deepcopy(schedula2)
 
-                    check1=True
-                    for k in range(1,len(schedula1)): #vado a ricostruire la soluzione e la schedula
-                        tempo_setup_commessa=macchina1.calcolo_tempi_setup(schedula1[k-1],schedula1[k])
-                        tempo_processamento_commessa=schedula1[k].metri_da_tagliare/macchina1.velocita_taglio_media
-                        return_schedulazione(schedula1[k],macchina1,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione1,inizio_schedulazione,s1) #ricostruzione 1
-                        ultima_lavorazione1=ultima_lavorazione1+tempo_setup_commessa+tempo_processamento_commessa
-                        check1 = check_LS(check1, s1[-1], schedula1[k]) #check validità schedula 1
+                #Effettuo l'insert
+                schedula1.remove(commessa)
+                if j+1==len(schedula2):
+                    schedula2.append(commessa)
+                else:
+                    schedula2.insert(posizione,commessa)
 
-                    check2 = True
-                    for k in range(1, len(schedula2)):  # vado a ricostruire la soluzione e la schedula
-                        tempo_setup_commessa=macchina2.calcolo_tempi_setup(schedula2[k - 1], schedula2[k]) #ricostruzione 2
-                        tempo_processamento_commessa = schedula2[k].metri_da_tagliare / macchina2.velocita_taglio_media
-                        return_schedulazione(schedula2[k], macchina2, tempo_setup_commessa,tempo_processamento_commessa, ultima_lavorazione2, inizio_schedulazione,s2)
-                        ultima_lavorazione2=ultima_lavorazione2+tempo_setup_commessa+tempo_processamento_commessa
-                        check2 = check_LS(check2, s2[-1], schedula2[k]) #check validità schedula 2
-                    
-                    if check1 and check2:
-                        #print("INSERT = OK")
-                        #print(f'----------------------------------------------------------------------------------------------------------------------------')
-                        improved=True #miglioramento trovato
-                        f_best+=delta #aggiorno funzione obiettivo
-                        contatore+=1
-                    else:
-                        schedula1=copia1
-                        schedula2=copia2
+                #Inizializzazioni
+                delta_ritardo = 0
+                risparmio_tot = 0
+
+                #Calcoli post-insert
+                for k in range(1, len(schedula1)): #ricostruisco soluzione (da schedula ad s)
+                    tempo_setup_commessa=macchina1.calcolo_tempi_setup(schedula1[k-1],schedula1[k])
+                    tempo_processamento_commessa=schedula1[k].metri_da_tagliare/macchina1.velocita_taglio_media
+                    return_schedulazione(schedula1[k],macchina1,tempo_setup_commessa,tempo_processamento_commessa,ultima_lavorazione1,inizio_schedulazione,s1,0) #ricostruzione 1
+                    ultima_lavorazione1=ultima_lavorazione1+tempo_setup_commessa+tempo_processamento_commessa
+                    #check1 = check_LS(check1, s1[-1], schedula1[k]) #check validità schedula 1
+                
+                for k in range(1,len(s1)): #calcolo il ritardo1
+                    delta_ritardo += ((-s1[k]['ritardo mossa'].total_seconds() / 3600)  +(s1[k]['ritardo'].total_seconds() / 3600))
+
+                for k in range(1, len(schedula2)):  # vado a ricostruire la soluzione e la schedula
+                    tempo_setup_commessa=macchina2.calcolo_tempi_setup(schedula2[k - 1], schedula2[k]) #ricostruzione 2
+                    tempo_processamento_commessa = schedula2[k].metri_da_tagliare / macchina2.velocita_taglio_media
+                    return_schedulazione(schedula2[k], macchina2, tempo_setup_commessa,tempo_processamento_commessa, ultima_lavorazione2, inizio_schedulazione,s2,0)
+                    ultima_lavorazione2=ultima_lavorazione2+tempo_setup_commessa+tempo_processamento_commessa
+                    #check2 = check_LS(check2, s2[-1], schedula2[k]) #check validità schedula 2
+                
+                for k in range(1,len(s2)): #calcolo il ritardo2
+                    delta_ritardo += ((-s2[k]['ritardo mossa'].total_seconds() / 3600)  +(s2[k]['ritardo'].total_seconds() / 3600))
+
+                ##CONDIZIONE DI MIGLIORAMENTO
+                delta = math.inf
+                delta = calcolo_delta(delta_setup,delta_ritardo) #calcolo della funzione obiettivo della ricerca locale
+                if delta < -eps:
+                    print(f'ritardo {delta_ritardo}, setup {delta_setup}, delta {delta}, commessa {commessa.id_commessa}, priorita {commessa.priorita_cliente}')
+                    for k in range(1,len(s1)): #aggiorno i ritardi per la soluzione ricostruita
+                        print(f'Viene aggiunta sulla macchina {macchina1} la commessa {schedula1[k].id_commessa}, che ha ritardo {schedula1[k].ritardo} con ritardomossa {s1[k]['ritardo mossa']}')
+                        risparmio_tot += ((s1[k]['ritardo'].total_seconds() - s1[k]['ritardo mossa'].total_seconds()) / 3600) / s1[k]['priorita']
+                        s1[k]['ritardo'] = s1[k]['ritardo mossa']
+                    for k in range(1,len(s2)):
+                        risparmio_tot += ((s2[k]['ritardo'].total_seconds() - s2[k]['ritardo mossa'].total_seconds()) / 3600) / s2[k]['priorita']
+                        s2[k]['ritardo'] = s2[k]['ritardo mossa']
+                    improved=True #miglioramento trovato
+                    f_best+=delta_setup #aggiorno funzione obiettivo
+                    contatore+=1
+                else: #se l'insert non è reputato migliorativo in termini di f.o.
+                    schedula1=copia1
+                    schedula2=copia2
             if improved:
                 break
         if improved:
             break
-    return schedula1,schedula2,f_best,contatore
+    #tot_rit = 0
+    #for k in range(1, len(schedula1)):
+    #    tot_rit += int(schedula1[k].ritardo.total_seconds() / 3600)
+    #for k in range(1, len(schedula2)):
+    #    tot_rit += int(schedula2[k].ritardo.total_seconds() / 3600)
+    return schedula1, schedula2, f_best,contatore, risparmio_tot
 
 ##INSERT INTRA-MACCHINA (Ricerca locale 2)
 def insert_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
@@ -467,7 +492,8 @@ def insert_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: 
     #CICLO PRINCIPALE
     for macchina in lista_macchine: #per ogni macchina
         macchina_schedula=[s for s in schedulazione if s['macchina']==macchina.nome_macchina] #vado a prendere tutte le schedule ad essa associate
-        schedula=macchina.lista_commesse_processate #copia semplice della lista di commesse schedulate
+        schedula_original=macchina.lista_commesse_processate
+        schedula = deepcopy(schedula_original)
         improved = True #variabile booleana che indica se è stato trovato un miglioramento
         if len(schedula)>=3: #se ho sufficienti elementi nella lista per effettuare un insert
             while improved: #finchè trovo miglioramenti continuo
@@ -508,24 +534,26 @@ def insert_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: 
                             for k in range(1, len(schedula)): #ricostruisco soluzione (da schedula ad s)
                                 tempo_setup_commessa = macchina.calcolo_tempi_setup(schedula[k - 1], schedula[k])
                                 tempo_processamento_commessa = schedula[k].metri_da_tagliare / macchina.velocita_taglio_media
-                                return_schedulazione(schedula[k], macchina, tempo_setup_commessa, tempo_processamento_commessa, ultima_lavorazione, inizio_schedulazione, s)
+                                return_schedulazione(schedula[k], macchina, tempo_setup_commessa, tempo_processamento_commessa, ultima_lavorazione, inizio_schedulazione, s,0)
                                 ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
                             for k in range(1,len(s)): #calcolo il ritardo totale della mossa
-                                delta_ritardo += -(s[k]['ritardo mossa'].total_seconds() / 3600)  +(s[k]['ritardo'].total_seconds() / 3600) // s[k]['priorita']
+                                delta_ritardo += (-(s[k]['ritardo mossa'].total_seconds() / 3600)  +(s[k]['ritardo'].total_seconds() / 3600)) / s[k]['priorita']
                                 #delta_ritardo risulterà cumulativamente positivo se i ritardi delle mosse sono cumulativamente > dei ritardi precedenti
 
                             ##CONDIZIONE DI MIGLIORAMENTO
+                            delta = math.inf
                             delta = calcolo_delta(delta_setup,delta_ritardo) #calcolo della funzione obiettivo della ricerca locale
                             if delta < -eps:
+                                print(f'ritardo {delta_ritardo}, setup {delta_setup}, delta {delta}, commessa {schedula[i].id_commessa}, priorita {schedula[i].priorita_cliente}')
                                 for k in range(1,len(s)): #aggiorno i ritardi per la soluzione ricostruita
                                     s[k]['ritardo'] = s[k]['ritardo mossa']
+                                    schedula[k].ritardo = s[k]['ritardo']
                                 f_best+=delta_setup #aggiorno funzione obiettivo (dei setup)
                                 macchina_schedula=s #aggiorno le schedule associate alla macchina
                                 contatoreLS2+=1
                                 improved = True  
-                            else: #se lo swap non è reputato migliorativo in termini di f.o.
-                                schedula.remove(comm_i)
-                                schedula.insert(i,comm_i)
+                            else: #se l'insert non è reputato migliorativo in termini di f.o.
+                                schedula = schedula_original
                         if improved:
                             break
                     if improved:
@@ -561,7 +589,8 @@ def swap_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: li
 
     for macchina in lista_macchine: #per ogni macchina
         macchina_schedula=[s for s in schedulazione if s['macchina']==macchina.nome_macchina] #vado a prendere tutte le schedule ad essa associate
-        schedula=macchina.lista_commesse_processate #copia profonda della lista di commesse schedulate
+        schedula_original=macchina.lista_commesse_processate #copia profonda della lista di commesse schedulate
+        schedula = deepcopy(schedula_original)
         improved = True #variabile booleana che indica se è stato trovato un miglioramento
         if len(schedula)>=3: #se ho sufficienti elementi nella lista per effettuare uno swap
             while improved: #finchè trovo miglioramenti continuo
@@ -606,25 +635,26 @@ def swap_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: li
                         for k in range(1, len(schedula)): #ricostruisco soluzione (da schedula ad s)
                             tempo_setup_commessa = macchina.calcolo_tempi_setup(schedula[k - 1], schedula[k])
                             tempo_processamento_commessa = schedula[k].metri_da_tagliare / macchina.velocita_taglio_media
-                            return_schedulazione(schedula[k], macchina, tempo_setup_commessa, tempo_processamento_commessa, ultima_lavorazione, inizio_schedulazione, s)
+                            return_schedulazione(schedula[k], macchina, tempo_setup_commessa, tempo_processamento_commessa, ultima_lavorazione, inizio_schedulazione, s,0)
                             ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
                         for k in range(1,len(s)): #calcolo il ritardo totale della mossa
-                            delta_ritardo += -(s[k]['ritardo mossa'].total_seconds() / 3600)  +(s[k]['ritardo'].total_seconds() / 3600) // s[k]['priorita']
-                            ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
+                            delta_ritardo += (-(s[k]['ritardo mossa'].total_seconds() / 3600)  +(s[k]['ritardo'].total_seconds() / 3600)) / s[k]['priorita']
     
                         ##CONDIZIONE DI MIGLIORAMENTO
+                        delta = math.inf
                         delta = calcolo_delta(delta_setup,delta_ritardo) #calcolo della funzione obiettivo della ricerca locale
                         if delta < -eps:
+                            print(f'ritardo {delta_ritardo}, setup {delta_setup}, delta {delta}, commessa {schedula[i].id_commessa}, priorita {schedula[i].priorita_cliente}')
                             for k in range(1,len(s)): #aggiorno i ritardi per la soluzione ricostruita
                                 s[k]['ritardo'] = s[k]['ritardo mossa']
+                                #schedula[k].ritardo = s[k]['ritardo']
                             f_best+=delta_setup #aggiorno funzione obiettivo (dei setup)
                             macchina_schedula=s #aggiorno le schedule associate alla macchina
                             contatoreLS3+=1
                             improved = True  
                         else:
                             #se lo swap non è ammissibile torno indietro annullando lo scambio
-                            schedula[i]=comm_i
-                            schedula[j]=comm_j
+                            schedula=schedula_original
                     if improved:
                         break
                 if improved:
