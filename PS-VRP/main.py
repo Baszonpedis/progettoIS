@@ -78,7 +78,7 @@ soluzione1, f1, contatoreLS1, f1_risparmio = solver.insert_inter_macchina(lista_
 f1_ritardo = f_obj3_ritardo - f1_risparmio
 print(f"{Fore.YELLOW}Risultato LS1 (setup): ottenuto {f1-f_obj3} minuti di setup")
 print(f'f1 {f1_risparmio}, f3 {f_obj3_ritardo}')
-print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {f1_risparmio} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-f1_risparmio} ore di ritardo")
 print(f"Mosse LS1: {contatoreLS1}")
 output.write_output_soluzione_euristica(soluzione1, "PS-VRP/Dati_output/insert_inter.xlsx")
 tot1 = time.time() - start1
@@ -91,10 +91,10 @@ print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS2 (Insert intra-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start_time_move = time.time()
-soluzione2, f2, contatoreLS2, f2_ritardo = solver.insert_intra(lista_macchine_copy1, lista_veicoli_copy1, f_obj3, schedulazione3)
+soluzione2, f2, contatoreLS2, f2_risparmio = solver.insert_intra(lista_macchine_copy1, lista_veicoli_copy1, f_obj3, schedulazione3)
 soluzione_move = [b for a in soluzione2 for b in a]
 print(f"{Fore.YELLOW}Risultato LS2 (setup): ottenuto {f2-f_obj3} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS2 (consegna): ottenuto {-f2_ritardo+f_obj3_ritardo} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS2 (consegna): ottenuto {-f2_risparmio} ore di ritardo")
 print(f"Mosse LS2: {contatoreLS2}")
 output.write_output_soluzione_euristica(soluzione_move, "PS-VRP/Dati_output/insert_intra.xlsx")
 tot2 = time.time() - start_time_move
@@ -190,7 +190,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}LS1+LS2[LS[G1+G2]+G3] (sequenza parziale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_tot_post = time.time()
-soluzione4post, f4post, contatoreLS2post, f4_ritardo_post = solver.insert_intra(lista_macchine_copy1, lista_veicoli_copy1, fpost, soluzionepost)
+soluzione4post, f4post, contatoreLS2post, f4_ritardo_post = solver.insert_intra(lista_macchine_copy, lista_veicoli_copy, fpost, soluzionepost)
 print(f'Mosse LS1+LS2 - post: {contatoreLS1post+contatoreLS2post}')
 soluzione_move_post = [b for a in soluzione4post for b in a]
 solver.grafico_schedulazione(soluzione_move_post)
@@ -205,7 +205,7 @@ print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f4_r
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}LS[LS[G1+G2]+G3] (sequenza finale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-soluzione5post, f5post, contatoreLS3post, f5_ritardo_post = solver.swap_intra(lista_macchine_copy2, lista_veicoli_copy2, fpost, soluzionepost)
+soluzione5post, f5post, contatoreLS3post, f5_ritardo_post = solver.swap_intra(lista_macchine_copy, lista_veicoli_copy, fpost, soluzionepost)
 print(f'Mosse LS1+LS2+LS3 - post: {contatoreLS1post+contatoreLS2post+contatoreLS3post}')
 soluzione_sequenza_post = [b for a in soluzione5post for b in a]
 print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (setup): ottenuto {f5post-fpost} minuti di setup")
