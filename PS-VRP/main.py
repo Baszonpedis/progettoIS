@@ -201,11 +201,18 @@ output.write_output_soluzione_euristica(soluzione_move_post, "PS-VRP/Dati_output
 print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (setup): ottenuto {f4post-f1post} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f4_ritardo_post+f1_ritardo_post} ore di ritardo")
 
+# APPIATTIMENTO SOLUZIONE4POST PER RENDERLA LEGGIBILE ALLO SWAP FINALE
+schedulazione_flat = [job_dict 
+                      for sched_macchina in soluzione4post 
+                      for job_dict in sched_macchina]
+
 # SEQUENZA COMPLETA
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}LS[LS[G1+G2]+G3] (sequenza finale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-soluzione5post, f5post, contatoreLS3post, f5_ritardo_post = solver.swap_intra(lista_macchine_copy, lista_veicoli_copy, f4post, soluzione4post)
+soluzione5post, f5post, contatoreLS3post, f5_ritardo_post = solver.swap_intra(lista_macchine_copy, lista_veicoli_copy, f4post, schedulazione_flat)
+print(f5post)
+print(f4post)
 print(f'Mosse LS1+LS2+LS3 - post: {contatoreLS1post+contatoreLS2post+contatoreLS3post}')
 soluzione_sequenza_post = [b for a in soluzione5post for b in a]
 print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (setup): ottenuto {f5post-f4post} minuti di setup")
@@ -222,7 +229,7 @@ print(f"{Fore.MAGENTA}{Style.BRIGHT}{'='*40}\n")
 #print(f"{Fore.YELLOW}RISULTATO FINALE: {f5post-f5+f_obj3} minuti di setup\n")
 #print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (entrambe le ricerche locali) (SETUP): {f5post - fpost + f5 - f3} minuti di setup")
 #print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (entrambe le ricerche locali) (CONSEGNE): {-f5_ritardo_post+fpost_ritardo -f5_ritardo+f_obj3_ritardo} ore di ritardo\n")
-print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (sole seconde ricerche locali) (SETUP): {f5post - fpost} ore di ritardo\n")
+print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (sole seconde ricerche locali) (SETUP): {f5post - fpost} minuti di setup\n")
 print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (sole seconde ricerche locali) (CONSEGNE): {-f5_ritardo_post+fpost_ritardo} ore di ritardo\n")
 
 print(f"{Fore.GREEN}COMMESSE LETTE CORRETTAMENTE: {len(lista_commesse)}")

@@ -512,147 +512,99 @@ def insert_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: 
     soluzione_move=[] #lista contenente tutte le schedule
 
     #CICLO PRINCIPALE
-    for macchina in lista_macchine: #per ogni macchina
-        macchina_schedula=[s for s in schedulazione if s['macchina']==macchina.nome_macchina] #vado a prendere tutte le schedule ad essa associate
-        schedula_original=macchina.lista_commesse_processate
+    for macchina in lista_macchine:
+        macchina_schedula = [s for s in schedulazione if s['macchina'] == macchina.nome_macchina]
+        schedula_original = macchina.lista_commesse_processate
         schedula = deepcopy(schedula_original)
-        improved = True #variabile booleana che indica se è stato trovato un miglioramento
-        if len(schedula)>=3: #se ho sufficienti elementi nella lista per effettuare un insert
-            while improved: #finchè trovo miglioramenti continuo
-                improved=False #imposto subito la variabile boolena a False, così se non trovo miglioramenti esco dal ciclo
-                for i in range(1,len(schedula)): #scorro tutte le possibili posizioni
-                    for j in range(1,len(schedula)): #idem
-                        if i!=j: #evito il reinserimento in stessa posizione
-                            delta_setup=math.inf
-                            ultima_lavorazione = macchina.ultima_lavorazione #imposto la variabile al tempo in cui la macchina diventa disponibile per la prima volta
-                            if (i<j and i+1!=j and j+1<len(schedula)) or (i>j and j+1!=i and i+1<len(schedula)):
-                                delta_setup=macchina.calcolo_tempi_setup(schedula[i-1],schedula[i+1])+macchina.calcolo_tempi_setup(schedula[j-1],schedula[i])+\
-                                      macchina.calcolo_tempi_setup(schedula[i],schedula[j]) +\
-                                      -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[i],schedula[i+1])+ \
-                                      -macchina.calcolo_tempi_setup(schedula[j-1],schedula[j])
+        improved = True
 
-                            if i<j and i+1==j and j+1<len(schedula):
-                                delta_setup=macchina.calcolo_tempi_setup(schedula[i-1],schedula[j])+macchina.calcolo_tempi_setup(schedula[j],schedula[i])+ \
-                                      macchina.calcolo_tempi_setup(schedula[i], schedula[j+1])+\
-                                      -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[i],schedula[j])+ \
-                                      -macchina.calcolo_tempi_setup(schedula[j], schedula[j+1])
+        if len(schedula) >= 3:
+            while improved:
+                improved = False
 
-                            if i<j and i+1!=j and j+1==len(schedula) : #commesse non consecutive con j in ultima posizione
-                                delta_setup=macchina.calcolo_tempi_setup(schedula[i-1],schedula[i+1])+macchina.calcolo_tempi_setup(schedula[j],schedula[i])+\
-                                      -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[i],schedula[i+1])
+                for i in range(1, len(schedula)):
+                    for j in range(1, len(schedula)):
+                        if i == j:
+                            continue
 
-                            if i<j and i+1==j and j+1==len(schedula) : #commesse non consecutive con j in ultima posizione
-                                delta_setup=macchina.calcolo_tempi_setup(schedula[i-1],schedula[j])+macchina.calcolo_tempi_setup(schedula[j],schedula[i])+\
-                                      -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[i],schedula[j])
+                        #---- NB: si sono tolte le casistiche come invece in swap per complicazioni varie
+                        #-------- nel calcolo
+                        # 1) Costruzione seq_before come copia superficiale di schedula
+                        seq_before = schedula[:]  # copia superficiale sufficiente
 
-                            if i>j and j+1==i and i+1<len(schedula):
-                                delta_setup=macchina.calcolo_tempi_setup(schedula[j-1],schedula[i])+macchina.calcolo_tempi_setup(schedula[i],schedula[j])+ \
-                                      macchina.calcolo_tempi_setup(schedula[j], schedula[i+1])+\
-                                      -macchina.calcolo_tempi_setup(schedula[j-1],schedula[j])-macchina.calcolo_tempi_setup(schedula[j],schedula[i])+ \
-                                      -macchina.calcolo_tempi_setup(schedula[i], schedula[i+1])
+                        # 2) Calcolo setup_before come float (per compatibilità con calcolo_tempi_setup)
+                        setup_before = 0.0
+                        for k in range(1, len(seq_before)):
+                            setup_before += macchina.calcolo_tempi_setup(
+                                seq_before[k-1],
+                                seq_before[k]
+                            )
 
-                            if i>j and j+1!=i and i+1==len(schedula) : #commesse non consecutive con j in ultima posizione
-                                delta_setup=macchina.calcolo_tempi_setup(schedula[j-1],schedula[i])+macchina.calcolo_tempi_setup(schedula[i],schedula[j])+\
-                                      -macchina.calcolo_tempi_setup(schedula[i-1],schedula[i])-macchina.calcolo_tempi_setup(schedula[j-1],schedula[j])
+                        # 3) Simulazione dell'insert in seq_after
+                        seq_after = seq_before[:]   # clono
+                        job_i    = seq_after.pop(i) # tolgo l’elemento da i
+                        seq_after.insert(j, job_i) # lo inserisco in j
 
-                            if i>j and j+1==i and i+1==len(schedula) : #commesse non consecutive con j in ultima posizione
-                                delta_setup=macchina.calcolo_tempi_setup(schedula[j-1],schedula[i])+macchina.calcolo_tempi_setup(schedula[i],schedula[j])+\
-                                      -macchina.calcolo_tempi_setup(schedula[j-1],schedula[j])-macchina.calcolo_tempi_setup(schedula[j],schedula[i])
+                        # 4) Calcolo setup_after come float (similmente a prima, per compatibilità)
+                        setup_after = 0.0
+                        for k in range(1, len(seq_after)):
+                            setup_after += macchina.calcolo_tempi_setup(
+                                seq_after[k-1],
+                                seq_after[k]
+                            )
 
-                            """if i+1 == j == len(schedula)-1:
-                              delta_setup = macchina.calcolo_tempi_setup(schedula[i-1], schedula[j]) \
-                                + macchina.calcolo_tempi_setup(schedula[j], schedula[i]) \
-                                - macchina.calcolo_tempi_setup(schedula[i-1], schedula[i]) \
-                                - macchina.calcolo_tempi_setup(schedula[i], schedula[j])"""""
-                            """if i==1 and j==2:
-                                print("CASO RARO")
-                                print(f'i {i}, j {j}')
-                                A = schedula[i - 1]
-                                X = schedula[i]
-                                Y = schedula[j]
-                                B = schedula[i + 1]
+                        # 5) Calcolo di delta_setup
+                        delta_setup = setup_after - setup_before
 
-                                delta_setup = (
-                                    macchina.calcolo_tempi_setup(A, Y)
-                                    + macchina.calcolo_tempi_setup(Y, X)
-                                    + macchina.calcolo_tempi_setup(X, B)
-                                    - macchina.calcolo_tempi_setup(A, X)
-                                    - macchina.calcolo_tempi_setup(X, Y)
-                                    - macchina.calcolo_tempi_setup(Y, B)
-                                )
-                            if i==2 and j==1:
-                                print("CASO RARO 2")
-                                print(f'i {i}, j {j}')
-                                A = schedula[j - 1]  # schedula[0]
-                                X = schedula[i]      # schedula[2]
-                                Y = schedula[j]      # schedula[1]
-                                B = schedula[i + 1]  # schedula[3]
+                        # Ricostruzione di ‘s’ e calcolo di delta_ritardo
+                        ultima_lavorazione = macchina.ultima_lavorazione
+                        s = []
+                        for k in range(1, len(seq_after)):
+                            tempo_setup_commessa = macchina.calcolo_tempi_setup(
+                                seq_after[k-1],
+                                seq_after[k]
+                            )
+                            tempo_processamento_commessa = seq_after[k].metri_da_tagliare / macchina.velocita_taglio_media
+                            return_schedulazione(
+                                seq_after[k], macchina,
+                                tempo_setup_commessa,
+                                tempo_processamento_commessa,
+                                ultima_lavorazione,
+                                inizio_schedulazione,
+                                s, 0
+                            )
+                            ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
 
-                                delta_setup = (
-                                macchina.calcolo_tempi_setup(A, X)
-                                + macchina.calcolo_tempi_setup(X, Y)
-                                + macchina.calcolo_tempi_setup(Y, B)
-                                - macchina.calcolo_tempi_setup(A, Y)
-                                - macchina.calcolo_tempi_setup(Y, X)
-                                - macchina.calcolo_tempi_setup(X, B)
-                                )"""
-                            #Inizializzazioni
-                            delta_ritardo = timedelta(days = 0)
-                            #risparmio_tot = timedelta(days=0)
-                            s=[] #imposto nuova schedula inizialmente vuota
-                            comm_i=schedula[i] #commessa i spostata a j
+                        delta_ritardo = timedelta(days=0)
+                        for k in range(1, len(s)):
+                            delta_ritardo += (-s[k]['ritardo mossa'] + s[k]['ritardo']) / s[k]['priorita']
 
-                            #Effettuo l'insert
-                            #schedula.remove(comm_i)
-                            #schedula.insert(j,comm_i)
-                            if j > i:
-                                schedula.remove(comm_i)
-                                schedula.insert(j-1,comm_i)
-                            else:
-                                schedula.remove(comm_i)
-                                schedula.insert(j,comm_i)
-
-                            #Calcoli post-insert
-                            for k in range(1, len(schedula)): #ricostruisco soluzione (da schedula ad s)
-                                tempo_setup_commessa = macchina.calcolo_tempi_setup(schedula[k - 1], schedula[k])
-                                tempo_processamento_commessa = schedula[k].metri_da_tagliare / macchina.velocita_taglio_media
-                                return_schedulazione(schedula[k], macchina, tempo_setup_commessa, tempo_processamento_commessa, ultima_lavorazione, inizio_schedulazione, s,0)
-                                ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
-                            for k in range(1,len(s)): #calcolo il ritardo totale della mossa
-                                delta_ritardo += (-s[k]['ritardo mossa']  +(s[k]['ritardo'])) / s[k]['priorita']
-                                #delta_ritardo risulterà cumulativamente positivo se i ritardi delle mosse sono cumulativamente > dei ritardi precedenti
-
-                            ##CONDIZIONE DI MIGLIORAMENTO
-                            delta = math.inf
-                            delta = calcolo_delta(delta_setup,delta_ritardo) #calcolo della funzione obiettivo della ricerca locale
-                            if delta < -eps:
-                                print(f'ritardo {delta_ritardo}, setup {delta_setup}, delta {delta}, commessa {schedula[i].id_commessa}, priorita {schedula[i].priorita_cliente}')
-                                for k in range(1,len(s)): #aggiorno i ritardi per la soluzione ricostruita
-                                    #risparmio_tot += (s[k]['ritardo'] - s[k]['ritardo mossa'])
-                                    s[k]['ritardo'] = s[k]['ritardo mossa']
-                                f_best+=delta_setup #aggiorno funzione obiettivo (dei setup)
-                                #macchina.lista_commesse_processate = schedula
-                                macchina_schedula=s #aggiorno le schedule associate alla macchina
-                                contatoreLS2+=1
-                                improved = True  
-                            else: #se l'insert non è reputato migliorativo in termini di f.o.
-                                schedula = schedula_original
-                        if improved:
+                        # Condizione di miglioramento
+                        delta = calcolo_delta(delta_setup, delta_ritardo)
+                        if delta < -eps:
+                            # Se è migliorativo, accetto seq_after come nuova schedula “di riferimento”
+                            print(f'[INSERT MIGLIORATIVO] delta_setup={delta_setup}, delta_ritardo={delta_ritardo}, delta_tot={delta}')
+                            for k in range(1, len(s)):
+                                s[k]['ritardo'] = s[k]['ritardo mossa']
+                            f_best += delta_setup
+                            macchina_schedula = s
+                            # AGGIORNO LA “BASE” PER LE ITERAZIONI SUCCESSIVE
+                            schedula = seq_after[:]                # sequenza oggettiva di commesse
+                            schedula_original = deepcopy(schedula)  # riferimento per rollback
+                            contatoreLS2 += 1
+                            improved = True
                             break
                     if improved:
                         break
-                if improved:
-                    break
-            soluzione_move.append(macchina_schedula) #aggiungo la schedula della macchina alla lista delle schedule
+            soluzione_move.append(macchina_schedula)
         else:
-            soluzione_move.append(macchina_schedula) #aggiungo la schedula (invariata) della macchina alla lista delle schedule
+            soluzione_move.append(macchina_schedula)
 
-    ritardo_totale_ore = timedelta(days = 0)
+    ritardo_totale_ore = timedelta(days=0)
     for macchina_schedula in soluzione_move:
         for commessa in macchina_schedula:
-            ritardo_ore = (commessa['ritardo'])
-            ritardo_totale_ore += ritardo_ore
-    return soluzione_move,f_best,contatoreLS2,ritardo_totale_ore
+            ritardo_totale_ore += commessa['ritardo']
+    return soluzione_move, f_best, contatoreLS2, ritardo_totale_ore
 
 ##SWAP INTRA-MACCHINA (Ricerca locale 3)
 def swap_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: list):
@@ -789,7 +741,7 @@ def check_LS(check, commessa1, commessa):
 #    return delta_ritardo, delta_ritardo_non_pesato
 
 def calcolo_delta(delta_setup,delta_ritardo):
-    alfa = 1 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
+    alfa = 0.1 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
     delta_ritardo = delta_ritardo.total_seconds()/3600
     delta = alfa*delta_setup+(1-alfa)*delta_ritardo
     return delta
