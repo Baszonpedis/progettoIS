@@ -53,11 +53,8 @@ tot_time_eur = end_time_eur - start_time_eur
 solver.grafico_schedulazione(schedulazione3)
 
 ## DEEPCOPIES PER RICERCHE LOCALI (prima fase)
-lista_veicoli_copy = deepcopy(lista_veicoli)
 lista_macchine_copy = deepcopy(lista_macchine)
-lista_veicoli_copy1 = deepcopy(lista_veicoli)
 lista_macchine_copy1 = deepcopy(lista_macchine)
-lista_veicoli_copy2 = deepcopy(lista_veicoli)
 lista_macchine_copy2 = deepcopy(lista_macchine)
 
 ## RICERCHE LOCALI (su primo euristico)
@@ -79,7 +76,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS1 (Insert inter-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start1 = time.time()
-soluzione1, f1, contatoreLS1, f1_ritardo = solver.insert_inter_macchina(lista_macchine_copy, lista_veicoli_copy, f_obj3)
+soluzione1, f1, contatoreLS1, f1_ritardo = solver.insert_inter_macchina(lista_macchine_copy, f_obj3)
 print(f1)
 print(f"{Fore.YELLOW}Risultato LS1 (setup): ottenuto {f1-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-f1_ritardo + f_obj3_ritardo} ore di ritardo")
@@ -103,7 +100,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS2 (Insert intra-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start_time_move = time.time()
-soluzione2, f2, contatoreLS2, f2_ritardo = solver.insert_intra(lista_macchine_copy1, lista_veicoli_copy1, f_obj3, schedulazione3)
+soluzione2, f2, contatoreLS2, f2_ritardo = solver.insert_intra(lista_macchine_copy1, f_obj3)
 #soluzione_move = [b for a in soluzione2 for b in a]
 print(f2)
 print(f"{Fore.YELLOW}Risultato LS2 (setup): ottenuto {f2-f_obj3} minuti di setup")
@@ -119,7 +116,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS3 (Swap intra-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start_time_swap = time.time()
-soluzione3, f3, contatoreLS3, f3_ritardo = solver.swap_intra(lista_macchine_copy2, lista_veicoli_copy2, f_obj3, schedulazione3)
+soluzione3, f3, contatoreLS3, f3_ritardo = solver.swap_intra(lista_macchine_copy2, f_obj3)
 print(f3)
 #soluzione_swap = [b for a in soluzione3 for b in a]
 print(f"{Fore.YELLOW}Risultato LS3 (setup): ottenuto {f3-f_obj3} minuti di setup")
@@ -167,11 +164,6 @@ ritardo1 = -f1_ritardo.total_seconds()/3600
 ritardo2 = -f2_ritardo.total_seconds()/3600
 ritardo3 = -f3_ritardo.total_seconds()/3600
 
-print(ritardo1)
-print(ritardo2)
-print(ritardo3)
-
-
 if (a*f1+(1-a)*ritardo1) < (a*f2+(1-a)*ritardo2) and (a*f1+(1-a)*ritardo1) < (a*f3+(1-a)*ritardo3):
     print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> INSERT INTER')
     fprimo = f1
@@ -201,14 +193,13 @@ output.write_output_soluzione_euristica(soluzionepost, "PS-VRP/Dati_output/euris
 solver.grafico_schedulazione(soluzionepost)
 post_time = time.time() - start_time_post
 
-
-## RICERCHE LOCALI (su secondo euristico)
-
 ## DEEPCOPIES PER RICERCHE LOCALI (seconda fase)
 lista_macchine_copy3 = deepcopy(macchine_post)
 lista_macchine_copy4 = deepcopy(macchine_post)
 lista_macchine_copy5 = deepcopy(macchine_post)
 
+
+## RICERCHE LOCALI (su secondo euristico)
 
 # M2M - Bis
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -216,7 +207,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}LS1[G3] (Insert inter-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start1_post = time.time()
-soluzione1post, f1post, contatoreLS1post, f1_ritardo_post = solver.insert_inter_macchina(lista_macchine_copy3, lista_veicoli_copy, fpost)
+soluzione1post, f1post, contatoreLS1post, f1_ritardo_post = solver.insert_inter_macchina(lista_macchine_copy3, fpost)
 print(f1post)
 print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (setup): ottenuto {f1post-fpost} minuti di setup")
 print(f1_ritardo_post)
@@ -230,7 +221,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}Insert Intra Bis")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_tot_post = time.time()
-soluzione2post, f2post, contatoreLS2post, f2_ritardo_post = solver.insert_intra(lista_macchine_copy4, lista_veicoli_copy, fpost, soluzionepost)
+soluzione2post, f2post, contatoreLS2post, f2_ritardo_post = solver.insert_intra(lista_macchine_copy4, fpost)
 print(f'Mosse LS1+LS2 - post: {contatoreLS2post}')
 #soluzione_move_post = [b for a in soluzione2post for b in a]
 solver.grafico_schedulazione(soluzione2post)
@@ -243,7 +234,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}Swap Intra Bis")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_tot_post = time.time()
-soluzione3post, f3post, contatoreLS3post, f3_ritardo_post = solver.insert_intra(lista_macchine_copy5, lista_veicoli_copy, fpost, soluzionepost)
+soluzione3post, f3post, contatoreLS3post, f3_ritardo_post = solver.insert_intra(lista_macchine_copy5, fpost)
 print(f'Mosse LS1+LS2 - post: {contatoreLS3post}')
 #soluzione_swap_post = [b for a in soluzione3post for b in a]
 #solver.grafico_schedulazione(soluzione_swap_post)

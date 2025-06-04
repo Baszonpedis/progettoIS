@@ -354,7 +354,7 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     return soluzionepost, f_obj, fpost_ritardo
 
 ##INSERT INTER-MACCHINA (Ricerca locale 1)
-def insert_inter_macchina(lista_macchine: list, lista_veicoli:list, f_obj):
+def insert_inter_macchina(lista_macchine: list, f_obj):
     #for m in lista_macchine:
     #    seen = set()
     #    for c in m.lista_commesse_processate:
@@ -492,8 +492,8 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                     print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
                     print(f'Tempo di setup (delta_setup): {delta_setup}')
                     print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
+                    #Aggiornamento necessario pena la desincronizzazione tra lista_commesse_processate e la soluzione
                     for entry in s1:
-                        # cerca l’oggetto commessa corrispondente e riscrivi ritardo = entry['ritardo mossa']
                         for comm in macchina1.lista_commesse_processate:
                             if comm.id_commessa == entry['commessa']:
                                 comm.ritardo = entry['ritardo mossa']
@@ -536,7 +536,7 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
     return schedula1, schedula2, f_best,contatore
 
 ##INSERT INTRA-MACCHINA (Ricerca locale 2)
-def insert_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: list):
+def insert_intra(lista_macchine: list, f_obj):
     """
     :param lista_macchine: lista contenente oggetti macchina
     :param lista_veicoli: lista contenente oggetti veicolo
@@ -560,14 +560,13 @@ def insert_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione
 
     # CICLO PRINCIPALE
     for macchina in lista_macchine:
-        #macchina_schedula = [s for s in schedulazione if s['macchina'] == macchina.nome_macchina]
         schedula = macchina.lista_commesse_processate
         improved = True
 
         if len(schedula) >= 3:
             while improved:
                 improved = False
-                # calcolo una volta per tutta la configurazione corrente il setup totale
+                # Calcolo una volta per tutta la configurazione corrente il setup totale
                 setup_corrente = total_setup(schedula, macchina)
 
                 for i in range(1, len(schedula)):
@@ -653,7 +652,7 @@ def insert_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione
     return soluzione_move, f_best, contatoreLS2, ritardo_cumul
 
 ##SWAP INTRA-MACCHINA (Ricerca locale 3)
-def swap_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: list):
+def swap_intra(lista_macchine, f_obj):
     """
     :param lista_macchine: lista contenente oggetti macchina
     :param lista_veicoli: lista contenente oggetti veicolo
@@ -662,7 +661,6 @@ def swap_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: 
     :return: schedulazione ottenuta applicando ricerca locale swap intra macchina
     """
     contatoreLS3 = 0  # numero di swap eseguiti
-    #partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli}
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione
     f_best = f_obj
     eps = 0.00001
@@ -684,10 +682,10 @@ def swap_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: 
         if len(schedula) >= 3:
             while improved:
                 improved = False
-                # calcolo una volta per tutta la configurazione corrente il setup totale
+                #Calcolo una volta per tutta la configurazione corrente il setup totale
                 setup_corrente = total_setup(schedula, macchina)
 
-                # scorro tutte le possibili coppie i,j di commesse schedulate sulla macchina evitando coppie identiche
+                #Scorro tutte le possibili coppie i,j di commesse schedulate sulla macchina evitando coppie identiche
                 for i in range(1, len(schedula) - 1):
                     for j in range(i + 1, len(schedula)):
                         # Creo una copia candidati di "schedula" e applico lo swap
@@ -700,11 +698,11 @@ def swap_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: 
 
                         # CALCOLO delta_ritardo usando lo stesso approccio di insert
                         delta_ritardo = timedelta(days=0)
-                        delta_ritardo_print = timedelta(days=0)
+                        delta_ritardo_print = timedelta(days=0) #corrisponde al delta ritardo "vero" senza peso
                         s = []
                         ultima_lavorazione = macchina.ultima_lavorazione
 
-                        # Ricostruisco soluzione per calcolare i ritardi di “candidate_seq”
+                        # Ricostruisco soluzione per calcolare i ritardi della schedula
                         for k in range(1, len(schedula)):
                             tempo_setup_commessa = macchina.calcolo_tempi_setup(schedula[k - 1], schedula[k])
                             tempo_processamento_commessa = schedula[k].metri_da_tagliare / macchina.velocita_taglio_media
@@ -724,7 +722,7 @@ def swap_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: 
                             delta_ritardo += (-s[k]['ritardo mossa'] + s[k]['ritardo']) / s[k]['priorita']
                             delta_ritardo_print += (-s[k]['ritardo mossa'] + s[k]['ritardo'])
 
-                        # CONDIZIONE DI MIGLIORAMENTO
+                        # CONDIZIONE DI MIGLIORAMENTO (ed eventuali aggiornamenti)
                         delta = calcolo_delta(delta_setup, delta_ritardo)
                         if delta < -eps:
                             print(f'\n---------------------------')
@@ -732,14 +730,9 @@ def swap_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: 
                             print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
                             print(f'Tempo di setup (delta_setup): {delta_setup}')
                             print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
-                            # Accetto lo swap: aggiorno i ritardi nella soluzione “s”
-                            #for k in range(1, len(s)):
-                            #    s[k]['ritardo'] = s[k]['ritardo mossa']
-
                             f_best += delta_setup
                             macchina.lista_commesse_processate = schedula
                             contatoreLS3 += 1
-                            # Aggiorno "schedula" con la nuova sequenza e esco dai cicli
                             improved = True
                             break
                         else:
@@ -767,7 +760,7 @@ def swap_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: 
 
     return soluzione_swap, f_best, contatoreLS3, ritardo_cumul
 
-#Nuova funzione utility per fare i check di validità nelle varie ricerche locali
+#Funzione utility per fare i check di validità nelle varie ricerche locali
 def check_LS(check, commessa1, commessa):
     if commessa.tassativita == "X": #tassative
         if 0 in commessa.zona_cliente: #tassative esterne
@@ -788,17 +781,7 @@ def check_LS(check, commessa1, commessa):
     #print(f'tassative: {counter_tass}, tassative interne: {counter_tass_int}, tassative esterne: {counter_tass_ext}, altre: {counter_aliud}')
     return check
 
-#def calcolo_delta_ritardo(schedula):
-#    if schedula.ritardomossa is not None:
-#        for k in range(1,len(schedula)):
-#            delta_ritardo = (schedula[k].ritardomossa - schedula[k].ritardo)//schedula[k].priorita
-#            delta_ritardo_non_pesato = (schedula[k].ritardomossa - schedula[k].ritardo)
-#    else:
-#        for k in range(1,len(schedula)):
-#            delta_ritardo = (schedula[k].ritardo)//schedula[k].priorita
-#            delta_ritardo_non_pesato = (schedula[k].ritardomossa - schedula[k].ritardo)
-#    return delta_ritardo, delta_ritardo_non_pesato
-
+#Funzione utility per il calcolo del delta migliorativo per le varie ricerche locali, combinando linearmente delta_ritardo (pesato e cumulativo) con delta_setup (cumulativo) in funzione del parametro alfa
 def calcolo_delta(delta_setup,delta_ritardo):
     alfa = 0.7 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
     delta_ritardo = delta_ritardo.total_seconds()/3600
