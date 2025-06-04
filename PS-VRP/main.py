@@ -65,6 +65,14 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}RICERCHE LOCALI".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
 
+for i in lista_macchine_copy:
+    print(i.nome_macchina)
+    for j in i.lista_commesse_processate:
+        print(j.id_commessa)
+
+for i in schedulazione3:
+    print(i['commessa'],i['macchina'])
+
 # M2M
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS1 (Insert inter-macchina)")
@@ -79,6 +87,15 @@ print(f"Mosse LS1: {contatoreLS1}")
 output.write_output_soluzione_euristica(soluzione1, "PS-VRP/Dati_output/insert_inter.xlsx")
 tot1 = time.time() - start1
 solver.grafico_schedulazione(soluzione1)
+
+for i in lista_macchine_copy:
+    print(i.nome_macchina)
+    for j in i.lista_commesse_processate:
+        print(j.id_commessa)
+
+for i in soluzione1:
+    print(i['commessa'],i['macchina'])
+
 
 # M
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -184,10 +201,6 @@ output.write_output_soluzione_euristica(soluzionepost, "PS-VRP/Dati_output/euris
 solver.grafico_schedulazione(soluzionepost)
 post_time = time.time() - start_time_post
 
-for i in macchine_post:
-    print(i.nome_macchina)
-    for j in i.lista_commesse_processate:
-        print(j.id_commessa)
 
 ## RICERCHE LOCALI (su secondo euristico)
 
