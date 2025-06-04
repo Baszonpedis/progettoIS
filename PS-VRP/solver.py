@@ -551,6 +551,7 @@ def insert_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione
 
                         # Calcolo delta_ritardo mantenendo il tuo approccio originale
                         delta_ritardo = timedelta(days=0)
+                        delta_ritardo_print= timedelta(days=0)
                         s = []
                         ultima_lavorazione = macchina.ultima_lavorazione
 
@@ -572,9 +573,11 @@ def insert_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione
 
                         for k in range(1, len(s)):
                             delta_ritardo += (-s[k]['ritardo mossa'] + s[k]['ritardo']) / s[k]['priorita']
+                            delta_ritardo_print += (-s[k]['ritardo mossa'] + s[k]['ritardo'])
 
                         # CONDIZIONE DI MIGLIORAMENTO
                         delta = calcolo_delta(delta_setup, delta_ritardo)
+                        print(delta_ritardo_print)
                         if delta < -eps:
                             # Accetto la mossa: aggiorno i ritardi nella soluzione “s”
                             for k in range(1, len(s)):
@@ -660,6 +663,7 @@ def swap_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: li
                         
                         #Inizializzazioni
                         delta_ritardo = timedelta(days = 0)
+                        delta_ritardo_print = timedelta(days = 0)
                         s=[] #imposto nuova schedula inizialmente vuota
                         comm_i=schedula[i] #commessa i
                         comm_j=schedula[j] #commessa j
@@ -676,12 +680,14 @@ def swap_intra(lista_macchine: list, lista_veicoli:list, f_obj,schedulazione: li
                             ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
                         for k in range(1,len(s)): #calcolo il ritardo totale della mossa
                             delta_ritardo += (-s[k]['ritardo mossa']  +(s[k]['ritardo'])) / s[k]['priorita']
+                            delta_ritardo_print += (-s[k]['ritardo mossa']  +(s[k]['ritardo']))
     
                         ##CONDIZIONE DI MIGLIORAMENTO
                         delta = math.inf
                         delta = calcolo_delta(delta_setup,delta_ritardo) #calcolo della funzione obiettivo della ricerca locale
                         if delta < -eps:
                             print(f'ritardo {delta_ritardo}, setup {delta_setup}, delta {delta}, commessa {schedula[i].id_commessa}, priorita {schedula[i].priorita_cliente}')
+                            print(delta_ritardo_print)
                             for k in range(1,len(s)): #aggiorno i ritardi per la soluzione ricostruita
                                 #risparmio_tot += (s[k]['ritardo'] - s[k]['ritardo mossa'])
                                 s[k]['ritardo'] = s[k]['ritardo mossa']
@@ -741,7 +747,7 @@ def check_LS(check, commessa1, commessa):
 #    return delta_ritardo, delta_ritardo_non_pesato
 
 def calcolo_delta(delta_setup,delta_ritardo):
-    alfa = 1 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
+    alfa = 0 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
     delta_ritardo = delta_ritardo.total_seconds()/3600
     delta = alfa*delta_setup+(1-alfa)*delta_ritardo
     return delta

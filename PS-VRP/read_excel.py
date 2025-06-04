@@ -7,6 +7,7 @@ from datetime import datetime
 from datetime import timedelta
 import output
 import warnings
+import re
 
 #CAMPI DI LETTURA DEI FILE DI INPUT
 campi_input_macchine=['Nome macchina','disponibilita','setup','velocità media','tipologia taglio','dt ultima lavorazione','ora ultima lavorazione','tempo setup cambio alberi','tempo setup prima fila coltelli','tempo setup coltelli','tempo carico bobina','tempo avvio taglio','tempo scarico bobina','tempo confezionamento sacchetti']
@@ -93,7 +94,7 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
     df=df.reset_index(drop=True)
     df['Release date']=pd.to_datetime(df['data fine stampa per schedulatore']).apply(lambda x: x.replace(hour=14, minute=0, second=0))
     if df['Commesse::CODICE DI ZONA'] is not int:
-        df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].apply(lambda x: [int(num) for num in str(x).split(' / ')])
+        df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].apply(lambda x: [int(num) for num in re.split(r'\s*/\s*', str(x))]) #Per essere più flessibili nel leggere varie possibilità (e.g. "/" o " /" o " / " o "/ ")
     df['data_inizio_schedulazione']=inizio_schedulazione
     #print(df['data_inizio_schedulazione'])
     ordine_colonne_df=['commessa','Release date','Commesse::DATA CONSEGNA',
