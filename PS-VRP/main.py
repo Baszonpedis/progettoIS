@@ -6,9 +6,9 @@ import time
 from colorama import Fore, Style, init
 
 ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
-file_macchine_excel="PS-VRP/Dati_input/Estrazione macchine 5.xlsx"
-file_commesse_excel="PS-VRP/Dati_input/Estrazione commesse 5.xlsx"
-file_veicoli_excel="PS-VRP/Dati_input/Estrazione veicoli 5.xlsx"
+file_macchine_excel="PS-VRP/Dati_input/Estrazione macchine 4.xlsx"
+file_commesse_excel="PS-VRP/Dati_input/Estrazione commesse 4.xlsx"
+file_veicoli_excel="PS-VRP/Dati_input/Estrazione veicoli 4.xlsx"
 
 ##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
@@ -55,13 +55,10 @@ solver.grafico_schedulazione(schedulazione3)
 ## DEEPCOPIES PER RICERCHE LOCALI (prima fase)
 lista_veicoli_copy = deepcopy(lista_veicoli)
 lista_macchine_copy = deepcopy(lista_macchine)
-lista_commesse_copy = deepcopy(lista_commesse)
 lista_veicoli_copy1 = deepcopy(lista_veicoli)
 lista_macchine_copy1 = deepcopy(lista_macchine)
-lista_commesse_copy1 = deepcopy(lista_commesse)
 lista_veicoli_copy2 = deepcopy(lista_veicoli)
 lista_macchine_copy2 = deepcopy(lista_macchine)
-lista_commesse_copy2 = deepcopy(lista_commesse)
 
 ## RICERCHE LOCALI (su primo euristico)
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
@@ -74,18 +71,14 @@ print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS1 (Insert inter-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start1 = time.time()
-soluzione1, f1, contatoreLS1, f1_ritardo = solver.insert_inter_macchina(lista_macchine_copy2, lista_veicoli_copy2, f_obj3)
+soluzione1, f1, contatoreLS1, f1_ritardo = solver.insert_inter_macchina(lista_macchine_copy, lista_veicoli_copy, f_obj3)
+print(f1)
 print(f"{Fore.YELLOW}Risultato LS1 (setup): ottenuto {f1-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-f1_ritardo + f_obj3_ritardo} ore di ritardo")
 print(f"Mosse LS1: {contatoreLS1}")
 output.write_output_soluzione_euristica(soluzione1, "PS-VRP/Dati_output/insert_inter.xlsx")
 tot1 = time.time() - start1
 solver.grafico_schedulazione(soluzione1)
-#from datetime import timedelta
-#ritardo = timedelta(days = 0)
-#for i in soluzione1:
-#    ritardo += i['ritardo']
-#print(ritardo)
 
 # M
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -95,6 +88,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_move = time.time()
 soluzione2, f2, contatoreLS2, f2_ritardo = solver.insert_intra(lista_macchine_copy1, lista_veicoli_copy1, f_obj3, schedulazione3)
 soluzione_move = [b for a in soluzione2 for b in a]
+print(f2)
 print(f"{Fore.YELLOW}Risultato LS2 (setup): ottenuto {f2-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS2 (consegna): ottenuto {-f2_ritardo+f_obj3_ritardo} ore di ritardo")
 print(f"Mosse LS2: {contatoreLS2}")
@@ -108,7 +102,8 @@ print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS3 (Swap intra-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start_time_swap = time.time()
-soluzione3, f3, contatoreLS3, f3_ritardo = solver.swap_intra(lista_macchine_copy, lista_veicoli_copy, f_obj3, schedulazione3)
+soluzione3, f3, contatoreLS3, f3_ritardo = solver.swap_intra(lista_macchine_copy2, lista_veicoli_copy2, f_obj3, schedulazione3)
+print(f3)
 soluzione_swap = [b for a in soluzione3 for b in a]
 print(f"{Fore.YELLOW}Risultato LS3 (setup): ottenuto {f3-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS3 (consegna): ottenuto {-f3_ritardo+f_obj3_ritardo} ore di ritardo")
@@ -124,6 +119,7 @@ tot3 = time.time() - start_time_swap
 #soluzione4, f4, contatoreLS2, f4_ritardo = solver.insert_intra(lista_macchine_copy2, lista_veicoli_copy2, f1, soluzione1)
 #print(f'Mosse LS1+LS2: {contatoreLS1+contatoreLS2}')
 #soluzione_parziale = [b for a in soluzione4 for b in a]
+#print(f4)
 #output.write_output_soluzione_euristica(soluzione_move, "PS-VRP/Dati_output/sequenza_parziale.xlsx")
 #print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto {f4-f1} minuti di setup")
 #print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-f4_ritardo+f1_ritardo} ore di ritardo")
@@ -149,8 +145,30 @@ tot3 = time.time() - start_time_swap
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G3)".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
+a = 0
+ritardo1 = -f1_ritardo.total_seconds()/3600
+ritardo2 = -f2_ritardo.total_seconds()/3600
+ritardo3 = -f3_ritardo.total_seconds()/3600
+
+if (a*f1+(1-a)*ritardo1) < (a*f2+(1-a)*ritardo2) and (a*f1+(1-a)*ritardo1) < (a*f3+(1-a)*ritardo3):
+    print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> INSERT INTER')
+    fprimo = f1
+    fritardoprimo = f1_ritardo
+    macchine_post = lista_macchine_copy
+elif (a*f1+(1-a)*ritardo1) < (a*f2+(1-a)*ritardo2) and (a*f1+(1-a)*f1_ritardo.total_seconds()/3600) > (a*f3+(1-a)*ritardo3):
+    print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> INSERT INTRA')
+    fprimo = f3
+    fritardoprimo = f3_ritardo
+    macchine_post = lista_macchine_copy2
+else:
+    print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> SWAP INTRA')
+    fprimo = f2
+    fritardoprimo = f2_ritardo
+    macchine_post = lista_macchine_copy1
+
+
 start_time_post = time.time()
-soluzionepost, fpost, fpost_ritardo = solver.euristico_post(soluzione1, commesse_residue, lista_macchine_copy2, commesse_scartate, f1, f1_ritardo)
+soluzionepost, fpost, fpost_ritardo = solver.euristico_post(soluzione1, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo)
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (setup): {fpost} minuti di setup")
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-fpost_ritardo} ore di ritardo")
 output.write_output_soluzione_euristica(soluzionepost, "PS-VRP/Dati_output/euristico_post.xlsx")
@@ -161,14 +179,9 @@ post_time = time.time() - start_time_post
 ## RICERCHE LOCALI (su secondo euristico)
 
 ## DEEPCOPIES PER RICERCHE LOCALI (seconda fase)
-lista_veicoli_copy = deepcopy(lista_veicoli_copy2)
-lista_macchine_copy = deepcopy(lista_macchine_copy2)
-lista_commesse_copy = deepcopy(lista_commesse_copy2)
-lista_veicoli_copy1 = deepcopy(lista_veicoli_copy2)
-lista_macchine_copy1 = deepcopy(lista_macchine_copy2)
-lista_commesse_copy1 = deepcopy(lista_commesse_copy2)
-lista_veicoli_copy2 = deepcopy(lista_veicoli_copy2)
-lista_commesse_copy2 = deepcopy(lista_commesse_copy2)
+lista_macchine_copy3 = deepcopy(macchine_post)
+lista_macchine_copy4 = deepcopy(macchine_post)
+lista_macchine_copy5 = deepcopy(macchine_post)
 
 
 # M2M - Bis
@@ -177,15 +190,42 @@ print(f"{Fore.CYAN}{Style.BRIGHT}LS1[G3] (Insert inter-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start1_post = time.time()
-soluzione1post, f1post, contatoreLS1post, f1_ritardo_post = solver.insert_inter_macchina(lista_macchine_copy, lista_veicoli_copy, fpost)
-print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3]: ottenuto {f1post-fpost} minuti di setup")
+soluzione1post, f1post, contatoreLS1post, f1_ritardo_post = solver.insert_inter_macchina(lista_macchine_copy3, lista_veicoli_copy, fpost)
+print(f1post)
+print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (setup): ottenuto {f1post-fpost} minuti di setup")
 print(f1_ritardo_post)
-print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3]: ottenuto {-f1_ritardo_post + fpost_ritardo} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (consegna): ottenuto {-f1_ritardo_post + fpost_ritardo} ore di ritardo")
 print(f"Mosse LS1 - post: {contatoreLS1post}")
 output.write_output_soluzione_euristica(soluzione1post, "PS-VRP/Dati_output/insert_inter_post.xlsx")
 tot1_post = time.time() - start1_post
 
-# SEQUENZA PARZIALE
+# INSERT-INTRA - Bis
+print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+print(f"{Fore.CYAN}{Style.BRIGHT}Insert Intra Bis")
+print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+start_time_tot_post = time.time()
+soluzione2post, f2post, contatoreLS2post, f2_ritardo_post = solver.insert_intra(lista_macchine_copy4, lista_veicoli_copy, fpost, soluzionepost)
+print(f'Mosse LS1+LS2 - post: {contatoreLS2post}')
+soluzione_move_post = [b for a in soluzione2post for b in a]
+solver.grafico_schedulazione(soluzione_move_post)
+output.write_output_soluzione_euristica(soluzione_move_post, "PS-VRP/Dati_output/insert_intra_post.xlsx")
+print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (setup): ottenuto {f2post-fpost} minuti di setup")
+print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f2_ritardo_post+fpost_ritardo} ore di ritardo")
+
+# INSERT-INTRA - Bis
+print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+print(f"{Fore.CYAN}{Style.BRIGHT}Swap Intra Bis")
+print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+start_time_tot_post = time.time()
+soluzione3post, f3post, contatoreLS3post, f3_ritardo_post = solver.insert_intra(lista_macchine_copy5, lista_veicoli_copy, fpost, soluzionepost)
+print(f'Mosse LS1+LS2 - post: {contatoreLS3post}')
+soluzione_swap_post = [b for a in soluzione3post for b in a]
+solver.grafico_schedulazione(soluzione_swap_post)
+output.write_output_soluzione_euristica(soluzione_swap_post, "PS-VRP/Dati_output/swap_intra_post.xlsx")
+print(f"{Fore.YELLOW}Risultato LS3[LS[G1+G2]+G3] (setup): ottenuto {f3post-fpost} minuti di setup")
+print(f"{Fore.YELLOW}Risultato LS3[LS[G1+G2]+G3] (consegna): ottenuto {-f3_ritardo_post+fpost_ritardo} ore di ritardo")
+
+"""# SEQUENZA PARZIALE
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}LS1+LS2[LS[G1+G2]+G3] (sequenza parziale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -219,7 +259,31 @@ print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (setup): ottenuto {f5post-f4post
 print(f'f5 {f5_ritardo_post}, f4 {f4_ritardo_post}')
 print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-f5_ritardo_post+f4_ritardo_post} ore di ritardo")
 output.write_output_soluzione_euristica(soluzione_sequenza_post, "PS-VRP/Dati_output/sequenza_post.xlsx")
-tot_tot_post = time.time() - start_time_tot_post
+tot_tot_post = time.time() - start_time_tot_post"""
+
+ritardo1 = -f1_ritardo_post.total_seconds()/3600
+ritardo2 = -f2_ritardo_post.total_seconds()/3600
+ritardo3 = -f3_ritardo_post.total_seconds()/3600
+print(a*f1post+(1-a)*f1_ritardo_post.total_seconds()/3600)
+print(a*f1post)
+print((1-a))
+print(f1_ritardo_post.total_seconds()/3600)
+
+if (a*f1post+(1-a)*ritardo1) < (a*f2post+(1-a)*ritardo2) and (a*f1post+(1-a)*ritardo1) < (a*f3post+(1-a)*ritardo3):
+    fprimopost = f1post
+    fritardoprimopost = f1_ritardo_post
+    print(f1_ritardo_post)
+    soluzionefinale = soluzione1post
+elif (a*f1+(1-a)*ritardo1) < (a*f2post+(1-a)*ritardo2) and (a*f1post+(1-a)*ritardo1) > (a*f3post+(1-a)*ritardo3):
+    fprimopost = f3post
+    fritardoprimopost = f3_ritardo_post
+    print(f3_ritardo_post)
+    soluzionefinale = soluzione_swap_post
+else:
+    fprimopost = f2post
+    fritardoprimopost = f2_ritardo_post
+    print(f2_ritardo_post)
+    soluzionefinale = soluzione_move_post
 
 ## STAMPE FINALI
 print(f"{Fore.MAGENTA}{Style.BRIGHT}\n{'='*40}")
@@ -229,14 +293,14 @@ print(f"{Fore.MAGENTA}{Style.BRIGHT}{'='*40}\n")
 #print(f"{Fore.YELLOW}RISULTATO FINALE: {f5post-f5+f_obj3} minuti di setup\n")
 #print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (entrambe le ricerche locali) (SETUP): {f5post - fpost + f5 - f3} minuti di setup")
 #print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (entrambe le ricerche locali) (CONSEGNE): {-f5_ritardo_post+fpost_ritardo -f5_ritardo+f_obj3_ritardo} ore di ritardo\n")
-print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (sole seconde ricerche locali) (SETUP): {f5post - fpost} minuti di setup\n")
-print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (sole seconde ricerche locali) (CONSEGNE): {-f5_ritardo_post+fpost_ritardo} ore di ritardo\n")
+print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (sole seconde ricerche locali) (SETUP): {fprimopost - fpost} minuti di setup\n")
+print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (sole seconde ricerche locali) (CONSEGNE): {-fritardoprimopost+fpost_ritardo} ore di ritardo\n")
 
 print(f"{Fore.GREEN}COMMESSE LETTE CORRETTAMENTE: {len(lista_commesse)}")
 print(f"{Fore.GREEN}COMMESSE ESCLUSE PER ERRORE NELL'ESTRAZIONE VEICOLI: {len(commesse_veicoli_errati)}")
 print(f"{Fore.GREEN}COMMESSE POST FILTRO ZONE E FILTRO VEICOLI (Interne a zona aperta + tassative): {len(commesse_da_schedulare)}")
 print(f"{Fore.GREEN}COMMESSE SCARTATE (RELEGATE A TERZO CICLO): {len(commesse_scartate)}")
-print(f"{Fore.GREEN}COMMESSE CORRETTAMENTE SCHEDULATE SU MACCHINA: {len(soluzione_sequenza_post)}\n")
+print(f"{Fore.GREEN}COMMESSE CORRETTAMENTE SCHEDULATE SU MACCHINA: {len(soluzionefinale)}\n")
 
 print(f"{Fore.BLUE}TEMPO Greedy (G1+G2): {tot_time_eur:.2f}s")
 print(f"{Fore.BLUE}TEMPO Greedy (G1+G2) + LS1: {tot_time_eur + tot1:.2f}s")
@@ -247,6 +311,6 @@ print(f"{Fore.BLUE}TEMPO Greedy (G1+G2) + LS1: {tot_time_eur + tot1:.2f}s")
 
 print(f"{Fore.BLUE}TEMPO Greedy (G3): {post_time:.2f}s")
 print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS1 post: {post_time + tot1_post:.2f}s")
-print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS1+LS2+LS3 post: {post_time + tot1 + tot_tot_post:.2f}s")
+#print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS1+LS2+LS3 post: {post_time + tot1 + tot_tot_post:.2f}s")
 
-solver.grafico_schedulazione(soluzione_sequenza_post)  # Soluzione finale totale
+#solver.grafico_schedulazione(soluzione_sequenza_post)  # Soluzione finale totale
