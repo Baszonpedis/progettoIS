@@ -204,7 +204,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     for i in lista_macchine:
         Macchina.inizializza_lista_commesse(i)  # inizializzo ogni macchina con una commessa dummy
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # è il primo lunedi disponibile che è uguale per tutte le macchine
-    lista_macchine2 = []
+    lista_macchine2 = lista_macchine.copy()
 
     #Sorting preliminare al primo ciclo while
     lista_commesse_tassative.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
@@ -232,13 +232,10 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                 #print(f'La commessa {commessa.id_commessa} è associata al veicolo {commessa.veicolo} //////////')
                 break
         if not schedulazione_eseguita:
-            lista_macchine2.append(macchina)
             lista_macchine.remove(macchina)
 
     #Si ricostituisce la lista delle macchine per il prossimo ciclo  
-    lista_macchine = set(lista_macchine2+lista_macchine)
-    list(lista_macchine)
-    lista_macchine2 = []
+    lista_macchine = lista_macchine2.copy()
 
     #Sorting preliminare dell'input al secondo ciclo While
     commesse_da_schedulare.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
@@ -278,15 +275,22 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                 causa_fallimento.pop(commessa.id_commessa, None) #rimuovo la commessa da quelle non schedulate; potrebbe succedere che alcune non siano schedulate subito ma in seguito sì
                 break
         if not schedulazione_eseguita:
-            lista_macchine2.append(macchina)
             lista_macchine.remove(macchina)
 
     commesse_residue = [c for c in commesse_da_schedulare]
 
     #Si ricostituisce la lista delle macchine per future chiamate
-    lista_macchine = set(lista_macchine2+lista_macchine)
-    lista_macchine = list(lista_macchine)
-    ritardo_cumul = timedelta(days = 0)
+    lista_macchine = lista_macchine2.copy()
+
+    for i in lista_macchine:
+        print(i.nome_macchina)
+        for j in i.lista_commesse_processate:
+            print(j.id_commessa)
+    
+    for i in schedulazione:
+        print(i['commessa'],i['macchina'])
+
+
     return schedulazione, f_obj, causa_fallimento, lista_macchine, commesse_residue, f_obj_ritardo
 
 ##EURISTICO POST (Greedy 2)
@@ -297,7 +301,15 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     f_obj = f_obj_base  #Funzione obiettivo (somma pesata dei tempi di setup)
     fpost_ritardo = f_obj_ritardo
     soluzionepost = soluzione #si parte con la schedulazione già effettuata (euristico + ricerche locali)
-    lista_macchine2 = []
+    lista_macchine2 = lista_macchine.copy()
+
+    for i in soluzione:
+        print(i['commessa'],i['macchina'])
+
+    for i in lista_macchine:
+        print(i.nome_macchina)
+        for j in i.lista_commesse_processate:
+            print(j.id_commessa)
 
     #Sorting preliminare dell'input al terzo ciclo While
     commesse_da_schedulare.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
@@ -324,12 +336,20 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
             if schedulazione_eseguita:
                 break
         if not schedulazione_eseguita:
-            lista_macchine2.append(macchina)
             lista_macchine.remove(macchina)
 
+    for i in lista_macchine:
+        print(i.nome_macchina)
+        for j in i.lista_commesse_processate:
+            print(j.id_commessa)
+
     #Si ricostituisce la lista delle macchine per future chiamate
-    lista_macchine = set(lista_macchine2+lista_macchine)
-    lista_macchine = list(lista_macchine)
+    lista_macchine = lista_macchine2.copy()
+
+    for i in lista_macchine:
+        print(i.nome_macchina)
+        for j in i.lista_commesse_processate:
+            print(j.id_commessa)
 
     return soluzionepost, f_obj, fpost_ritardo
 
@@ -341,11 +361,15 @@ def insert_inter_macchina(lista_macchine: list, lista_veicoli:list, f_obj):
     #        if c.id_commessa in seen:
     #            print(f"[DUPLICATE in machine {m.nome_macchina}]: {c.id_commessa}")
     #        seen.add(c.id_commessa)
+    for i in lista_macchine:
+        print(i.nome_macchina)
+        for j in i.lista_commesse_processate:
+            print(j.id_commessa)
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # data in cui inizia la schedulazione
     f_best = f_obj  # funzione obiettivo
     soluzione_move = []  # lista contenente tutte le schedule
     contatoreLS1=0 # contatore mosse insert
-    ritardo_totale_ore = timedelta(days = 0)
+    #ritardo_totale_ore = timedelta(days = 0)
     for m1 in range(len(lista_macchine)):
         for m2 in range(len(lista_macchine)):
             #print(lista_macchine[m1].nome_macchina,len(lista_macchine[m1].lista_commesse_processate))
@@ -379,7 +403,7 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
     schedula2=macchina2.lista_commesse_processate #copia profonda della lista di commesse schedulate
     eps = 0.00001  # parametro per stabilire se il delta è conveniente
     improved=False
-    risparmio_tot = 0
+    #risparmio_tot = 0
     for i in range(1, len(schedula1)):
         for j in range(1, len(schedula2)):
             commessa = schedula1[i]
@@ -416,8 +440,8 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                 delta_ritardo_print = timedelta(days = 0)
                 s1=[]
                 s2=[]
-                copia1 = schedula1.copy()
-                copia2 = schedula2.copy()
+                copia1 = deepcopy(schedula1)
+                copia2 = deepcopy(schedula2)
 
                 #Effettuo l'insert
                 #ids = [c.id_commessa for c in schedula1]
@@ -469,23 +493,32 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                     print(f'Tempo di setup (delta_setup): {delta_setup}')
                     print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
                     for entry in s1:
-                        #new_t = entry['ritardo mossa']
-                        #old_t = entry['ritardo']
-                        #pri   = entry['priorita']
-                        #risparmio_tot += (old_t.total_seconds()/3600 - new_t.total_seconds()/3600) / pri
-                        entry['ritardo'] = entry['ritardo mossa']
-                        for commessa in schedula1:
-                            if commessa.id_commessa == entry['commessa']:
-                                commessa.ritardo = entry['ritardo']
+                        # cerca l’oggetto commessa corrispondente e riscrivi ritardo = entry['ritardo mossa']
+                        for comm in macchina1.lista_commesse_processate:
+                            if comm.id_commessa == entry['commessa']:
+                                comm.ritardo = entry['ritardo mossa']
                     for entry in s2:
+                        for comm in macchina2.lista_commesse_processate:
+                            if comm.id_commessa == entry['commessa']:
+                                comm.ritardo = entry['ritardo mossa']
+                    #for entry in s1:
                         #new_t = entry['ritardo mossa']
                         #old_t = entry['ritardo']
                         #pri   = entry['priorita']
-                        entry['ritardo'] = entry['ritardo mossa']
                         #risparmio_tot += (old_t.total_seconds()/3600 - new_t.total_seconds()/3600) / pri
-                        for commessa in schedula2:
-                            if commessa.id_commessa == entry['commessa']:
-                                commessa.ritardo = entry['ritardo']
+                        #entry['ritardo'] = entry['ritardo mossa']
+                       # for commessa in schedula1:
+                      #      if commessa.id_commessa == entry['commessa']:
+                     #           commessa.ritardo = entry['ritardo']
+                    #for entry in s2:
+                        #new_t = entry['ritardo mossa']
+                        #old_t = entry['ritardo']
+                        #pri   = entry['priorita']
+                       # entry['ritardo'] = entry['ritardo mossa']
+                        #risparmio_tot += (old_t.total_seconds()/3600 - new_t.total_seconds()/3600) / pri
+                      #  for commessa in schedula2:
+                     #       if commessa.id_commessa == entry['commessa']:
+                    #            commessa.ritardo = entry['ritardo']
                                 #print(f"aggiornamento ritardo: la commessa {commessa.id_commessa} = {entry['commessa']} ha ora ritardo {entry['ritardo']}")
                     #for k in range(1,len(schedula2)):
                         #print(f'la commessa {schedula2[k].id_commessa} ha ritardo {schedula2[k].ritardo}')
@@ -527,9 +560,8 @@ def insert_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione
 
     # CICLO PRINCIPALE
     for macchina in lista_macchine:
-        macchina_schedula = [s for s in schedulazione if s['macchina'] == macchina.nome_macchina]
-        schedula_original = macchina.lista_commesse_processate
-        schedula = deepcopy(schedula_original)
+        #macchina_schedula = [s for s in schedulazione if s['macchina'] == macchina.nome_macchina]
+        schedula = macchina.lista_commesse_processate
         improved = True
 
         if len(schedula) >= 3:
@@ -545,15 +577,15 @@ def insert_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione
                         if i == j:
                             continue
 
+                        schedula_copy = deepcopy(schedula)
                         # Calcolo delta_setup ricostruendo la sequenza
-                        candidate_seq = schedula[:]
-                        comm_i = candidate_seq.pop(i)
+                        comm_i = schedula.pop(i)
                         if j > i:
-                            candidate_seq.insert(j - 1, comm_i)
+                            schedula.insert(j - 1, comm_i)
                         else:
-                            candidate_seq.insert(j, comm_i)
+                            schedula.insert(j, comm_i)
 
-                        new_setup = total_setup(candidate_seq, macchina)
+                        new_setup = total_setup(schedula, macchina)
                         delta_setup = new_setup - setup_corrente
 
                         # Calcolo delta_ritardo mantenendo il tuo approccio originale
@@ -563,11 +595,11 @@ def insert_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione
                         ultima_lavorazione = macchina.ultima_lavorazione
 
                         # Ricostruisco soluzione per calcolare i ritardi di “candidate_seq”
-                        for k in range(1, len(candidate_seq)):
-                            tempo_setup_commessa = macchina.calcolo_tempi_setup(candidate_seq[k - 1], candidate_seq[k])
-                            tempo_processamento_commessa = candidate_seq[k].metri_da_tagliare / macchina.velocita_taglio_media
+                        for k in range(1, len(schedula)):
+                            tempo_setup_commessa = macchina.calcolo_tempi_setup(schedula[k - 1], schedula[k])
+                            tempo_processamento_commessa = schedula[k].metri_da_tagliare / macchina.velocita_taglio_media
                             return_schedulazione(
-                                candidate_seq[k],
+                                schedula[k],
                                 macchina,
                                 tempo_setup_commessa,
                                 tempo_processamento_commessa,
@@ -590,34 +622,35 @@ def insert_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione
                             print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
                             print(f'Tempo di setup (delta_setup): {delta_setup}')
                             print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
-                            # Accetto la mossa: aggiorno i ritardi nella soluzione “s”
-                            for k in range(1, len(s)):
-                                s[k]['ritardo'] = s[k]['ritardo mossa']
                             f_best += delta_setup
-                            macchina_schedula = s[:]
                             contatoreLS2 += 1
-                            # aggiornamento di schedula e uscita dai cicli
-                            schedula = candidate_seq
+                            macchina.lista_commesse_processate = schedula
                             improved = True
                             break
                         else:
-                            # mossa non migliorativa: nessun cambiamento su "schedula"
-                            pass
-
+                            schedula = schedula_copy
                     if improved:
                         break
                 if improved:
                     break
-            soluzione_move.append(macchina_schedula)
-        else:
-            soluzione_move.append(macchina_schedula)
 
-    ritardo_totale_ore = timedelta(days=0)
-    for macchina_schedula in soluzione_move:
-        for commessa in macchina_schedula:
-            ritardo_totale_ore += commessa['ritardo']
+    for m in lista_macchine:
+        if len(m.lista_commesse_processate)>1:
+            ultima_lavorazione=m.ultima_lavorazione
+            for pos in range(1,len(m.lista_commesse_processate)):
+                tempo_setup_commessa=m.calcolo_tempi_setup(m.lista_commesse_processate[pos-1],m.lista_commesse_processate[pos])
+                tempo_processamento_commessa=m.lista_commesse_processate[pos].metri_da_tagliare/m.velocita_taglio_media
+                #ritardo_totale_ore += int(m.lista_commesse_processate[pos].ritardo.total_seconds() / 3600)
+                aggiorna_schedulazione(m.lista_commesse_processate[pos], m, tempo_setup_commessa, tempo_processamento_commessa, inizio_schedulazione, soluzione_move, ultima_lavorazione,1)
+                ultima_lavorazione = ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa
 
-    return soluzione_move, f_best, contatoreLS2, ritardo_totale_ore
+    ritardo_cumul = timedelta(days = 0)
+    for commessa in soluzione_move:
+        ritardo_cumul += commessa['ritardo']
+        #print(ritardo_cumul)
+    print(f'Ritardo cumulativo: {-ritardo_cumul}')
+
+    return soluzione_move, f_best, contatoreLS2, ritardo_cumul
 
 ##SWAP INTRA-MACCHINA (Ricerca locale 3)
 def swap_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: list):
@@ -629,7 +662,7 @@ def swap_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: 
     :return: schedulazione ottenuta applicando ricerca locale swap intra macchina
     """
     contatoreLS3 = 0  # numero di swap eseguiti
-    partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli}
+    #partenze = {veicolo.nome: veicolo.data_partenza for veicolo in lista_veicoli}
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione
     f_best = f_obj
     eps = 0.00001
@@ -643,7 +676,7 @@ def swap_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: 
         return tot
 
     for macchina in lista_macchine:
-        macchina_schedula = [s for s in schedulazione if s['macchina'] == macchina.nome_macchina]
+        #macchina_schedula = [s for s in schedulazione if s['macchina'] == macchina.nome_macchina]
         schedula_original = macchina.lista_commesse_processate
         schedula = deepcopy(schedula_original)
         improved = True
@@ -656,15 +689,13 @@ def swap_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: 
 
                 # scorro tutte le possibili coppie i,j di commesse schedulate sulla macchina evitando coppie identiche
                 for i in range(1, len(schedula) - 1):
-                    if improved:
-                        break
                     for j in range(i + 1, len(schedula)):
                         # Creo una copia candidati di "schedula" e applico lo swap
-                        candidate_seq = schedula[:]
-                        candidate_seq[i], candidate_seq[j] = candidate_seq[j], candidate_seq[i]
+                        schedula_copy = schedula.copy()
+                        schedula[i], schedula[j] = schedula[j], schedula[i]
 
                         # Calcolo delta_setup: differenza tra setup nuovo e setup corrente
-                        new_setup = total_setup(candidate_seq, macchina)
+                        new_setup = total_setup(schedula, macchina)
                         delta_setup = new_setup - setup_corrente
 
                         # CALCOLO delta_ritardo usando lo stesso approccio di insert
@@ -674,11 +705,11 @@ def swap_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: 
                         ultima_lavorazione = macchina.ultima_lavorazione
 
                         # Ricostruisco soluzione per calcolare i ritardi di “candidate_seq”
-                        for k in range(1, len(candidate_seq)):
-                            tempo_setup_commessa = macchina.calcolo_tempi_setup(candidate_seq[k - 1], candidate_seq[k])
-                            tempo_processamento_commessa = candidate_seq[k].metri_da_tagliare / macchina.velocita_taglio_media
+                        for k in range(1, len(schedula)):
+                            tempo_setup_commessa = macchina.calcolo_tempi_setup(schedula[k - 1], schedula[k])
+                            tempo_processamento_commessa = schedula[k].metri_da_tagliare / macchina.velocita_taglio_media
                             return_schedulazione(
-                                candidate_seq[k],
+                                schedula[k],
                                 macchina,
                                 tempo_setup_commessa,
                                 tempo_processamento_commessa,
@@ -702,35 +733,39 @@ def swap_intra(lista_macchine: list, lista_veicoli: list, f_obj, schedulazione: 
                             print(f'Tempo di setup (delta_setup): {delta_setup}')
                             print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
                             # Accetto lo swap: aggiorno i ritardi nella soluzione “s”
-                            for k in range(1, len(s)):
-                                s[k]['ritardo'] = s[k]['ritardo mossa']
+                            #for k in range(1, len(s)):
+                            #    s[k]['ritardo'] = s[k]['ritardo mossa']
 
                             f_best += delta_setup
-                            macchina_schedula = s[:]
+                            macchina.lista_commesse_processate = schedula
                             contatoreLS3 += 1
                             # Aggiorno "schedula" con la nuova sequenza e esco dai cicli
-                            schedula = candidate_seq
                             improved = True
                             break
-                        # Se non è migliorativo, "schedula" rimane invariato e passo alla coppia successiva
-
+                        else:
+                            schedula = schedula_copy
                     if improved:
                         break
-                # Fine dei due for su i,j
                 if improved:
                     break
-            # Aggiungo la schedule finale per questa macchina
-            soluzione_swap.append(macchina_schedula)
-        else:
-            soluzione_swap.append(macchina_schedula)
+    
+    for m in lista_macchine:
+        if len(m.lista_commesse_processate)>1:
+            ultima_lavorazione=m.ultima_lavorazione
+            for pos in range(1,len(m.lista_commesse_processate)):
+                tempo_setup_commessa=m.calcolo_tempi_setup(m.lista_commesse_processate[pos-1],m.lista_commesse_processate[pos])
+                tempo_processamento_commessa=m.lista_commesse_processate[pos].metri_da_tagliare/m.velocita_taglio_media
+                #ritardo_totale_ore += int(m.lista_commesse_processate[pos].ritardo.total_seconds() / 3600)
+                aggiorna_schedulazione(m.lista_commesse_processate[pos], m, tempo_setup_commessa, tempo_processamento_commessa, inizio_schedulazione, soluzione_swap, ultima_lavorazione,1)
+                ultima_lavorazione = ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa
 
-    # Calcolo ritardo totale alla fine
-    ritardo_totale_ore = timedelta(days=0)
-    for macchina_schedula in soluzione_swap:
-        for commessa in macchina_schedula:
-            ritardo_totale_ore += commessa['ritardo']
+    ritardo_cumul = timedelta(days = 0)
+    for commessa in soluzione_swap:
+        ritardo_cumul += commessa['ritardo']
+        #print(ritardo_cumul)
+    print(f'Ritardo cumulativo: {-ritardo_cumul}')
 
-    return soluzione_swap, f_best, contatoreLS3, ritardo_totale_ore
+    return soluzione_swap, f_best, contatoreLS3, ritardo_cumul
 
 #Nuova funzione utility per fare i check di validità nelle varie ricerche locali
 def check_LS(check, commessa1, commessa):

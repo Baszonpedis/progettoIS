@@ -87,14 +87,14 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start_time_move = time.time()
 soluzione2, f2, contatoreLS2, f2_ritardo = solver.insert_intra(lista_macchine_copy1, lista_veicoli_copy1, f_obj3, schedulazione3)
-soluzione_move = [b for a in soluzione2 for b in a]
+#soluzione_move = [b for a in soluzione2 for b in a]
 print(f2)
 print(f"{Fore.YELLOW}Risultato LS2 (setup): ottenuto {f2-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS2 (consegna): ottenuto {-f2_ritardo+f_obj3_ritardo} ore di ritardo")
 print(f"Mosse LS2: {contatoreLS2}")
-output.write_output_soluzione_euristica(soluzione_move, "PS-VRP/Dati_output/insert_intra.xlsx")
+output.write_output_soluzione_euristica(soluzione2, "PS-VRP/Dati_output/insert_intra.xlsx")
 tot2 = time.time() - start_time_move
-solver.grafico_schedulazione(soluzione_move)
+solver.grafico_schedulazione(soluzione2)
 
 # S
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -104,11 +104,11 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_swap = time.time()
 soluzione3, f3, contatoreLS3, f3_ritardo = solver.swap_intra(lista_macchine_copy2, lista_veicoli_copy2, f_obj3, schedulazione3)
 print(f3)
-soluzione_swap = [b for a in soluzione3 for b in a]
+#soluzione_swap = [b for a in soluzione3 for b in a]
 print(f"{Fore.YELLOW}Risultato LS3 (setup): ottenuto {f3-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS3 (consegna): ottenuto {-f3_ritardo+f_obj3_ritardo} ore di ritardo")
 print(f"Mosse LS3: {contatoreLS3}")
-output.write_output_soluzione_euristica(soluzione_swap, "PS-VRP/Dati_output/swap_intra.xlsx")
+output.write_output_soluzione_euristica(soluzione3, "PS-VRP/Dati_output/swap_intra.xlsx")
 tot3 = time.time() - start_time_swap
 
 # SEQUENZA PARZIALE
@@ -150,18 +150,23 @@ ritardo1 = -f1_ritardo.total_seconds()/3600
 ritardo2 = -f2_ritardo.total_seconds()/3600
 ritardo3 = -f3_ritardo.total_seconds()/3600
 
+print(ritardo1)
+print(ritardo2)
+print(ritardo3)
+
+
 if (a*f1+(1-a)*ritardo1) < (a*f2+(1-a)*ritardo2) and (a*f1+(1-a)*ritardo1) < (a*f3+(1-a)*ritardo3):
     print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> INSERT INTER')
     fprimo = f1
     fritardoprimo = f1_ritardo
     macchine_post = lista_macchine_copy
 elif (a*f1+(1-a)*ritardo1) < (a*f2+(1-a)*ritardo2) and (a*f1+(1-a)*f1_ritardo.total_seconds()/3600) > (a*f3+(1-a)*ritardo3):
-    print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> INSERT INTRA')
+    print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> SWAP INTRA')
     fprimo = f3
     fritardoprimo = f3_ritardo
     macchine_post = lista_macchine_copy2
 else:
-    print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> SWAP INTRA')
+    print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> INSERT INTRA')
     fprimo = f2
     fritardoprimo = f2_ritardo
     macchine_post = lista_macchine_copy1
@@ -169,12 +174,20 @@ else:
 
 start_time_post = time.time()
 soluzionepost, fpost, fpost_ritardo = solver.euristico_post(soluzione1, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo)
+for i in soluzionepost:
+    if i['commessa'] == 251371:
+        print(i['macchina'])
+        print("-------------------------------")
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (setup): {fpost} minuti di setup")
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-fpost_ritardo} ore di ritardo")
 output.write_output_soluzione_euristica(soluzionepost, "PS-VRP/Dati_output/euristico_post.xlsx")
 solver.grafico_schedulazione(soluzionepost)
 post_time = time.time() - start_time_post
 
+for i in macchine_post:
+    print(i.nome_macchina)
+    for j in i.lista_commesse_processate:
+        print(j.id_commessa)
 
 ## RICERCHE LOCALI (su secondo euristico)
 
@@ -206,22 +219,22 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_tot_post = time.time()
 soluzione2post, f2post, contatoreLS2post, f2_ritardo_post = solver.insert_intra(lista_macchine_copy4, lista_veicoli_copy, fpost, soluzionepost)
 print(f'Mosse LS1+LS2 - post: {contatoreLS2post}')
-soluzione_move_post = [b for a in soluzione2post for b in a]
-solver.grafico_schedulazione(soluzione_move_post)
-output.write_output_soluzione_euristica(soluzione_move_post, "PS-VRP/Dati_output/insert_intra_post.xlsx")
+#soluzione_move_post = [b for a in soluzione2post for b in a]
+solver.grafico_schedulazione(soluzione2post)
+output.write_output_soluzione_euristica(soluzione2post, "PS-VRP/Dati_output/insert_intra_post.xlsx")
 print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (setup): ottenuto {f2post-fpost} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f2_ritardo_post+fpost_ritardo} ore di ritardo")
 
-# INSERT-INTRA - Bis
+# SWAP-INTRA - Bis
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}Swap Intra Bis")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_tot_post = time.time()
 soluzione3post, f3post, contatoreLS3post, f3_ritardo_post = solver.insert_intra(lista_macchine_copy5, lista_veicoli_copy, fpost, soluzionepost)
 print(f'Mosse LS1+LS2 - post: {contatoreLS3post}')
-soluzione_swap_post = [b for a in soluzione3post for b in a]
-solver.grafico_schedulazione(soluzione_swap_post)
-output.write_output_soluzione_euristica(soluzione_swap_post, "PS-VRP/Dati_output/swap_intra_post.xlsx")
+#soluzione_swap_post = [b for a in soluzione3post for b in a]
+#solver.grafico_schedulazione(soluzione_swap_post)
+output.write_output_soluzione_euristica(soluzione3post, "PS-VRP/Dati_output/swap_intra_post.xlsx")
 print(f"{Fore.YELLOW}Risultato LS3[LS[G1+G2]+G3] (setup): ottenuto {f3post-fpost} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS3[LS[G1+G2]+G3] (consegna): ottenuto {-f3_ritardo_post+fpost_ritardo} ore di ritardo")
 
@@ -278,12 +291,12 @@ elif (a*f1+(1-a)*ritardo1) < (a*f2post+(1-a)*ritardo2) and (a*f1post+(1-a)*ritar
     fprimopost = f3post
     fritardoprimopost = f3_ritardo_post
     print(f3_ritardo_post)
-    soluzionefinale = soluzione_swap_post
+    soluzionefinale = soluzione3
 else:
     fprimopost = f2post
     fritardoprimopost = f2_ritardo_post
     print(f2_ritardo_post)
-    soluzionefinale = soluzione_move_post
+    soluzionefinale = soluzione2post
 
 ## STAMPE FINALI
 print(f"{Fore.MAGENTA}{Style.BRIGHT}\n{'='*40}")
