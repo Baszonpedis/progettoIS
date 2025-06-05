@@ -303,13 +303,13 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     soluzionepost = soluzione #si parte con la schedulazione già effettuata (euristico + ricerche locali)
     lista_macchine2 = lista_macchine.copy()
 
-    for i in soluzione:
-        print(i['commessa'],i['macchina'])
+    #for i in soluzione:
+    #    print(i['commessa'],i['macchina'])
 
-    for i in lista_macchine:
-        print(i.nome_macchina)
-        for j in i.lista_commesse_processate:
-            print(j.id_commessa)
+    #for i in lista_macchine:
+    #    print(i.nome_macchina)
+    #    for j in i.lista_commesse_processate:
+    #        print(j.id_commessa)
 
     #Sorting preliminare dell'input al terzo ciclo While
     commesse_da_schedulare.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
@@ -338,18 +338,18 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
         if not schedulazione_eseguita:
             lista_macchine.remove(macchina)
 
-    for i in lista_macchine:
-        print(i.nome_macchina)
-        for j in i.lista_commesse_processate:
-            print(j.id_commessa)
+    #for i in lista_macchine:
+    #    print(i.nome_macchina)
+    #    for j in i.lista_commesse_processate:
+    #        print(j.id_commessa)
 
     #Si ricostituisce la lista delle macchine per future chiamate
     lista_macchine = lista_macchine2.copy()
 
-    for i in lista_macchine:
-        print(i.nome_macchina)
-        for j in i.lista_commesse_processate:
-            print(j.id_commessa)
+    #for i in lista_macchine:
+    #    print(i.nome_macchina)
+    #    for j in i.lista_commesse_processate:
+    #        print(j.id_commessa)
 
     return soluzionepost, f_obj, fpost_ritardo
 
@@ -616,11 +616,11 @@ def insert_intra(lista_macchine: list, f_obj):
                         # CONDIZIONE DI MIGLIORAMENTO
                         delta = calcolo_delta(delta_setup, delta_ritardo)
                         if delta < -eps:
-                            print(f'\n---------------------------')
-                            print(f'Macchina: {macchina.nome_macchina}')
-                            print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
-                            print(f'Tempo di setup (delta_setup): {delta_setup}')
-                            print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
+                            #print(f'\n---------------------------')
+                            #print(f'Macchina: {macchina.nome_macchina}')
+                            #print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
+                            #print(f'Tempo di setup (delta_setup): {delta_setup}')
+                            #print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
                             f_best += delta_setup
                             contatoreLS2 += 1
                             macchina.lista_commesse_processate = schedula
@@ -725,11 +725,11 @@ def swap_intra(lista_macchine, f_obj):
                         # CONDIZIONE DI MIGLIORAMENTO (ed eventuali aggiornamenti)
                         delta = calcolo_delta(delta_setup, delta_ritardo)
                         if delta < -eps:
-                            print(f'\n---------------------------')
-                            print(f'Macchina: {macchina.nome_macchina}')
-                            print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
-                            print(f'Tempo di setup (delta_setup): {delta_setup}')
-                            print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
+                            #print(f'\n---------------------------')
+                            #print(f'Macchina: {macchina.nome_macchina}')
+                            #print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
+                            #print(f'Tempo di setup (delta_setup): {delta_setup}')
+                            #print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
                             f_best += delta_setup
                             macchina.lista_commesse_processate = schedula
                             contatoreLS3 += 1

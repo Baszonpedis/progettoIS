@@ -159,7 +159,7 @@ print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (consegna): ottenuto {-f5_ritardo+f_obj3
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G3)".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
-a = 0
+a = 1
 ritardo5 = -f5_ritardo.total_seconds()/3600 
 ritardo2 = -f2_ritardo.total_seconds()/3600
 ritardo3 = -f3_ritardo.total_seconds()/3600
@@ -234,7 +234,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}Swap Intra Bis")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_tot_post = time.time()
-soluzione3post, f3post, contatoreLS3post, f3_ritardo_post = solver.insert_intra(lista_macchine_copy5, fpost)
+soluzione3post, f3post, contatoreLS3post, f3_ritardo_post = solver.swap_intra(lista_macchine_copy5, fpost)
 print(f'Mosse LS1+LS2 - post: {contatoreLS3post}')
 #soluzione_swap_post = [b for a in soluzione3post for b in a]
 #solver.grafico_schedulazione(soluzione_swap_post)
@@ -330,4 +330,4 @@ print(f"{Fore.BLUE}TEMPO Greedy (G3): {post_time:.2f}s")
 print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS1 post: {post_time + tot1_post:.2f}s")
 #print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS1+LS2+LS3 post: {post_time + tot1 + tot_tot_post:.2f}s")
 
-#solver.grafico_schedulazione(soluzione_sequenza_post)  # Soluzione finale totale
+solver.grafico_schedulazione(soluzionefinale)  # Soluzione finale totale
