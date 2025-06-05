@@ -6,9 +6,9 @@ import time
 from colorama import Fore, Style, init
 
 ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
-file_macchine_excel="PS-VRP/Dati_input/Estrazione macchine 4.xlsx"
-file_commesse_excel="PS-VRP/Dati_input/Estrazione commesse 4.xlsx"
-file_veicoli_excel="PS-VRP/Dati_input/Estrazione veicoli 4.xlsx"
+file_macchine_excel="PS-VRP/Dati_input/Estrazione macchine 5.xlsx"
+file_commesse_excel="PS-VRP/Dati_input/Estrazione commesse 5.xlsx"
+file_veicoli_excel="PS-VRP/Dati_input/Estrazione veicoli 5.xlsx"
 
 ##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
@@ -295,7 +295,7 @@ elif (a*f1+(1-a)*ritardo1) < (a*f2post+(1-a)*ritardo2) and (a*f1post+(1-a)*ritar
     fprimopost = f3post
     fritardoprimopost = f3_ritardo_post
     print(f3_ritardo_post)
-    soluzionefinale = soluzione3
+    soluzionefinale = soluzione3post
 else:
     fprimopost = f2post
     fritardoprimopost = f2_ritardo_post
@@ -316,7 +316,7 @@ print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (sole seconde ricerche locali) (CONSEG
 print(f"{Fore.GREEN}COMMESSE LETTE CORRETTAMENTE: {len(lista_commesse)}")
 print(f"{Fore.GREEN}COMMESSE ESCLUSE PER ERRORE NELL'ESTRAZIONE VEICOLI: {len(commesse_veicoli_errati)}")
 print(f"{Fore.GREEN}COMMESSE POST FILTRO ZONE E FILTRO VEICOLI (Interne a zona aperta + tassative): {len(commesse_da_schedulare)}")
-print(f"{Fore.GREEN}COMMESSE SCARTATE (RELEGATE A TERZO CICLO): {len(commesse_scartate)}")
+print(f"{Fore.GREEN}COMMESSE SCARTATE (RELEGATE A TERZO CICLO): {len(commesse_scartate+commesse_residue)}")
 print(f"{Fore.GREEN}COMMESSE CORRETTAMENTE SCHEDULATE SU MACCHINA: {len(soluzionefinale)}\n")
 
 print(f"{Fore.BLUE}TEMPO Greedy (G1+G2): {tot_time_eur:.2f}s")
