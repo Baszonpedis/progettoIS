@@ -26,6 +26,8 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G1+G2)".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
 print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE SENZA CAMPI MANCANTI (LETTE CORRETTAMENTE): {len(lista_commesse)}")
+for i in lista_commesse:
+    print(i.id_commessa)
 
 start_time_eur = time.time()
 
@@ -62,14 +64,6 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}RICERCHE LOCALI".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
 
-for i in lista_macchine_copy:
-    print(i.nome_macchina)
-    for j in i.lista_commesse_processate:
-        print(j.id_commessa)
-
-for i in schedulazione3:
-    print(i['commessa'],i['macchina'])
-
 # M2M
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS1 (Insert inter-macchina)")
@@ -85,13 +79,9 @@ output.write_output_soluzione_euristica(soluzione1, "PS-VRP/Dati_output/insert_i
 tot1 = time.time() - start1
 solver.grafico_schedulazione(soluzione1)
 
-for i in lista_macchine_copy:
-    print(i.nome_macchina)
-    for j in i.lista_commesse_processate:
-        print(j.id_commessa)
+#lista_macchine_copy10 = lista_macchine_copy.copy()
 
-for i in soluzione1:
-    print(i['commessa'],i['macchina'])
+#print("ID macchine in copia shallow (lista_macchine_copy10):", [id(m) for m in lista_macchine_copy10])
 
 
 # M
@@ -126,17 +116,17 @@ output.write_output_soluzione_euristica(soluzione3, "PS-VRP/Dati_output/swap_int
 tot3 = time.time() - start_time_swap
 
 # SEQUENZA PARZIALE
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2 (sequenza parziale)")
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+#print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+#print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2 (sequenza parziale)")
+#print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_tot = time.time()
 soluzione4, f4, contatoreLS2, f4_ritardo = solver.insert_intra(lista_macchine_copy, f1)
 print(f'Mosse LS1+LS2: {contatoreLS1+contatoreLS2}')
 #soluzione_parziale = [b for a in soluzione4 for b in a]
-print(f4)
-output.write_output_soluzione_euristica(soluzione1, "PS-VRP/Dati_output/sequenza_parziale.xlsx")
-print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto {f4-f1} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-f4_ritardo+f1_ritardo} ore di ritardo")
+#print(f4)
+#output.write_output_soluzione_euristica(soluzione1, "PS-VRP/Dati_output/sequenza_parziale.xlsx")
+#print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto {f4-f1} minuti di setup")
+#print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-f4_ritardo+f1_ritardo} ore di ritardo")
 
 # SEQUENZA COMPLETA
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -169,24 +159,22 @@ if (a*f5+(1-a)*ritardo5) < (a*f2+(1-a)*ritardo2) and (a*f5+(1-a)*ritardo5) < (a*
     fprimo = f5
     fritardoprimo = f5_ritardo
     macchine_post = lista_macchine_copy
+    soluzionebest = soluzione5
 elif (a*f5+(1-a)*ritardo5) < (a*f2+(1-a)*ritardo2) and (a*f5+(1-a)*ritardo5) > (a*f3+(1-a)*ritardo3):
     print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> SWAP INTRA')
     fprimo = f3
     fritardoprimo = f3_ritardo
     macchine_post = lista_macchine_copy2
+    soluzionebest = soluzione3
 else:
     print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> INSERT INTRA')
     fprimo = f2
     fritardoprimo = f2_ritardo
     macchine_post = lista_macchine_copy1
-
+    soluzionebest = soluzione1
 
 start_time_post = time.time()
-soluzionepost, fpost, fpost_ritardo = solver.euristico_post(soluzione1, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo)
-#for i in soluzionepost:
-#    if i['commessa'] == 251371:
-#        print(i['macchina'])
-#        print("-------------------------------")
+soluzionepost, fpost, fpost_ritardo = solver.euristico_post(soluzionebest, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo)
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (setup): {fpost} minuti di setup")
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-fpost_ritardo} ore di ritardo")
 output.write_output_soluzione_euristica(soluzionepost, "PS-VRP/Dati_output/euristico_post.xlsx")
@@ -216,6 +204,14 @@ print(f"Mosse LS1 - post: {contatoreLS1post}")
 output.write_output_soluzione_euristica(soluzione1post, "PS-VRP/Dati_output/insert_inter_post.xlsx")
 tot1_post = time.time() - start1_post
 
+for i in lista_macchine:
+    print(i.nome_macchina)
+    for j in i.lista_commesse_processate:
+        print(j.id_commessa)
+
+for i in soluzione4:
+    print(i['commessa'],i['macchina'])
+
 # INSERT-INTRA - Bis
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}Insert Intra Bis")
@@ -228,6 +224,14 @@ solver.grafico_schedulazione(soluzione2post)
 output.write_output_soluzione_euristica(soluzione2post, "PS-VRP/Dati_output/insert_intra_post.xlsx")
 print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (setup): ottenuto {f2post-fpost} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f2_ritardo_post+fpost_ritardo} ore di ritardo")
+
+for i in lista_macchine:
+    print(i.nome_macchina)
+    for j in i.lista_commesse_processate:
+        print(j.id_commessa)
+
+for i in soluzione4:
+    print(i['commessa'],i['macchina'])
 
 # SWAP-INTRA - Bis
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
