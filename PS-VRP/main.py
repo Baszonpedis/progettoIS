@@ -80,9 +80,7 @@ tot1 = time.time() - start1
 solver.grafico_schedulazione(soluzione1)
 
 #lista_macchine_copy10 = lista_macchine_copy.copy()
-
 #print("ID macchine in copia shallow (lista_macchine_copy10):", [id(m) for m in lista_macchine_copy10])
-
 
 # M
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -116,17 +114,18 @@ output.write_output_soluzione_euristica(soluzione3, "PS-VRP/Dati_output/swap_int
 tot3 = time.time() - start_time_swap
 
 # SEQUENZA PARZIALE
-#print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-#print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2 (sequenza parziale)")
-#print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2 (sequenza parziale)")
+print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_tot = time.time()
 soluzione4, f4, contatoreLS2, f4_ritardo = solver.insert_intra(lista_macchine_copy, f1)
 print(f'Mosse LS1+LS2: {contatoreLS1+contatoreLS2}')
 #soluzione_parziale = [b for a in soluzione4 for b in a]
-#print(f4)
-#output.write_output_soluzione_euristica(soluzione1, "PS-VRP/Dati_output/sequenza_parziale.xlsx")
-#print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto {f4-f1} minuti di setup")
-#print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-f4_ritardo+f1_ritardo} ore di ritardo")
+print(f4)
+print(-f4_ritardo)
+output.write_output_soluzione_euristica(soluzione4, "PS-VRP/Dati_output/sequenza_parziale.xlsx")
+print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto {f4-f1} minuti di setup")
+print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-f4_ritardo+f1_ritardo} ore di ritardo")
 
 # SEQUENZA COMPLETA
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -203,14 +202,6 @@ print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (consegna): ottenuto {-f1_ritar
 print(f"Mosse LS1 - post: {contatoreLS1post}")
 output.write_output_soluzione_euristica(soluzione1post, "PS-VRP/Dati_output/insert_inter_post.xlsx")
 tot1_post = time.time() - start1_post
-
-for i in lista_macchine:
-    print(i.nome_macchina)
-    for j in i.lista_commesse_processate:
-        print(j.id_commessa)
-
-for i in soluzione4:
-    print(i['commessa'],i['macchina'])
 
 # INSERT-INTRA - Bis
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
