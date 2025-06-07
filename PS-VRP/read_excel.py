@@ -154,7 +154,7 @@ def read_compatibilita(nome_file,lista_commesse):
         # Supponendo che ogni oggetto Commessa abbia un metodo `to_dict()` per esportare i dati
         incompatibili_dict = [{'commessa': c.id_commessa, 'motivo': 'nessuna compatibilità con alcuna macchina'} for c in commesse_incompatibili]
         df_incompatibili = pd.DataFrame(incompatibili_dict)
-        df_incompatibili.to_excel("commesse_incompatibili.xlsx", index=False)
+        df_incompatibili.to_excel("PS-VRP/Dati_output/errori_compatibilità.xlsx", index=False)
     return incompatibili_dict
 
 def read_excel_veicoli(nome_file):
