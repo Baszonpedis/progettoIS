@@ -15,7 +15,7 @@ lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base o
 read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
 inizio_schedulazione=lista_macchine[0].data_inizio_schedulazione
 lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedulazione) #Lista base oggetti commessa
-read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse)
+incompatibili = read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse); estraggo le eventuali incompatibili con ogni macchina
 lista_veicoli=read_excel.read_excel_veicoli(file_veicoli_excel) #Lista base oggetti veicolo
 lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
 
@@ -25,9 +25,9 @@ init(autoreset=True)  # Ripristina i colori dopo ogni print
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G1+G2)".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
-print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE SENZA CAMPI MANCANTI (LETTE CORRETTAMENTE): {len(lista_commesse)}")
-for i in lista_commesse:
-    print(i.id_commessa)
+print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE LETTE CORRETTAMENTE (NO CAMPI MANCANTI, ALMENO UNA COMPATIBILITA' MACCHINA): {len(lista_commesse)}")
+print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE ESCLUSE PER INCOMPATIBILITA' CON TUTTE LE MACCHINE: {len(incompatibili)}")
+
 
 start_time_eur = time.time()
 
@@ -216,14 +216,6 @@ output.write_output_soluzione_euristica(soluzione2post, "PS-VRP/Dati_output/inse
 print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (setup): ottenuto {f2post-fpost} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f2_ritardo_post+fpost_ritardo} ore di ritardo")
 
-for i in lista_macchine:
-    print(i.nome_macchina)
-    for j in i.lista_commesse_processate:
-        print(j.id_commessa)
-
-for i in soluzione4:
-    print(i['commessa'],i['macchina'])
-
 # SWAP-INTRA - Bis
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}Swap Intra Bis")
@@ -319,7 +311,7 @@ print(f"{Fore.BLUE}TEMPO Greedy (G1+G2) + LS1: {tot_time_eur + tot1:.2f}s")
 print(f"{Fore.BLUE}TEMPO Greedy (G1+G2) + LS2: {tot_time_eur + tot2:.2f}s")
 print(f"{Fore.BLUE}TEMPO Greedy (G1+G2) + LS3: {tot_time_eur + tot3:.2f}s")
 print(f"{Fore.BLUE}TEMPO Greedy (G1+G2) + LS1: {tot_time_eur + tot1:.2f}s")
-#print(f"{Fore.BLUE}TEMPO Greedy (G1+G2) + LS1+LS2+LS3: {tot_time_eur + tot1 + tot_tot:.2f}s")
+print(f"{Fore.BLUE}TEMPO Greedy (G1+G2) + LS1+LS2+LS3: {tot_time_eur + tot1 + tot_tot:.2f}s")
 
 print(f"{Fore.BLUE}TEMPO Greedy (G3): {post_time:.2f}s")
 print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS1 post: {post_time + tot1_post:.2f}s")

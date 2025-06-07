@@ -135,8 +135,27 @@ def read_compatibilita(nome_file,lista_commesse):
     pattern_ok = r'^OK.*$' #pattern che inizia con OK
     pattern_err = r'^ERR.*$' #pattern che inizia con ERR
     df[macchine]=df[macchine].replace({pattern_ok: 1, pattern_err: 0}, regex=True).astype(int) #dove c'è OK metto 1, dove c'è ERR metto 0
-    for (i,f) in df.iterrows(): #itero lungo le righe del df (la i indica l'indice della riga; da notare che vi è corrispondenza tra la i del df pandas e la i della commessa)
-        lista_commesse[i].compatibilita=dict(f) #assegno all'attributo compatibilita un dizionario con chiave=nome della macchina e valore=0/1 a seconda che la commessa non possa/possa essere schedulata sulla macchina
+    commesse_compatibili = []
+    commesse_incompatibili = []
+
+    for i, f in df.iterrows(): #itero lungo le righe del df (la i indica l'indice della riga; da notare che vi è corrispondenza tra la i del df pandas e la i della commessa)
+        compat = dict(f)
+        if sum([compat[m] for m in macchine]) > 0:
+            lista_commesse[i].compatibilita = compat #assegno all'attributo compatibilita un dizionario con chiave=nome della macchina e valore=0/1 a seconda che la commessa non possa/possa essere schedulata sulla macchina
+            commesse_compatibili.append(lista_commesse[i])
+        else:
+            commesse_incompatibili.append(lista_commesse[i])
+
+    # Sovrascrive lista_commesse con solo quelle compatibili
+    lista_commesse[:] = commesse_compatibili
+
+    # Esporta le commesse incompatibili in un file Excel
+    if commesse_incompatibili:
+        # Supponendo che ogni oggetto Commessa abbia un metodo `to_dict()` per esportare i dati
+        incompatibili_dict = [{'commessa': c.id_commessa, 'motivo': 'nessuna compatibilità con alcuna macchina'} for c in commesse_incompatibili]
+        df_incompatibili = pd.DataFrame(incompatibili_dict)
+        df_incompatibili.to_excel("commesse_incompatibili.xlsx", index=False)
+    return incompatibili_dict
 
 def read_excel_veicoli(nome_file):
     """
