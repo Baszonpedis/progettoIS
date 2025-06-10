@@ -394,8 +394,8 @@ def insert_inter_macchina(lista_macchine: list, f_obj):
 def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contatore:int,inizio_schedulazione,f_best):
     #for i in macchina1.lista_commesse_processate:
     #    print(i.id_commessa)
-    schedula1=macchina1.lista_commesse_processate #copia profonda della lista di commesse schedulate
-    schedula2=macchina2.lista_commesse_processate #copia profonda della lista di commesse schedulate
+    schedula1=macchina1.lista_commesse_processate #copia della lista di commesse schedulate
+    schedula2=macchina2.lista_commesse_processate #copia della lista di commesse schedulate
     eps = 0.00001  # parametro per stabilire se il delta è conveniente
     improved=False
     #risparmio_tot = 0

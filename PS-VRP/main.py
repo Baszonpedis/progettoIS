@@ -28,7 +28,6 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
 print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE LETTE CORRETTAMENTE (NO CAMPI MANCANTI, ALMENO UNA COMPATIBILITA' MACCHINA): {len(lista_commesse)}")
 print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE ESCLUSE PER INCOMPATIBILITA' CON TUTTE LE MACCHINE: {len(incompatibili)}")
 
-
 start_time_eur = time.time()
 
 commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
@@ -47,7 +46,6 @@ print(f"\n{Fore.RED}{Style.BRIGHT}COMMESSE NON SCHEDULATE AL PRIMO EURISTICO (su
 print(f"{Fore.RED}Dettaglio motivi: {commesse_non_schedulate}")
 print(f"\n{Fore.YELLOW}Funzione obiettivo euristico (setup): {f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Funzione obiettivo euristico (consegna): {-f_obj3_ritardo} ore di ritardo\n")
-
 
 end_time_eur = time.time()
 tot_time_eur = end_time_eur - start_time_eur
@@ -105,7 +103,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start_time_swap = time.time()
 soluzione3, f3, contatoreLS3, f3_ritardo = solver.swap_intra(lista_macchine_copy2, f_obj3)
-print(f3)
+#print(f3)
 #soluzione_swap = [b for a in soluzione3 for b in a]
 print(f"{Fore.YELLOW}Risultato LS3 (setup): ottenuto {f3-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS3 (consegna): ottenuto {-f3_ritardo+f_obj3_ritardo} ore di ritardo")
@@ -121,8 +119,8 @@ start_time_tot = time.time()
 soluzione4, f4, contatoreLS2, f4_ritardo = solver.insert_intra(lista_macchine_copy, f1)
 print(f'Mosse LS1+LS2: {contatoreLS1+contatoreLS2}')
 #soluzione_parziale = [b for a in soluzione4 for b in a]
-print(f4)
-print(-f4_ritardo)
+#print(f4)
+#print(-f4_ritardo)
 output.write_output_soluzione_euristica(soluzione4, "PS-VRP/Dati_output/sequenza_parziale.xlsx")
 print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto {f4-f1} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-f4_ritardo+f1_ritardo} ore di ritardo")
@@ -134,13 +132,13 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 soluzione5, f5, contatoreLS3, f5_ritardo = solver.swap_intra(lista_macchine_copy, f4)
 print(f'Mosse LS1+LS2+LS3: {contatoreLS1+contatoreLS2+contatoreLS3}')
 #soluzione_sequenza = [b for a in soluzione5 for b in a]
-print(f5_ritardo)
-print(f4_ritardo)
+#print(f5_ritardo)
+#print(f4_ritardo)
 print(f"{Fore.YELLOW}Risultato LS1+LS2+LS3 (setup): ottenuto {f5-f4} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1+LS2+LS3 (consegna): ottenuto {-f5_ritardo+f4_ritardo} ore di ritardo")
 output.write_output_soluzione_euristica(soluzione5, "PS-VRP/Dati_output/sequenza.xlsx")
 tot_tot = time.time() - start_time_tot
-print(f5)
+#print(f5)
 print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (setup): ottenuto {f5-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (consegna): ottenuto {-f5_ritardo+f_obj3_ritardo} ore di ritardo")
 
@@ -195,9 +193,9 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start1_post = time.time()
 soluzione1post, f1post, contatoreLS1post, f1_ritardo_post = solver.insert_inter_macchina(lista_macchine_copy3, fpost)
-print(f1post)
+#print(f1post)
 print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (setup): ottenuto {f1post-fpost} minuti di setup")
-print(f1_ritardo_post)
+#print(f1_ritardo_post)
 print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (consegna): ottenuto {-f1_ritardo_post + fpost_ritardo} ore di ritardo")
 print(f"Mosse LS1 - post: {contatoreLS1post}")
 output.write_output_soluzione_euristica(soluzione1post, "PS-VRP/Dati_output/insert_inter_post.xlsx")
@@ -268,25 +266,25 @@ tot_tot_post = time.time() - start_time_tot_post"""
 ritardo1 = -f1_ritardo_post.total_seconds()/3600
 ritardo2 = -f2_ritardo_post.total_seconds()/3600
 ritardo3 = -f3_ritardo_post.total_seconds()/3600
-print(a*f1post+(1-a)*f1_ritardo_post.total_seconds()/3600)
-print(a*f1post)
-print((1-a))
-print(f1_ritardo_post.total_seconds()/3600)
+#print(a*f1post+(1-a)*f1_ritardo_post.total_seconds()/3600)
+#print(a*f1post)
+#print((1-a))
+#print(f1_ritardo_post.total_seconds()/3600)
 
 if (a*f1post+(1-a)*ritardo1) < (a*f2post+(1-a)*ritardo2) and (a*f1post+(1-a)*ritardo1) < (a*f3post+(1-a)*ritardo3):
     fprimopost = f1post
     fritardoprimopost = f1_ritardo_post
-    print(f1_ritardo_post)
+    #print(f1_ritardo_post)
     soluzionefinale = soluzione1post
 elif (a*f1+(1-a)*ritardo1) < (a*f2post+(1-a)*ritardo2) and (a*f1post+(1-a)*ritardo1) > (a*f3post+(1-a)*ritardo3):
     fprimopost = f3post
     fritardoprimopost = f3_ritardo_post
-    print(f3_ritardo_post)
+    #print(f3_ritardo_post)
     soluzionefinale = soluzione3post
 else:
     fprimopost = f2post
     fritardoprimopost = f2_ritardo_post
-    print(f2_ritardo_post)
+    #print(f2_ritardo_post)
     soluzionefinale = soluzione2post
 
 ## STAMPE FINALI
