@@ -484,7 +484,7 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                 if delta < -eps:
                     #print(f'\n---------------------------')
                     #print(f'Macchine: {macchina1.nome_macchina}, {macchina2.nome_macchina}; Commessa mossa: {commessa.id_commessa}')
-                    #print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
+                    print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
                     #print(f'Tempo di setup (delta_setup): {delta_setup}')
                     #print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
                     #Aggiornamento necessario pena la desincronizzazione tra lista_commesse_processate e la soluzione
