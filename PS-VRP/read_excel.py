@@ -111,8 +111,9 @@ def read_compatibilita(nome_file,lista_commesse):
     """
     :param nome_file: nome del file da leggere relativo alle compatibilita commessa-macchina
     :param lista_commesse: lista di oggetti Commessa a cui andare ad aggiungere le compatibilita con le macchine
-    :return: nulla da ritornare in quanto la lista esiste gia
+    :return: lista di dizionari di incompatibilità (se presenti - in caso di commesse erroneamente incompatibili per ogni macchina)
     """
+    incompatibili_dict = []
     df=pd.read_excel(nome_file, 0, skiprows=0, usecols=campi_compatibilita) #lettura del df con pandas
     colonne_commesse_foglio = ['Commesse::FASCIA', 'Commesse::Diam int tubo']
     for col in colonne_commesse_foglio:
