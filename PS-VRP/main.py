@@ -146,7 +146,7 @@ print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (consegna): ottenuto {-f5_ritardo+f_obj3
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G3)".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
-a = 1
+a = 0
 ritardo5 = -f5_ritardo.total_seconds()/3600 
 ritardo2 = -f2_ritardo.total_seconds()/3600
 ritardo3 = -f3_ritardo.total_seconds()/3600
@@ -271,7 +271,7 @@ ritardo3 = -f3_ritardo_post.total_seconds()/3600
 #print((1-a))
 #print(f1_ritardo_post.total_seconds()/3600)
 
-if (a*f5post+(1-a)*ritardo5) < (a*f2post+(1-a)*ritardo2) and (a*f5post+(1-a)*ritardo1) < (a*f3post+(1-a)*ritardo3):
+if (a*f5post+(1-a)*ritardo5) < (a*f2post+(1-a)*ritardo2) and (a*f5post+(1-a)*ritardo5) < (a*f3post+(1-a)*ritardo3):
     print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> SEQUENZA')
     fprimopost = f5post
     fritardoprimopost = f5_ritardo_post
@@ -295,8 +295,9 @@ print(f"{Fore.MAGENTA}{Style.BRIGHT}\n{'='*40}")
 print(f"{Fore.MAGENTA}{Style.BRIGHT}RISULTATI FINALI".center(40))
 print(f"{Fore.MAGENTA}{Style.BRIGHT}{'='*40}\n")
 
-print(f"{Fore.YELLOW}RISULTATO FINALE: {fprimopost} minuti di setup\n")
-print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (entrambe le ricerche locali) (SETUP): {fprimopost - fpost + fprimo - f3} minuti di setup")
+print(f"{Fore.YELLOW}RISULTATO FINALE (SETUP): {fprimopost} minuti di setup\n")
+print(f"{Fore.YELLOW}RISULTATO FINALE (CONSEGNE): {-fritardoprimopost} ore di ritardo\n")
+print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (entrambe le ricerche locali) (SETUP): {fprimopost - fpost + fprimo - f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (entrambe le ricerche locali) (CONSEGNE): {-fritardoprimopost+fpost_ritardo -fritardoprimo +f_obj3_ritardo} ore di ritardo\n")
 print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (sole seconde ricerche locali) (SETUP): {fprimopost - fpost} minuti di setup")
 print(f"{Fore.YELLOW}RISPARMIO CUMULATIVO (sole seconde ricerche locali) (CONSEGNE): {-fritardoprimopost+fpost_ritardo} ore di ritardo")
