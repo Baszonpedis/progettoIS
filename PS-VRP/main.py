@@ -9,7 +9,7 @@ from colorama import Fore, Style, init
 file_macchine_excel="PS-VRP/Dati_input/Estrazione macchine 5.xlsx"
 file_commesse_excel="PS-VRP/Dati_input/Estrazione commesse 5.xlsx"
 file_veicoli_excel="PS-VRP/Dati_input/Estrazione veicoli 5.xlsx"
-a = 1 #parametro "a" per decidere la migliore ricerca locale nei due stadi di ricerca locale
+a = 0 #parametro "a" per decidere la migliore ricerca locale nei due stadi di ricerca locale
 
 ##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
