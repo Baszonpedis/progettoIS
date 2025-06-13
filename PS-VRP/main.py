@@ -9,7 +9,7 @@ from colorama import Fore, Style, init
 file_macchine_excel="PS-VRP/Dati_input/Estrazione macchine 5.xlsx"
 file_commesse_excel="PS-VRP/Dati_input/Estrazione commesse 5.xlsx"
 file_veicoli_excel="PS-VRP/Dati_input/Estrazione veicoli 5.xlsx"
-a = 0 #parametro "a" per decidere la migliore ricerca locale nei due stadi di ricerca locale
+a = 1 #parametro "a" per decidere la migliore ricerca locale nei due stadi di ricerca locale
 
 ##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
@@ -151,14 +151,14 @@ ritardo5 = -f5_ritardo.total_seconds()/3600
 ritardo2 = -f2_ritardo.total_seconds()/3600
 ritardo3 = -f3_ritardo.total_seconds()/3600
 
-if (a*f5+(1-a)*ritardo5) < (a*f2+(1-a)*ritardo2) and (a*f5+(1-a)*ritardo5) < (a*f3+(1-a)*ritardo3):
-    print(f'SOLUZIONE MIGLIORE PER BETA = {a} -> SEQUENZA')
-    fprimo = f5
-    fritardoprimo = f5_ritardo
-    ritardo_pesato_primo = ritardo_pesato_5
-    macchine_post = lista_macchine_copy
-    soluzionebest = soluzione5
-elif (a*f5+(1-a)*ritardo5) < (a*f2+(1-a)*ritardo2) and (a*f5+(1-a)*ritardo5) > (a*f3+(1-a)*ritardo3):
+#if (a*f5+(1-a)*ritardo5) < (a*f2+(1-a)*ritardo2) and (a*f5+(1-a)*ritardo5) < (a*f3+(1-a)*ritardo3):
+print(f'SOLUZIONE MIGLIORE PER BETA = {a} -> SEQUENZA')
+fprimo = f5
+fritardoprimo = f5_ritardo
+ritardo_pesato_primo = ritardo_pesato_5
+macchine_post = lista_macchine_copy
+soluzionebest = soluzione5
+"""elif (a*f5+(1-a)*ritardo5) < (a*f2+(1-a)*ritardo2) and (a*f5+(1-a)*ritardo5) > (a*f3+(1-a)*ritardo3):
     print(f'SOLUZIONE MIGLIORE PER BETA = {a} -> SWAP INTRA')
     fprimo = f3
     fritardoprimo = f3_ritardo
@@ -171,7 +171,7 @@ else:
     fritardoprimo = f2_ritardo
     ritardo_pesato_primo = ritardo_pesato_2
     macchine_post = lista_macchine_copy1
-    soluzionebest = soluzione1
+    soluzionebest = soluzione1"""
 
 start_time_post = time.time()
 soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato = solver.euristico_post(soluzionebest, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
@@ -274,13 +274,13 @@ ritardo3 = -f3_ritardo_post.total_seconds()/3600
 #print((1-a))
 #print(f1_ritardo_post.total_seconds()/3600)
 
-if (a*f5post+(1-a)*ritardo5) < (a*f2post+(1-a)*ritardo2) and (a*f5post+(1-a)*ritardo5) < (a*f3post+(1-a)*ritardo3):
-    print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> SEQUENZA')
-    fprimopost = f5post
-    fritardoprimopost = f5_ritardo_post
-    ritardo_pesato_post_primo = ritardo_post_pesato_5
-    soluzionefinale = soluzione5post
-elif (a*f5+(1-a)*ritardo5) < (a*f2post+(1-a)*ritardo2) and (a*f5post+(1-a)*ritardo5) > (a*f3post+(1-a)*ritardo3):
+#if (a*f5post+(1-a)*ritardo5) < (a*f2post+(1-a)*ritardo2) and (a*f5post+(1-a)*ritardo5) < (a*f3post+(1-a)*ritardo3):
+print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> SEQUENZA')
+fprimopost = f5post
+fritardoprimopost = f5_ritardo_post
+ritardo_pesato_post_primo = ritardo_post_pesato_5
+soluzionefinale = soluzione5post
+"""elif (a*f5+(1-a)*ritardo5) < (a*f2post+(1-a)*ritardo2) and (a*f5post+(1-a)*ritardo5) > (a*f3post+(1-a)*ritardo3):
     print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> SWAP INTRA')
     fprimopost = f3post
     fritardoprimopost = f3_ritardo_post
@@ -291,7 +291,7 @@ else:
     fprimopost = f2post
     fritardoprimopost = f2_ritardo_post
     ritardo_pesato_post_primo = ritardo_post_pesato_2
-    soluzionefinale = soluzione2post
+    soluzionefinale = soluzione2post"""
 
 ## STAMPE FINALI
 print(f"{Fore.MAGENTA}{Style.BRIGHT}\n{'='*40}")

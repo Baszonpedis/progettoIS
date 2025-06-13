@@ -493,7 +493,7 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                 if delta < -eps and check1 and check2:
                     #print(f'\n---------------------------')
                     #print(f'Macchine: {macchina1.nome_macchina}, {macchina2.nome_macchina}; Commessa mossa: {commessa.id_commessa}')
-                    print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
+                    #print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
                     #print(f'Tempo di setup (delta_setup): {delta_setup}')
                     #print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
                     #Aggiornamento necessario pena la desincronizzazione tra lista_commesse_processate e la soluzione
@@ -807,11 +807,11 @@ def check_LS(check, commessa1, commessa):
         if commessa.ritardo > commessa1["ritardo mossa"]:
             check = False
     #print(f'tassative: {counter_tass}, tassative interne: {counter_tass_int}, tassative esterne: {counter_tass_ext}, altre: {counter_aliud}')
-    return check
+    return True
 
 #Funzione utility per il calcolo del delta migliorativo per le varie ricerche locali, combinando linearmente delta_ritardo (pesato e cumulativo) con delta_setup (cumulativo) in funzione del parametro alfa
 def calcolo_delta(delta_setup,delta_ritardo):
-    alfa = 0.6 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
+    alfa = 0.3 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
     delta_ritardo = delta_ritardo.total_seconds()/3600
     delta = alfa*delta_setup+(1-alfa)*delta_ritardo
     return delta
@@ -1119,5 +1119,139 @@ def grafico_schedulazione(schedulazione):
 
     fig.canvas.mpl_connect("motion_notify_event", on_motion)
 
+    plt.tight_layout()
+    plt.show()"""
+
+"""import matplotlib.pyplot as plt
+from matplotlib.text import Annotation
+from datetime import datetime, timedelta
+
+def grafico_schedulazione(schedulazione):
+    macchine = list(set(s["macchina"] for s in schedulazione))
+    macchine.sort(reverse=True)
+
+    veicoli = list(set(s["veicolo"] for s in schedulazione))
+    green_shades = ['#006400']
+    colori_veicoli = {}
+    green_index = 0
+    for veicolo in veicoli:
+        colori_veicoli[veicolo] = '#d9b904' if veicolo is None else green_shades[green_index % len(green_shades)]
+        if veicolo is not None:
+            green_index += 1
+
+    inizi = [s["inizio_setup"] for s in schedulazione] + [s["inizio_lavorazione"] for s in schedulazione]
+    fine = [s["fine_setup"] for s in schedulazione] + [s["fine_lavorazione"] for s in schedulazione]
+    inizio_timeline = min(inizi)
+    fine_timeline = max(fine)
+
+    # Calcola intervalli non produttivi
+    intervalli_non_produzione = []
+    current_time = inizio_timeline.replace(hour=0, minute=0, second=0, microsecond=0)
+    while current_time < fine_timeline:
+        weekday = current_time.weekday()
+
+        if weekday == 4:  # Venerdì
+            weekend_start = current_time + timedelta(hours=15)
+            weekend_end = (current_time + timedelta(days=3)).replace(hour=7)
+
+            start = max(weekend_start, inizio_timeline)
+            end = min(weekend_end, fine_timeline)
+            if start < end:
+                intervalli_non_produzione.append((start, end))
+
+            current_time += timedelta(days=3)
+        else:
+            np_start = current_time + timedelta(hours=15)
+            np_end = (current_time + timedelta(days=1)).replace(hour=7)
+
+            start = max(np_start, inizio_timeline)
+            end = min(np_end, fine_timeline)
+            if start < end:
+                intervalli_non_produzione.append((start, end))
+
+            current_time += timedelta(days=1)
+
+    # Funzione per mappare i tempi produttivi
+    def crea_mappa_tempo(inizio, fine, blocchi_np):
+        mappa = {}
+        tempo_corrente = inizio
+        tempo_asse = 0
+
+        blocchi_np = sorted(blocchi_np)
+
+        while tempo_corrente < fine:
+            in_np = False
+            for np_start, np_end in blocchi_np:
+                if np_start <= tempo_corrente < np_end:
+                    in_np = True
+                    tempo_corrente = np_end  # Salta il blocco NP
+                    break
+            if not in_np:
+                mappa[tempo_corrente] = tempo_asse
+                tempo_corrente += timedelta(minutes=1)
+                tempo_asse += 1  # ogni minuto è un'unità asse
+        return mappa
+
+    def trasforma_tempo(dt, mappa_tempo):
+        dt_rounded = dt.replace(second=0, microsecond=0)
+        return mappa_tempo.get(dt_rounded, None)
+
+    mappa_tempo = crea_mappa_tempo(inizio_timeline, fine_timeline, intervalli_non_produzione)
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    bars = []
+    schedula_by_bar = {}
+
+    for s in schedulazione:
+        y = macchine.index(s["macchina"])
+
+        # Setup
+        start_setup = trasforma_tempo(s["inizio_setup"], mappa_tempo)
+        end_setup = trasforma_tempo(s["fine_setup"], mappa_tempo)
+        if start_setup is None or end_setup is None:
+            continue  # salta se fuori range
+        durata_setup = end_setup - start_setup
+
+        setup_bar = ax.barh(y, durata_setup, left=start_setup, height=0.5, color='red', edgecolor='black')[0]
+        bars.append(setup_bar)
+        schedula_by_bar[setup_bar] = {
+            'type': 'setup',
+            'data': s
+        }
+
+        # Lavorazione
+        start_lav = trasforma_tempo(s["inizio_lavorazione"], mappa_tempo)
+        end_lav = trasforma_tempo(s["fine_lavorazione"], mappa_tempo)
+        if start_lav is None or end_lav is None:
+            continue
+        durata_lav = end_lav - start_lav
+
+        colore = colori_veicoli[s["veicolo"]]
+        lav_bar = ax.barh(y, durata_lav, left=start_lav, height=0.5, color=colore, edgecolor='black')[0]
+        bars.append(lav_bar)
+        schedula_by_bar[lav_bar] = {
+            'type': 'lavorazione',
+            'data': s
+        }
+
+    ax.set_yticks(range(len(macchine)))
+    ax.set_yticklabels(macchine)
+
+    # Calcola tick asse X
+    ticks = []
+    labels = []
+    tick_set = set()
+    for dt, pos in sorted(mappa_tempo.items()):
+        if dt.hour == 8 and dt.minute == 0 and pos not in tick_set:  # Solo 8:00
+            ticks.append(pos)
+            labels.append(dt.strftime('%d-%m %H:%M'))
+            tick_set.add(pos)
+
+    ax.set_xticks(ticks)
+    ax.set_xticklabels(labels, rotation=45)
+
+    ax.set_xlabel('Tempo (produttivo)')
+    ax.set_ylabel('Macchina')
+    ax.set_title('Schedulazione (tempi non produttivi rimossi)')
     plt.tight_layout()
     plt.show()"""
