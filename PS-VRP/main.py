@@ -51,7 +51,7 @@ print(f"{Fore.YELLOW}Funzione obiettivo euristico (consegna): {-f_obj3_ritardo} 
 end_time_eur = time.time()
 tot_time_eur = end_time_eur - start_time_eur
 
-solver.grafico_schedulazione(schedulazione3)
+#solver.grafico_schedulazione(schedulazione3)
 
 ## DEEPCOPIES PER RICERCHE LOCALI (prima fase)
 lista_macchine_copy = deepcopy(lista_macchine)
@@ -76,7 +76,7 @@ print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-f1_ritardo + f_obj3_ri
 print(f"Mosse LS1: {contatoreLS1}")
 output.write_output_soluzione_euristica(soluzione1, "PS-VRP/Dati_output/insert_inter.xlsx")
 tot1 = time.time() - start1
-solver.grafico_schedulazione(soluzione1)
+#solver.grafico_schedulazione(soluzione1)
 
 #lista_macchine_copy10 = lista_macchine_copy.copy()
 #print("ID macchine in copia shallow (lista_macchine_copy10):", [id(m) for m in lista_macchine_copy10])
@@ -95,7 +95,7 @@ print(f"{Fore.YELLOW}Risultato LS2 (consegna): ottenuto {-f2_ritardo+f_obj3_rita
 print(f"Mosse LS2: {contatoreLS2}")
 output.write_output_soluzione_euristica(soluzione2, "PS-VRP/Dati_output/insert_intra.xlsx")
 tot2 = time.time() - start_time_move
-solver.grafico_schedulazione(soluzione2)
+#solver.grafico_schedulazione(soluzione2)
 
 # S
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -178,7 +178,7 @@ soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato = solver.euristico_post
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (setup): {fpost} minuti di setup")
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-fpost_ritardo} ore di ritardo")
 output.write_output_soluzione_euristica(soluzionepost, "PS-VRP/Dati_output/euristico_post.xlsx")
-solver.grafico_schedulazione(soluzionepost)
+#solver.grafico_schedulazione(soluzionepost)
 post_time = time.time() - start_time_post
 
 ## DEEPCOPIES PER RICERCHE LOCALI (seconda fase)
@@ -212,7 +212,7 @@ start_time_tot_post = time.time()
 soluzione2post, f2post, contatoreLS2post, f2_ritardo_post, ritardo_post_pesato_2 = solver.insert_intra(lista_macchine_copy4, fpost)
 print(f'Mosse LS1+LS2 - post: {contatoreLS2post}')
 #soluzione_move_post = [b for a in soluzione2post for b in a]
-solver.grafico_schedulazione(soluzione2post)
+#solver.grafico_schedulazione(soluzione2post)
 output.write_output_soluzione_euristica(soluzione2post, "PS-VRP/Dati_output/insert_intra_post.xlsx")
 print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (setup): ottenuto {f2post-fpost} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f2_ritardo_post+fpost_ritardo} ore di ritardo")
@@ -238,7 +238,7 @@ start_time_tot_post = time.time()
 soluzione4post, f4post, contatoreLS2post, f4_ritardo_post, ritardo_post_pesato_4 = solver.insert_intra(lista_macchine_copy3, f1post)
 print(f'Mosse LS1+LS2 - post: {contatoreLS1post+contatoreLS2post}')
 #soluzione_move_post = [b for a in soluzione4post for b in a]
-solver.grafico_schedulazione(soluzione4post)
+#solver.grafico_schedulazione(soluzione4post)
 print(f4_ritardo_post)
 print(f1_ritardo_post)
 print(f'f4 {f4post}, f1 {f1post}')
