@@ -792,12 +792,12 @@ def check_LS(check, commessa1, commessa):
         if 0 in commessa.zona_cliente: #tassative esterne
             if commessa1["inizio_lavorazione"] < commessa.release_date:
                 check = False
-            if commessa.ritardo / commessa.priorita > commessa1["ritardo mossa"] / commessa1['priorita cliente']:
+            if commessa.ritardo / commessa.priorita_cliente > commessa1["ritardo mossa"] / commessa1['priorita']:
                 check = False
         else: #tassative interne
             if commessa1["inizio_lavorazione"] < commessa.release_date:
                 check = False
-            if commessa.ritardo / commessa.priorita > commessa1["ritardo mossa"] / commessa1['priorita cliente']:
+            if commessa.ritardo / commessa.priorita_cliente > commessa1["ritardo mossa"] / commessa1['priorita']:
                 check = False
     #else: #non tassative
         if commessa1["inizio_lavorazione"] < commessa.release_date:
