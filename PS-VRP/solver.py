@@ -574,6 +574,8 @@ def insert_intra(lista_macchine: list, f_obj):
                 setup_corrente = total_setup(schedula, macchina)
 
                 for i in range(1, len(schedula)):
+                    if improved:
+                        break
                     for j in range(1, len(schedula)):
                         if i == j:
                             continue
@@ -799,17 +801,17 @@ def check_LS(check, commessa1, commessa):
                 check = False
             if commessa.ritardo > commessa1["ritardo mossa"]:
                 check = False
-    #else: #non tassative
+    else: #non tassative
         if commessa1["inizio_lavorazione"] < commessa.release_date:
             check = False
-        if commessa.ritardo > commessa1["ritardo mossa"]:
-            check = False
+        #if commessa.ritardo > commessa1["ritardo mossa"]:
+        #    check = False
     #print(f'tassative: {counter_tass}, tassative interne: {counter_tass_int}, tassative esterne: {counter_tass_ext}, altre: {counter_aliud}')
     return check
 
 #Funzione utility per il calcolo del delta migliorativo per le varie ricerche locali, combinando linearmente delta_ritardo (pesato e cumulativo) con delta_setup (cumulativo) in funzione del parametro alfa
 def calcolo_delta(delta_setup,delta_ritardo):
-    alfa = 0.1 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
+    alfa = 0 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
     delta_ritardo = delta_ritardo.total_seconds()/3600
     delta = alfa*delta_setup+(1-alfa)*delta_ritardo
     return delta
