@@ -1,3 +1,4 @@
+import os
 import read_excel
 import solver
 import output
@@ -6,10 +7,18 @@ import time
 from colorama import Fore, Style, init
 
 ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
-file_macchine_excel="PS-VRP/Dati_input/Scheda_Macchine_Taglio.xlsx"
-file_commesse_excel="PS-VRP/Dati_input/Commesse_da_tagliare.xlsx"
-file_veicoli_excel="PS-VRP/Dati_input/vettori.xlsx"
-a = 1 #parametro "a" per decidere la migliore ricerca locale nei due stadi di ricerca locale
+print(os.getcwd())
+if os.path.basename(os.getcwd()) == "PS-VRP":
+    file_macchine_excel= os.getcwd() + '/Dati_input/Scheda_Macchine_Taglio.xlsx'
+    file_commesse_excel= os.getcwd() + '/Dati_input/Commesse_da_tagliare.xlsx'
+    file_veicoli_excel= os.getcwd() + '/Dati_input/vettori.xlsx'
+elif os.path.basename(os.getcwd()) == "progettoIS":
+    file_macchine_excel= os.getcwd() + '/PS-VRP/Dati_input/Scheda_Macchine_Taglio.xlsx'
+    file_commesse_excel= os.getcwd() + '/PS-VRP//Dati_input/Commesse_da_tagliare.xlsx'
+    file_veicoli_excel= os.getcwd() + '/PS-VRP//Dati_input/vettori.xlsx'
+else:
+    print("ERRORE - file di input non localizzati correttamente")
+a = 0.5 #parametro "a" per decidere la migliore ricerca locale nei due stadi di ricerca locale
 
 ##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
@@ -34,9 +43,13 @@ start_time_eur = time.time()
 commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
 lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
 df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
-output.write_veicoli_error_output(df_errati,"PS-VRP/Dati_output/errori_veicoli.xlsx")
+
+if os.path.basename(os.getcwd()) == "PS-VRP":
+    output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/errori_veicoli.xlsx')
+elif os.path.basename(os.getcwd()) == "progettoIS":
+    output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/errori_veicoli.xlsx')
 schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
-output.write_output_soluzione_euristica(schedulazione3, "PS-VRP/Dati_output/euristico_costruttivo.xlsx")
+#output.write_output_soluzione_euristica(schedulazione3, os.getcwd() + '/Dati_output/euristico_costruttivo.xlsx')
 print(f'SCARTATI DAL PRIMO EURISTICO - Direttamente al Gruppo tre: {len(dizionario_filtri)}')
 print(f'INPUT AL PRIMO EURISTICO: {len(lista_commesse) - len(dizionario_filtri)}')
 print(f'FALLIMENTI PRIMO EURISTICO: {len(causa_fallimento)}')
@@ -74,7 +87,7 @@ soluzione1, f1, contatoreLS1, f1_ritardo, ritardo_pesato_1 = solver.insert_inter
 print(f"{Fore.YELLOW}Risultato LS1 (setup): ottenuto {f1-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-f1_ritardo + f_obj3_ritardo} ore di ritardo")
 print(f"Mosse LS1: {contatoreLS1}")
-output.write_output_soluzione_euristica(soluzione1, "PS-VRP/Dati_output/insert_inter.xlsx")
+#output.write_output_soluzione_euristica(soluzione1, os.getcwd() +'/Dati_output/insert_inter.xlsx')
 tot1 = time.time() - start1
 #solver.grafico_schedulazione(soluzione1)
 
@@ -93,7 +106,7 @@ soluzione2, f2, contatoreLS2, f2_ritardo, ritardo_pesato_2 = solver.insert_intra
 print(f"{Fore.YELLOW}Risultato LS2 (setup): ottenuto {f2-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS2 (consegna): ottenuto {-f2_ritardo+f_obj3_ritardo} ore di ritardo")
 print(f"Mosse LS2: {contatoreLS2}")
-output.write_output_soluzione_euristica(soluzione2, "PS-VRP/Dati_output/insert_intra.xlsx")
+#output.write_output_soluzione_euristica(soluzione2, os.getcwd() + '/Dati_output/insert_intra.xlsx')
 tot2 = time.time() - start_time_move
 #solver.grafico_schedulazione(soluzione2)
 
@@ -109,7 +122,7 @@ soluzione3, f3, contatoreLS3, f3_ritardo, ritardo_pesato_3 = solver.swap_intra(l
 print(f"{Fore.YELLOW}Risultato LS3 (setup): ottenuto {f3-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS3 (consegna): ottenuto {-f3_ritardo+f_obj3_ritardo} ore di ritardo")
 print(f"Mosse LS3: {contatoreLS3}")
-output.write_output_soluzione_euristica(soluzione3, "PS-VRP/Dati_output/swap_intra.xlsx")
+#output.write_output_soluzione_euristica(soluzione3, os.getcwd() + '/Dati_output/swap_intra.xlsx')
 tot3 = time.time() - start_time_swap
 
 # SEQUENZA PARZIALE
@@ -122,7 +135,7 @@ print(f'Mosse LS1+LS2: {contatoreLS1+contatoreLS2}')
 #soluzione_parziale = [b for a in soluzione4 for b in a]
 #print(f4)
 #print(-f4_ritardo)
-output.write_output_soluzione_euristica(soluzione4, "PS-VRP/Dati_output/sequenza_parziale.xlsx")
+#output.write_output_soluzione_euristica(soluzione4, os.getcwd() + '/Dati_output/sequenza_parziale.xlsx')
 print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto {f4-f1} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-f4_ritardo+f1_ritardo} ore di ritardo")
 
@@ -137,7 +150,7 @@ print(f'Mosse LS1+LS2+LS3: {contatoreLS1+contatoreLS2+contatoreLS3}')
 #print(f4_ritardo)
 print(f"{Fore.YELLOW}Risultato LS1+LS2+LS3 (setup): ottenuto {f5-f4} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1+LS2+LS3 (consegna): ottenuto {-f5_ritardo+f4_ritardo} ore di ritardo")
-output.write_output_soluzione_euristica(soluzione5, "PS-VRP/Dati_output/sequenza.xlsx")
+#output.write_output_soluzione_euristica(soluzione5, os.getcwd() + '/Dati_output/sequenza.xlsx')
 tot_tot = time.time() - start_time_tot
 #print(f5)
 print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (setup): ottenuto {f5-f_obj3} minuti di setup")
@@ -177,7 +190,7 @@ start_time_post = time.time()
 soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato = solver.euristico_post(soluzionebest, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (setup): {fpost} minuti di setup")
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-fpost_ritardo} ore di ritardo")
-output.write_output_soluzione_euristica(soluzionepost, "PS-VRP/Dati_output/euristico_post.xlsx")
+#output.write_output_soluzione_euristica(soluzionepost, os.getcwd() + '/Dati_output/euristico_post.xlsx')
 #solver.grafico_schedulazione(soluzionepost)
 post_time = time.time() - start_time_post
 
@@ -201,7 +214,7 @@ print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (setup): ottenuto {f1post-fpost
 #print(f1_ritardo_post)
 print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (consegna): ottenuto {-f1_ritardo_post + fpost_ritardo} ore di ritardo")
 print(f"Mosse LS1 - post: {contatoreLS1post}")
-output.write_output_soluzione_euristica(soluzione1post, "PS-VRP/Dati_output/insert_inter_post.xlsx")
+#output.write_output_soluzione_euristica(soluzione1post, os.getcwd() + '/Dati_output/insert_inter_post.xlsx')
 tot1_post = time.time() - start1_post
 
 # INSERT-INTRA - Bis
@@ -213,7 +226,7 @@ soluzione2post, f2post, contatoreLS2post, f2_ritardo_post, ritardo_post_pesato_2
 print(f'Mosse LS1+LS2 - post: {contatoreLS2post}')
 #soluzione_move_post = [b for a in soluzione2post for b in a]
 #solver.grafico_schedulazione(soluzione2post)
-output.write_output_soluzione_euristica(soluzione2post, "PS-VRP/Dati_output/insert_intra_post.xlsx")
+#output.write_output_soluzione_euristica(soluzione2post, os.getcwd() + '/Dati_output/insert_intra_post.xlsx')
 print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (setup): ottenuto {f2post-fpost} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f2_ritardo_post+fpost_ritardo} ore di ritardo")
 
@@ -226,7 +239,7 @@ soluzione3post, f3post, contatoreLS3post, f3_ritardo_post, ritardo_post_pesato_3
 print(f'Mosse LS1+LS2 - post: {contatoreLS3post}')
 #soluzione_swap_post = [b for a in soluzione3post for b in a]
 #solver.grafico_schedulazione(soluzione_swap_post)
-output.write_output_soluzione_euristica(soluzione3post, "PS-VRP/Dati_output/swap_intra_post.xlsx")
+#output.write_output_soluzione_euristica(soluzione3post, os.getcwd() + '/Dati_output/swap_intra_post.xlsx')
 print(f"{Fore.YELLOW}Risultato LS3[LS[G1+G2]+G3] (setup): ottenuto {f3post-fpost} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS3[LS[G1+G2]+G3] (consegna): ottenuto {-f3_ritardo_post+fpost_ritardo} ore di ritardo")
 
@@ -242,7 +255,7 @@ print(f'Mosse LS1+LS2 - post: {contatoreLS1post+contatoreLS2post}')
 print(f4_ritardo_post)
 print(f1_ritardo_post)
 print(f'f4 {f4post}, f1 {f1post}')
-output.write_output_soluzione_euristica(soluzione4post, "PS-VRP/Dati_output/sequenza_parziale_post.xlsx")
+#output.write_output_soluzione_euristica(soluzione4post, os.getcwd() + '/Dati_output/sequenza_parziale_post.xlsx')
 print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (setup): ottenuto {f4post-f1post} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f4_ritardo_post+f1_ritardo_post} ore di ritardo")
 
@@ -263,7 +276,11 @@ print(f'Mosse LS1+LS2+LS3 - post: {contatoreLS1post+contatoreLS2post+contatoreLS
 print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (setup): ottenuto {f5post-f4post} minuti di setup")
 print(f'f5 {f5_ritardo_post}, f4 {f4_ritardo_post}')
 print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-f5_ritardo_post+f4_ritardo_post} ore di ritardo")
-output.write_output_soluzione_euristica(soluzione5post, "PS-VRP/Dati_output/sequenza_post.xlsx")
+
+if os.path.basename(os.getcwd()) == "PS-VRP":
+    output.write_output_soluzione_euristica(soluzione5post, os.getcwd() + '/Dati_output/sequenza_post.xlsx')
+if os.path.basename(os.getcwd()) == "progettoIS":
+    output.write_output_soluzione_euristica(soluzione5post, os.getcwd() + '/PS-VRP/Dati_output/sequenza_post.xlsx')
 tot_tot_post = time.time() - start_time_tot_post
 
 ritardo1 = -f1_ritardo_post.total_seconds()/3600

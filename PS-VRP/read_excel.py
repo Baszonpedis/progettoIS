@@ -1,4 +1,5 @@
 
+import os
 import pandas as pd
 from macchina import Macchina
 from commessa import Commessa
@@ -12,7 +13,7 @@ import re
 #CAMPI DI LETTURA DEI FILE DI INPUT
 campi_input_macchine=['Nome macchina','disponibilita','setup','velocità media','tipologia taglio','dt ultima lavorazione','ora ultima lavorazione','tempo setup cambio alberi','tempo setup prima fila coltelli','tempo setup coltelli','tempo carico bobina','tempo avvio taglio','tempo scarico bobina','tempo confezionamento sacchetti']
 campi_attrezzaggio=['numero file ult lavoro','diam tubo ult lavoro']
-campi_input_commesse=['commessa','data fine stampa per schedulatore','stato stampa calc','Commesse::DATA CONSEGNA','Commesse::Priorita cliente','qta da tagliare metri per schedulatore','qta da tagliare per schedulatore','Commesse::CODICE DI ZONA','Anagrafica incarti::tipologia taglio','Commesse::FASCIA','Commesse::FASCIA UTILE','Commesse::Diam int tubo','compatibilità macchine taglio::check dati','Commesse::categoria materiale', 'flag tassativo taglio per schedulatore', 'id spedizione']
+campi_input_commesse=['commessa','data fine stampa per schedulatore','stato stampa calc','Commesse::DATA CONSEGNA','Commesse::Priorita cliente','qta da tagliare metri per schedulatore','qta da tagliare per schedulatore','Commesse::CODICE DI ZONA','Anagrafica incarti::tipologia taglio','Commesse::fascia','Commesse::fascia utile','Commesse::Diam int tubo','compatibilità macchine taglio::check dati','Commesse::categoria materiale', 'flag tassativo taglio per schedulatore', 'id spedizione']
 campi_compatibilita=campi_input_commesse+['compatibilità macchine taglio::compat macc taglio 1','compatibilità macchine taglio::compat macc taglio 2','compatibilità macchine taglio::compat macc taglio 3','compatibilità macchine taglio::compat macc taglio 4','compatibilità macchine taglio::compat macc taglio 5','compatibilità macchine taglio::compat macc taglio 6','compatibilità macchine taglio::compat macc taglio 7','compatibilità macchine taglio::compat macc taglio 8','compatibilità macchine taglio::compat macc taglio 9','compatibilità macchine taglio::compat macc taglio 10','compatibilità macchine taglio::compat macc taglio 11','compatibilità macchine taglio::compat macc taglio 12','compatibilità macchine taglio::compat macc taglio 13','compatibilità macchine taglio::compat macc taglio 14','compatibilità macchine taglio::compat macc taglio 15','compatibilità macchine taglio::compat macc taglio 16','compatibilità macchine taglio::compat macc taglio 17']
 #campi_veicoli=['Nome veicolo','Data e ora disponibilita','Disponibilita','Capacita','Zone coperte']
 campi_veicoli=['id sped', 'dt sped', 'zona spedizione', 'spedizioni condivise::kg_rimanenti per schedulatore']
@@ -77,10 +78,16 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
     #rimuoviamo tutte le commesse con campi vuoti e andiamo a stampare un file con tutte le commesse eliminate e il motivo
     #warnings.simplefilter("ignore") #ignorare i warning fastidiosi pandas
     df=pd.read_excel(nome_file,0, skiprows=0,usecols=campi_input_commesse)  # creazione di un dataframe con i dati di input. usecols permette di usare i nomi delle colonne che passo come parametro
-    colonne_commesse_foglio=['Commesse::FASCIA','Commesse::Diam int tubo']
+    colonne_commesse_foglio=['Commesse::fascia','Commesse::Diam int tubo']
     for col in colonne_commesse_foglio:
         df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col] = df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col].fillna(0)
-    output.write_error_output(df,"PS-VRP/Dati_output/errori_lettura.xlsx")
+    if os.path.basename(os.getcwd()) == "PS-VRP":
+        output.write_error_output(df,os.getcwd() + '/Dati_output/errori_lettura.xlsx')
+    elif os.path.basename(os.getcwd()) == "progettoIS":
+        output.write_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/errori_lettura.xlsx')
+    else:
+        print("ERRORE: la directory di output degli errori lettura non è correttamente impostata")
+
 
     #Campi riempiti per evitare che vengano rimossi dal .dropna (campi "facoltativi")zz
     df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].fillna(0)
@@ -100,7 +107,7 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
     ordine_colonne_df=['commessa','Release date','Commesse::DATA CONSEGNA',
                         'Commesse::Priorita cliente', 'qta da tagliare metri per schedulatore',
                         'qta da tagliare per schedulatore', 'Commesse::CODICE DI ZONA',
-                        'Anagrafica incarti::tipologia taglio','Commesse::FASCIA UTILE','Commesse::FASCIA',
+                        'Anagrafica incarti::tipologia taglio','Commesse::fascia utile','Commesse::fascia',
                         'Commesse::Diam int tubo','data_inizio_schedulazione','Commesse::categoria materiale', 'flag tassativo taglio per schedulatore', 'id spedizione'] #stabilisco il nuovo ordine delle colonne del df
     df=df[ordine_colonne_df] #assegno il nuovo ordine di colonne
     for (_,f) in df.iterrows():  # iterrows() ritorna una pd.Series per ogni riga nel dataframe, "_" prende l'indice (usato quando non mi importa il valore di tale indice) e "f" è la riga/pd.Series
@@ -115,7 +122,7 @@ def read_compatibilita(nome_file,lista_commesse):
     """
     incompatibili_dict = []
     df=pd.read_excel(nome_file, 0, skiprows=0, usecols=campi_compatibilita) #lettura del df con pandas
-    colonne_commesse_foglio = ['Commesse::FASCIA', 'Commesse::Diam int tubo']
+    colonne_commesse_foglio = ['Commesse::fascia', 'Commesse::Diam int tubo']
     for col in colonne_commesse_foglio:
         df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col] = df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col].fillna(0)
     
@@ -155,7 +162,12 @@ def read_compatibilita(nome_file,lista_commesse):
         # Supponendo che ogni oggetto Commessa abbia un metodo `to_dict()` per esportare i dati
         incompatibili_dict = [{'commessa': c.id_commessa, 'motivo': 'nessuna compatibilità con alcuna macchina'} for c in commesse_incompatibili]
         df_incompatibili = pd.DataFrame(incompatibili_dict)
-        df_incompatibili.to_excel("PS-VRP/Dati_output/errori_compatibilità.xlsx", index=False)
+        if os.path.basename(os.getcwd()) == "PS-VRP":
+            df_incompatibili.to_excel( os.getcwd() + '/Dati_output/errori_compatibilità.xlsx', index=False)
+        elif os.path.basename(os.getcwd()) == "progettoIS":
+            df_incompatibili.to_excel( os.getcwd() + '/PS-VRP/Dati_output/errori_compatibilità.xlsx', index=False)
+        else:
+            print("ERRORE: la directory di output degli errori compatibilità non è correttamente impostata")
     return incompatibili_dict
 
 def read_excel_veicoli(nome_file):
