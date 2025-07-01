@@ -818,11 +818,7 @@ def calcolo_delta(delta_setup,delta_ritardo):
         
 #GRAFICAZIONE
 #import mplcursors
-def grafico_schedulazione(schedulazione):
-    """
-    :param schedulazione: lista di dizionari che contiene le informazioni relative ad una schedulazione
-    :return: plot del grafico relativo alla schedulazione
-    """
+"""def grafico_schedulazione(schedulazione):
     macchine = list(set(s["macchina"] for s in schedulazione))
     macchine.sort(reverse=True)
 
@@ -955,22 +951,20 @@ def grafico_schedulazione(schedulazione):
     fig.canvas.mpl_connect("motion_notify_event", on_motion)
 
     plt.tight_layout()
-    plt.show()
+    plt.show()"""
 
 #Graficazione alternativa
-"""import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from matplotlib.text import Annotation
 from datetime import timedelta
 import matplotlib.colors as mcolors
+import matplotlib.dates as mdates
 
 def desatura(colore, luminanza=0.7):
     #Restituisce un grigio uniforme di luminanza specificata.
-    #return (luminanza, luminanza, luminanza)
+    return (luminanza, luminanza, luminanza)
 
 def split_intervallo(inizio, fine, blocchi_np):
-    #Divide l'intervallo [inizio,fine] in segmenti di produzione ('p')
-    #e non produzione ('np'), in base ai blocchi_np = [(start,end),...].
-    #Restituisce lista di (start, end, tipo).
     segments = []
     cursor = inizio
     while cursor < fine:
@@ -989,10 +983,6 @@ def split_intervallo(inizio, fine, blocchi_np):
     return segments
 
 def grafico_schedulazione(schedulazione):
-    :param schedulazione: lista di dizionari con chiavi:
-          'macchina', 'commessa', 'veicolo', 
-          'inizio_setup', 'fine_setup',
-          'inizio_lavorazione', 'fine_lavorazione'
     macchine = list({s["macchina"] for s in schedulazione})
     macchine.sort(reverse=True)
 
@@ -1080,6 +1070,8 @@ def grafico_schedulazione(schedulazione):
     ax.set_yticks(range(len(macchine)))
     ax.set_yticklabels(macchine)
     ax.set_xlim(t0, t1)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m %H:%M'))
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
     ax.set_ylim(-0.5, len(macchine)-0.5)
     fig.autofmt_xdate()
     ax.set_xlabel('Tempo')
@@ -1120,7 +1112,7 @@ def grafico_schedulazione(schedulazione):
     fig.canvas.mpl_connect("motion_notify_event", on_motion)
 
     plt.tight_layout()
-    plt.show()"""
+    plt.show()
 
 """import matplotlib.pyplot as plt
 from matplotlib.text import Annotation

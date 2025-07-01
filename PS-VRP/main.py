@@ -6,9 +6,9 @@ import time
 from colorama import Fore, Style, init
 
 ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
-file_macchine_excel="PS-VRP/Dati_input/Estrazione macchine 4.xlsx"
-file_commesse_excel="PS-VRP/Dati_input/Estrazione commesse 4.xlsx"
-file_veicoli_excel="PS-VRP/Dati_input/Estrazione veicoli 4.xlsx"
+file_macchine_excel="PS-VRP/Dati_input/Scheda_Macchine_Taglio.xlsx"
+file_commesse_excel="PS-VRP/Dati_input/Commesse_da_tagliare.xlsx"
+file_veicoli_excel="PS-VRP/Dati_input/vettori.xlsx"
 a = 1 #parametro "a" per decidere la migliore ricerca locale nei due stadi di ricerca locale
 
 ##ELABORAZIONI SU INPUT(s)
