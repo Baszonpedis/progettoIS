@@ -1,9 +1,10 @@
 
 import openpyxl as pyxl
-from openpyxl.styles import PatternFill
+from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 import pandas as pd
 
-campi_risultati_euristico=['commessa','macchina','minuti setup','minuti processamento','inizio setup','fine setup','inizio lavorazione','fine lavorazione','mt da tagliare','taglio','macchine compatibili','numero coltelli','diametro tubo','veicolo']
+campi_risultati_euristico=['commessa','macchina','minuti setup','minuti processamento','inizio setup','fine setup','inizio lavorazione','fine lavorazione','mt da tagliare','taglio','macchine compatibili','numero coltelli','diametro tubo','veicolo', 'tassativita', 'veicolo tassativo', 'due date (non indicativa)', 'ritardo', 'priorita']
+campi_risultati_ridotti=['commessa','macchina','inizio setup','inizio lavorazione']
 
 def write_output_soluzione_euristica(schedulazione,nome_file):
     """
@@ -16,20 +17,24 @@ def write_output_soluzione_euristica(schedulazione,nome_file):
     ws1.title='Schedulazione' #si rinomina il titolo del foglio
     ws1.append(campi_risultati_euristico) #vado ad inserire il nome delle colonne
     ws1.column_dimensions['A'].width=15 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['B'].width=15 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['C'].width=20 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['D'].width=20 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['E'].width=50 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['F'].width=50 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['G'].width=50 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['H'].width=50 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['I'].width=15 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['J'].width=15 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['K'].width=100 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['L'].width=15 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['M'].width=15 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['N'].width=15 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['O'].width=15 #si settano le dimensioni delle colonne
+    ws1.column_dimensions['B'].width=15
+    ws1.column_dimensions['C'].width=20
+    ws1.column_dimensions['D'].width=20
+    ws1.column_dimensions['E'].width=50
+    ws1.column_dimensions['F'].width=50
+    ws1.column_dimensions['G'].width=50
+    ws1.column_dimensions['H'].width=50
+    ws1.column_dimensions['I'].width=15
+    ws1.column_dimensions['J'].width=15
+    ws1.column_dimensions['K'].width=90
+    ws1.column_dimensions['L'].width=15
+    ws1.column_dimensions['M'].width=15
+    ws1.column_dimensions['N'].width=15
+    ws1.column_dimensions['O'].width=15
+    ws1.column_dimensions['P'].width=15
+    ws1.column_dimensions['Q'].width=20 #si settano le dimensioni delle colonne
+
+
 
     start_row=2 #inizializzo la riga in cui andrò a printare. si parte dalla seconda in quanto la prima è occupata dai titoli
     start_column=1 #inizializzo le colonne in cui andrò a printare si parte dalla prima e si andrà avanti fino all'ultimo campo
@@ -39,7 +44,7 @@ def write_output_soluzione_euristica(schedulazione,nome_file):
                 valore.sort()
                 valore=" ;".join(valore)
             if type(valore)==pd.Timestamp: #se sto considerando un campo contenente una data pandas devo convertirla
-                valore=valore.strftime("%Y-%m-%d %H:%M:%S") #converto in data (giorno-mese-anno)
+                valore=valore.strftime("%d-%m-%Y %H:%M:%S") #converto in data (giorno-mese-anno)
             if chiave=='veicolo' and valore != None and not isinstance(valore, str):
                 valore = valore.nome
             ws1.cell(row=start_row,column=start_column,value=valore) #assegno il valore in questione alla cella
@@ -47,6 +52,119 @@ def write_output_soluzione_euristica(schedulazione,nome_file):
         start_row+=1 #quando sono finiti i campi passo alla riga successiva
         start_column=1 #quando sono finiti i campi riparto dalla prima colonna
     wb.save(nome_file) #salvo il file excel con il nome che passo come parametro
+
+def write_output_ridotto(schedulazione,nome_file):
+    """
+    :param schedulazione: lista di dizionari con info sulla schedulazione
+    :param nome_file: percorso file excel
+    :return: file excel abbellito
+    """
+    campi_risultati_ridotti = ['commessa', 'macchina', 'inizio_setup', 'inizio_lavorazione']
+
+    # Colori pastello tenui (HEX)
+    colori_pastello = [
+        'CCE5FF',  # azzurro chiaro
+        'D5E8D4',  # verde pallido
+        'FCE5CD',  # arancio chiarissimo
+        'EAD1DC',  # rosa tenue
+        'FFF2CC',  # giallo chiaro
+        'D9D2E9',  # lilla chiaro
+        'E2EFDA',  # verde menta
+        'F4CCCC',  # rosato
+    ]
+
+    # Costruisci mappa macchina → colore
+    macchine = list({schedula['macchina'] for schedula in schedulazione})
+    macchina_colori = {
+        macchina: colori_pastello[i % len(colori_pastello)] for i, macchina in enumerate(macchine)
+    }
+
+    # Workbook e foglio
+    wb = pyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Schedulazione'
+
+    # Stili base
+    bold_font = Font(bold=True)
+    center_align = Alignment(horizontal='center', vertical='center')
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    # Scrivi intestazioni
+    for idx, campo in enumerate(campi_risultati_ridotti, start=1):
+        cell = ws.cell(row=1, column=idx, value=campo)
+        cell.font = bold_font
+        cell.alignment = center_align
+        cell.border = thin_border
+
+    # Scrivi dati con colore
+    for row_idx, schedula in enumerate(schedulazione, start=2):
+        macchina = schedula.get('macchina')
+        colore = macchina_colori.get(macchina, 'FFFFFF')
+        fill = PatternFill(start_color=colore, end_color=colore, fill_type='solid')
+
+        for col_idx, chiave in enumerate(campi_risultati_ridotti, start=1):
+            valore = schedula.get(chiave, '')
+            if isinstance(valore, pd.Timestamp):
+                valore = valore.strftime("%d-%m-%Y %H:%M:%S")
+            cell = ws.cell(row=row_idx, column=col_idx, value=valore)
+            cell.alignment = center_align
+            cell.border = thin_border
+            cell.fill = fill
+
+    # Colonne larghezza base
+    col_widths = [15, 15, 22, 22]
+    for idx, width in zip(range(1, len(campi_risultati_ridotti) + 1), col_widths):
+        ws.column_dimensions[pyxl.utils.get_column_letter(idx)].width = width
+
+    # Congela intestazione
+    ws.freeze_panes = 'A2'
+
+    # Salva file
+    wb.save(nome_file)
+
+def write_output_ridotto_txt(schedulazione, nome_file):
+    """
+    Salva la schedulazione in un .txt formattato a tabella leggibile
+    """
+    campi_risultati_ridotti = ['commessa', 'macchina', 'inizio_setup', 'inizio_lavorazione']
+
+    # Larghezza colonne di base
+    larghezze = [15, 15, 22, 22]  # Ho allargato un po' anche le date
+
+    with open(nome_file, 'w', encoding='utf-8') as f:
+        # Linea intestazione
+        intestazione = ''
+        for i, (campo, larghezza) in enumerate(zip(campi_risultati_ridotti, larghezze)):
+            intestazione += f"{campo:<{larghezza}}"
+            # Aggiungi separazione extra solo tra terza e quarta colonna
+            if i == 2:
+                intestazione += '   '  # 3 spazi extra
+        f.write(intestazione + '\n')
+
+        # Riga di separazione
+        separatore = ''
+        for i, larghezza in enumerate(larghezze):
+            separatore += '-' * larghezza
+            if i == 2:
+                separatore += '   '
+        f.write(separatore + '\n')
+
+        # Dati
+        for schedula in schedulazione:
+            riga = ''
+            for i, (chiave, larghezza) in enumerate(zip(campi_risultati_ridotti, larghezze)):
+                valore = schedula.get(chiave, '')
+                if isinstance(valore, pd.Timestamp):
+                    valore = valore.strftime("%d-%m-%Y %H:%M:%S")
+                riga += f"{str(valore):<{larghezza}}"
+                if i == 2:
+                    riga += '   '
+            f.write(riga + '\n')
 
 def write_error_output(df,nome_file):
     """

@@ -278,9 +278,17 @@ print(f'f5 {f5_ritardo_post}, f4 {f4_ritardo_post}')
 print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-f5_ritardo_post+f4_ritardo_post} ore di ritardo")
 
 if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_output_soluzione_euristica(soluzione5post, os.getcwd() + '/Dati_output/sequenza_post.xlsx')
+    output.write_output_soluzione_euristica(soluzione5post, os.getcwd() + '/Dati_output/output.xlsx')
 if os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_output_soluzione_euristica(soluzione5post, os.getcwd() + '/PS-VRP/Dati_output/sequenza_post.xlsx')
+    output.write_output_soluzione_euristica(soluzione5post, os.getcwd() + '/PS-VRP/Dati_output/output.xlsx')
+if os.path.basename(os.getcwd()) == "PS-VRP":
+    output.write_output_ridotto(soluzione5post, os.getcwd() + '/Dati_output/output_ridotto.xlsx')
+if os.path.basename(os.getcwd()) == "progettoIS":
+    output.write_output_ridotto(soluzione5post, os.getcwd() + '/PS-VRP/Dati_output/output_ridotto.xlsx')
+if os.path.basename(os.getcwd()) == "PS-VRP":
+    output.write_output_ridotto_txt(soluzione5post, os.getcwd() + '/Dati_output/output_ridotto.txt')
+if os.path.basename(os.getcwd()) == "progettoIS":
+    output.write_output_ridotto_txt(soluzione5post, os.getcwd() + '/PS-VRP/Dati_output/output_ridotto.txt')
 tot_tot_post = time.time() - start_time_tot_post
 
 ritardo1 = -f1_ritardo_post.total_seconds()/3600

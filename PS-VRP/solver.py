@@ -34,7 +34,7 @@ def associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, 
     for commessa in lista_commesse_tassative: #ciclo for per assegnazione dei veicoli alle commesse tassative tramite corrispondenza id_tassativo e dizionario mappa_veicoli
         if commessa.id_tassativo in mappa_veicoli:
             commessa.veicolo = mappa_veicoli[commessa.id_tassativo]
-        else: #se l'id tassativo punta ad un veicolo fuori dalla mappa veicolo (e dunque furoi dall'estrazione)
+        else: #se l'id tassativo punta ad un veicolo fuori dalla mappa veicolo (e dunque fuori dall'estrazione)
             if 0 in commessa.zona_cliente: #veicoli fuori dall'estrazione esterni (comportamento corretto)
                 veicolo_non_in_estrazione = Veicolo(str(int(commessa.id_tassativo))+" (esterno)", 0, None, None)
                 print(f'Il veicolo {veicolo_non_in_estrazione.nome} non è in estrazione! Aggiunto alla lista')
@@ -790,16 +790,20 @@ def swap_intra(lista_macchine, f_obj):
 
 #Funzione utility per fare i check di validità nelle varie ricerche locali
 def check_LS(check, commessa1, commessa):
+    '''
+    commessa - commessa memorizzata come oggetto di una classe
+    commessa1 - stessa commessa memorizzata come dizionario di una lista
+    '''
     if commessa.tassativita == "X": #tassative
         if 0 in commessa.zona_cliente: #tassative esterne
             if commessa1["inizio_lavorazione"] < commessa.release_date:
                 check = False
-            if commessa.ritardo > commessa1["ritardo mossa"]:
+            if commessa.ritardo / commessa.priorita_cliente > commessa1["ritardo mossa"] / commessa1["priorita"]:
                 check = False
         else: #tassative interne
             if commessa1["inizio_lavorazione"] < commessa.release_date:
                 check = False
-            if commessa.ritardo > commessa1["ritardo mossa"]:
+            if commessa.ritardo / commessa.priorita_cliente > commessa1["ritardo mossa"] / commessa1["priorita"]:
                 check = False
     else: #non tassative
         if commessa1["inizio_lavorazione"] < commessa.release_date:
