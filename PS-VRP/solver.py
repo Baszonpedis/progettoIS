@@ -252,12 +252,12 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
             if macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1 and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
                 veicoli_feasible = [veicolo for veicolo in lista_veicoli if (veicolo.zone_coperte in commessa.zona_cliente)]
                 for veicolo in veicoli_feasible:
+                    tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
+                    tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
+                    tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
+                    tempo_fine_lavorazione = tempo_inizio_taglio + tempo_processamento + tempo_setup
+                    data_fine_lavorazione = aggiungi_minuti(tempo_fine_lavorazione, inizio_schedulazione)
                     if data_fine_lavorazione <= veicolo.data_partenza and veicolo.capacita >= commessa.kg_da_tagliare:
-                        tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
-                        tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
-                        tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
-                        tempo_fine_lavorazione = tempo_inizio_taglio + tempo_processamento + tempo_setup
-                        data_fine_lavorazione = aggiungi_minuti(tempo_fine_lavorazione, inizio_schedulazione)
                         commessa.veicolo=veicolo
                         veicolo.capacita-=commessa.kg_da_tagliare
                         schedulazione_eseguita=True
