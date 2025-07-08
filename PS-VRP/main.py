@@ -90,7 +90,6 @@ print(f"Mosse LS1: {contatoreLS1}")
 #output.write_output_soluzione_euristica(soluzione1, os.getcwd() +'/Dati_output/insert_inter.xlsx')
 tot1 = time.time() - start1
 #solver.grafico_schedulazione(soluzione1)
-
 #lista_macchine_copy10 = lista_macchine_copy.copy()
 #print("ID macchine in copia shallow (lista_macchine_copy10):", [id(m) for m in lista_macchine_copy10])
 
