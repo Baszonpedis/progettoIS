@@ -37,19 +37,28 @@ print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G1+G2)".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
 print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE LETTE CORRETTAMENTE (NO CAMPI MANCANTI, ALMENO UNA COMPATIBILITA' MACCHINA): {len(lista_commesse)}")
 print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE ESCLUSE PER INCOMPATIBILITA' CON TUTTE LE MACCHINE: {len(incompatibili)}")
-
+print(incompatibili)
 start_time_eur = time.time()
 
 commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
 lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
 df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
 
+for i in lista_commesse_tassative:
+    if i.id_commessa == 252277:
+        print("COMMESSONA")
+        print(i.veicolo.nome)
+        print(i.tassativita)
+        print(i.zona_cliente)
+
 if os.path.basename(os.getcwd()) == "PS-VRP":
     output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/errori_veicoli.xlsx')
 elif os.path.basename(os.getcwd()) == "progettoIS":
     output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/errori_veicoli.xlsx')
 schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
-#output.write_output_soluzione_euristica(schedulazione3, os.getcwd() + '/Dati_output/euristico_costruttivo.xlsx')
+output.write_output_soluzione_euristica(schedulazione3, os.getcwd() + '/PS-VRP/Dati_output/euristico_costruttivo.xlsx')
+for i in schedulazione3:
+    print(i)
 print(f'SCARTATI DAL PRIMO EURISTICO - Direttamente al Gruppo tre: {len(dizionario_filtri)}')
 print(f'INPUT AL PRIMO EURISTICO: {len(lista_commesse) - len(dizionario_filtri)}')
 print(f'FALLIMENTI PRIMO EURISTICO: {len(causa_fallimento)}')
@@ -64,7 +73,7 @@ print(f"{Fore.YELLOW}Funzione obiettivo euristico (consegna): {-f_obj3_ritardo} 
 end_time_eur = time.time()
 tot_time_eur = end_time_eur - start_time_eur
 
-#solver.grafico_schedulazione(schedulazione3)
+solver.grafico_schedulazione(schedulazione3)
 
 ## DEEPCOPIES PER RICERCHE LOCALI (prima fase)
 lista_macchine_copy = deepcopy(lista_macchine)
@@ -75,6 +84,10 @@ lista_macchine_copy2 = deepcopy(lista_macchine)
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}RICERCHE LOCALI".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
+
+for i in lista_macchine:
+    for j in i.lista_commesse_processate:
+        print(j.id_commessa)
 
 # M2M
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -89,7 +102,11 @@ print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-f1_ritardo + f_obj3_ri
 print(f"Mosse LS1: {contatoreLS1}")
 #output.write_output_soluzione_euristica(soluzione1, os.getcwd() +'/Dati_output/insert_inter.xlsx')
 tot1 = time.time() - start1
-#solver.grafico_schedulazione(soluzione1)
+solver.grafico_schedulazione(soluzione1)
+
+for i in lista_macchine:
+    for j in i.lista_commesse_processate:
+        print(j.id_commessa)
 
 #lista_macchine_copy10 = lista_macchine_copy.copy()
 #print("ID macchine in copia shallow (lista_macchine_copy10):", [id(m) for m in lista_macchine_copy10])
@@ -108,7 +125,7 @@ print(f"{Fore.YELLOW}Risultato LS2 (consegna): ottenuto {-f2_ritardo+f_obj3_rita
 print(f"Mosse LS2: {contatoreLS2}")
 #output.write_output_soluzione_euristica(soluzione2, os.getcwd() + '/Dati_output/insert_intra.xlsx')
 tot2 = time.time() - start_time_move
-#solver.grafico_schedulazione(soluzione2)
+solver.grafico_schedulazione(soluzione2)
 
 # S
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -124,6 +141,8 @@ print(f"{Fore.YELLOW}Risultato LS3 (consegna): ottenuto {-f3_ritardo+f_obj3_rita
 print(f"Mosse LS3: {contatoreLS3}")
 #output.write_output_soluzione_euristica(soluzione3, os.getcwd() + '/Dati_output/swap_intra.xlsx')
 tot3 = time.time() - start_time_swap
+solver.grafico_schedulazione(soluzione3)
+
 
 # SEQUENZA PARZIALE
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -138,6 +157,8 @@ print(f'Mosse LS1+LS2: {contatoreLS1+contatoreLS2}')
 #output.write_output_soluzione_euristica(soluzione4, os.getcwd() + '/Dati_output/sequenza_parziale.xlsx')
 print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto {f4-f1} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-f4_ritardo+f1_ritardo} ore di ritardo")
+solver.grafico_schedulazione(soluzione4)
+
 
 # SEQUENZA COMPLETA
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -155,6 +176,10 @@ tot_tot = time.time() - start_time_tot
 #print(f5)
 print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (setup): ottenuto {f5-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (consegna): ottenuto {-f5_ritardo+f_obj3_ritardo} ore di ritardo")
+
+print(soluzione5)
+solver.grafico_schedulazione(soluzione5)
+
 
 # EURISTICO NUOVO (gruppo3)
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")

@@ -34,8 +34,6 @@ def write_output_soluzione_euristica(schedulazione,nome_file):
     ws1.column_dimensions['P'].width=15
     ws1.column_dimensions['Q'].width=20 #si settano le dimensioni delle colonne
 
-
-
     start_row=2 #inizializzo la riga in cui andrò a printare. si parte dalla seconda in quanto la prima è occupata dai titoli
     start_column=1 #inizializzo le colonne in cui andrò a printare si parte dalla prima e si andrà avanti fino all'ultimo campo
     for schedula in schedulazione: #per ogni dizionario nella lista
