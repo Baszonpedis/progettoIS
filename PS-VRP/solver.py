@@ -191,7 +191,6 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
 
 ##EURISTICO COSTRUTTIVO (Greedy)
 def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, lista_veicoli:list):
-
     #INIZIALIZZAZIONI
     causa_fallimento={} #Dizionario con formato "commessa_fallita:motivo"
     lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"] #Commesse tassative interne ed esterne (i.e. veicolo predeterminato e obbligato)
@@ -216,9 +215,20 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
         schedulazione_eseguita=False
         lista_macchine=sorted(lista_macchine,key=lambda macchina: macchina._minuti_fine_ultima_lavorazione)
         macchina=lista_macchine[0]
+        #beta = 500
         for commessa in lista_commesse_tassative:
+            #if commessa.id_commessa == 252277:
+            #    print("Tentativo")
+            #print(commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione)
+            #print(commessa._minuti_release_date)
+            #print(macchina.nome_macchina, macchina._minuti_fine_ultima_lavorazione)
             if macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1 and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
+                #if commessa.id_commessa == 252277:
+                #    print("Tentativo riuscito")
+                #if commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
                 tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
+                #else:
+                #    tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione + beta
                 tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
                 tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
                 tempo_fine_lavorazione = tempo_inizio_taglio + tempo_processamento + tempo_setup
@@ -231,9 +241,15 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                 f_obj_ritardo_pesato+=commessa.ritardo/commessa.priorita_cliente
                 lista_commesse_tassative.remove(commessa)
             if schedulazione_eseguita:
+                if commessa.id_commessa == 252277:
+                    print("Schedulazione eseguita!")
                 #print(f'La commessa {commessa.id_commessa} è associata al veicolo {commessa.veicolo} //////////')
                 break
+            else:
+                print(f'La commessa tassativa {commessa.id_commessa} finisce di stampare troppo tardi per ressere schedulata tassativamente; viene spostata al terzo ciclo')
         if not schedulazione_eseguita:
+            if len(lista_commesse_tassative) > 0 and len(lista_macchine)==1:
+                tassative_problematiche = lista_commesse_tassative
             lista_macchine.remove(macchina)
 
     #Si ricostituisce la lista delle macchine per il prossimo ciclo  
@@ -243,7 +259,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     commesse_da_schedulare.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
 
     #SECONDO CICLO WHILE
-    #Provo a inserire tutte le commesse interne a zona aperta (su macchine e veicoli)
+    #Commesse non tassative zona aperta
     while len(commesse_da_schedulare)>0 and len(lista_macchine)>0:
         schedulazione_eseguita=False
         lista_macchine=sorted(lista_macchine,key=lambda macchina: macchina._minuti_fine_ultima_lavorazione)
@@ -282,8 +298,57 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
 
     commesse_residue = [c for c in commesse_da_schedulare]
 
+    lista_macchine = lista_macchine2.copy()
+
+    tassative_problematiche.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
+
+    beta = 10 #placeholder
+    while len(tassative_problematiche)>0 and len(lista_macchine)>0:
+        schedulazione_eseguita=False
+        lista_macchine=sorted(lista_macchine,key=lambda macchina: macchina._minuti_fine_ultima_lavorazione)
+        macchina=lista_macchine[0]
+        for commessa in tassative_problematiche:
+            if commessa.id_commessa == 252277:
+                print("Tentativo")
+            #print(commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione)
+            #print(commessa._minuti_release_date)
+            #print(macchina.nome_macchina, macchina._minuti_fine_ultima_lavorazione)
+            if commessa._minuti_release_date > macchina._minuti_fine_ultima_lavorazione:
+                beta = commessa._minuti_release_date - macchina._minuti_fine_ultima_lavorazione
+            if macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1 and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione + beta:
+                #if commessa.id_commessa == 252277:
+                #    print("Tentativo riuscito")
+                #if commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
+                #    tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
+                #else:
+                #    tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione + beta
+                #tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
+                tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
+                #tempo_fine_lavorazione = tempo_inizio_taglio + tempo_processamento + tempo_setup
+                #data_fine_lavorazione = aggiungi_minuti(tempo_fine_lavorazione, inizio_schedulazione)
+                schedulazione_eseguita=True
+                f_obj+=tempo_setup
+                #commessa.veicolo = int(commessa.id_tassativo) #da fare prima dell'aggiornamento
+                aggiorna_schedulazione(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione+beta,0)
+                f_obj_ritardo+=commessa.ritardo 
+                f_obj_ritardo_pesato+=commessa.ritardo/commessa.priorita_cliente
+                lista_commesse_tassative.remove(commessa)
+            if schedulazione_eseguita:
+                if commessa.id_commessa == 252277:
+                    print("Schedulazione eseguita!")
+                #print(f'La commessa {commessa.id_commessa} è associata al veicolo {commessa.veicolo} //////////')
+                break
+            else:
+                print(f'La commessa tassativa {commessa.id_commessa} finisce di stampare troppo tardi per ressere schedulata tassativamente; viene spostata al terzo ciclo')
+        if not schedulazione_eseguita:
+            if len(lista_commesse_tassative) > 0 and len(lista_macchine)==1:
+                tassative_problematiche = lista_commesse_tassative
+            lista_macchine.remove(macchina)
+    
+
     #Si ricostituisce la lista delle macchine per future chiamate
     lista_macchine = lista_macchine2.copy()
+
 
     #for i in lista_macchine:
     #    print(i.nome_macchina)
@@ -794,6 +859,8 @@ def check_LS(check, commessa1, commessa):
     commessa - commessa memorizzata come oggetto di una classe
     commessa1 - stessa commessa memorizzata come dizionario di una lista
     '''
+    if commessa.id_commessa == 252277:
+        print("check")
     if commessa.tassativita == "X": #tassative
         if 0 in commessa.zona_cliente: #tassative esterne
             if commessa1["inizio_lavorazione"] < commessa.release_date:
@@ -811,6 +878,8 @@ def check_LS(check, commessa1, commessa):
         #if commessa.ritardo > commessa1["ritardo mossa"]:
         #    check = False
     #print(f'tassative: {counter_tass}, tassative interne: {counter_tass_int}, tassative esterne: {counter_tass_ext}, altre: {counter_aliud}')
+    if commessa.id_commessa == 252277:
+        print(check)
     return check
 
 #Funzione utility per il calcolo del delta migliorativo per le varie ricerche locali, combinando linearmente delta_ritardo (pesato e cumulativo) con delta_setup (cumulativo) in funzione del parametro alfa
