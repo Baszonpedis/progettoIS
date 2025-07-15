@@ -18,7 +18,8 @@ elif os.path.basename(os.getcwd()) == "progettoIS":
     file_veicoli_excel= os.getcwd() + '/PS-VRP//Dati_input/vettori.xlsx'
 else:
     print("ERRORE - file di input non localizzati correttamente")
-a = 0.5 #parametro "a" per decidere la migliore ricerca locale nei due stadi di ricerca locale
+#a = 0.5 #parametro "a" per decidere la migliore ricerca locale nei due stadi di ricerca locale
+#NB: alfa non è questo, è nel solver
 
 ##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
@@ -165,7 +166,7 @@ ritardo2 = -f2_ritardo.total_seconds()/3600
 ritardo3 = -f3_ritardo.total_seconds()/3600
 
 #if (a*f5+(1-a)*ritardo5) < (a*f2+(1-a)*ritardo2) and (a*f5+(1-a)*ritardo5) < (a*f3+(1-a)*ritardo3):
-print(f'SOLUZIONE MIGLIORE PER BETA = {a} -> SEQUENZA')
+#print(f'SOLUZIONE MIGLIORE PER BETA = {a} -> SEQUENZA')
 fprimo = f5
 fritardoprimo = f5_ritardo
 ritardo_pesato_primo = ritardo_pesato_5
@@ -300,7 +301,7 @@ ritardo3 = -f3_ritardo_post.total_seconds()/3600
 #print(f1_ritardo_post.total_seconds()/3600)
 
 #if (a*f5post+(1-a)*ritardo5) < (a*f2post+(1-a)*ritardo2) and (a*f5post+(1-a)*ritardo5) < (a*f3post+(1-a)*ritardo3):
-print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> SEQUENZA')
+#print(f'SOLUZIONE MIGLIORE PER ALFA = {a} -> SEQUENZA')
 fprimopost = f5post
 fritardoprimopost = f5_ritardo_post
 ritardo_pesato_post_primo = ritardo_post_pesato_5
