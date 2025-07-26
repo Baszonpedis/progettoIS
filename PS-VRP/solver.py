@@ -7,6 +7,8 @@ from matplotlib.text import Annotation
 from commessa import Commessa
 from macchina import Macchina
 from copy import deepcopy
+import output
+import os
 
 ##FUNZIONI FONDAMENTALI
 #Aggiunge un certo numero di minuti ad una certa data
@@ -37,12 +39,12 @@ def associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, 
         else: #se l'id tassativo punta ad un veicolo fuori dalla mappa veicolo (e dunque fuori dall'estrazione)
             if 0 in commessa.zona_cliente: #veicoli fuori dall'estrazione esterni (comportamento corretto)
                 veicolo_non_in_estrazione = Veicolo(str(int(commessa.id_tassativo))+" (esterno)", 0, None, None)
-                print(f'Il veicolo {veicolo_non_in_estrazione.nome} non è in estrazione! Aggiunto alla lista')
+                #print(f'Il veicolo {veicolo_non_in_estrazione.nome} non è in estrazione! Aggiunto alla lista')
                 lista_veicoli.append(veicolo_non_in_estrazione)
                 commessa.veicolo = veicolo_non_in_estrazione
             else: #veicoli fuori dall'estrazione interni (comportamento scorretto)
-                veicolo_non_in_estrazione = Veicolo(str(int(commessa.id_tassativo))+" (non in estrazione)", 0, None, None)
-                print(f'Il veicolo {veicolo_non_in_estrazione.nome} non è in estrazione! Rimuovo commesse associate')
+                veicolo_non_in_estrazione = Veicolo(str(int(commessa.id_tassativo))+" (interno)", 0, None, None)
+                print(f'ATTENZIONE: Il veicolo {veicolo_non_in_estrazione.nome} non è in estrazione! Rimuovo commesse associate')
                 #lista_veicoli.append(veicolo_non_in_estrazione)
                 commesse_da_schedulare.remove(commessa) #tolgo la commessa dalle schedulande
                 commesse_veicoli_errati[commessa.id_commessa] = "Il veicolo associato alla commessa dovrebbe essere in estrazione, ma non c'è" #aggiungo la commessa ad un dizionario da assorbire con gli altri dizionari di errore
@@ -96,7 +98,7 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
 #Filtra tutte le commesse lette correttamente in base alle zone aperte ed alle partenze dei veicoli
 def filtro_commesse(lista_commesse:list,lista_veicoli):
     #lista_veicoli_disponibili = [veicolo for veicolo in lista_veicoli] #if veicolo.disponibilita == 1]  # lista che contiene i veicoli disponibili (veicoli filtrati per disponibilità)
-    zone_aperte = set([veicolo.zone_coperte for veicolo in lista_veicoli])  # set contenente tutte le zone aperte (una lista può contenere duplicati, mentre un set ha elementi unici)
+    zone_aperte = set([veicolo.zone_coperte for veicolo in lista_veicoli if not math.isnan(veicolo.zone_coperte)])  # set contenente tutte le zone aperte (una lista può contenere duplicati, mentre un set ha elementi unici)
     commesse_da_tagliare = [] #commesse assegnabili in base alle zone
     commesse_da_schedulare = [] #commesse assegnabili in base ai veicoli
     commesse_esterne_non_tassative = [] 
@@ -235,11 +237,31 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                 break
         if not schedulazione_eseguita:
             lista_macchine.remove(macchina)
+    
+    if len(lista_commesse_tassative) > 0:
+        print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
+        print(f'ATTENZIONE: alcune commesse tassative hanno release date troppo in là nel tempo per essere schedulate appropriatamente; le commesse problematiche sono:')
+        for i in lista_commesse_tassative:
+            print(i.id_commessa)
+        print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
+
+    df = lista_commesse_tassative 
+
+    df = pd.DataFrame([{
+        'id': c.id_commessa,
+        'release_date': c.release_date,
+    } for c in lista_commesse_tassative])
+
+    if os.path.basename(os.getcwd()) == "PS-VRP":
+        output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/errori_tassative.xlsx')
+    elif os.path.basename(os.getcwd()) == "progettoIS":
+        output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/errori_tassative.xlsx')
 
     #Si ricostituisce la lista delle macchine per il prossimo ciclo  
     lista_macchine = lista_macchine2.copy()
 
     #Sorting preliminare dell'input al secondo ciclo While
+    commesse_da_schedulare += lista_commesse_tassative
     commesse_da_schedulare.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
 
     #SECONDO CICLO WHILE

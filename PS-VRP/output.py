@@ -4,7 +4,6 @@ from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 import pandas as pd
 
 campi_risultati_euristico=['commessa','macchina','minuti setup','minuti processamento','inizio setup','fine setup','inizio lavorazione','fine lavorazione','mt da tagliare','taglio','macchine compatibili','numero coltelli','diametro tubo','veicolo', 'tassativita', 'veicolo tassativo', 'due date (non indicativa)', 'ritardo', 'priorita']
-campi_risultati_ridotti=['commessa','macchina','inizio setup','inizio lavorazione']
 
 def write_output_soluzione_euristica(schedulazione,nome_file):
     """
@@ -59,7 +58,7 @@ def write_output_ridotto(schedulazione,nome_file):
     :param nome_file: percorso file excel
     :return: file excel abbellito
     """
-    campi_risultati_ridotti = ['commessa', 'macchina', 'inizio_setup', 'inizio_lavorazione']
+    campi_risultati_ridotti = ['commessa', 'macchina', 'inizio_setup', 'inizio_lavorazione', 'tassativita']
 
     # Colori pastello tenui (HEX)
     colori_pastello = [
@@ -213,6 +212,33 @@ def write_veicoli_error_output(df, nome_file):
     wb = pyxl.Workbook()
     ws1 = wb.active
     ws1.title = 'Errori Veicoli'
+    
+    # Titoli colonne
+    nomi_colonne = list(df.columns)
+    ws1.append(nomi_colonne)
+    
+    # Imposta larghezza colonne dinamicamente
+    for i, col in enumerate(nomi_colonne, start=1):
+        ws1.column_dimensions[chr(64 + i)].width = 30
+    
+    fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    
+    start_row = 2
+    df = df.fillna("CAMPO VUOTO")
+    
+    for index, row in df.iterrows():
+        for col_index, value in enumerate(row):
+            cell = ws1.cell(row=start_row, column=col_index + 1, value=value)
+            if value == "CAMPO VUOTO":
+                cell.fill = fill
+        start_row += 1
+    
+    wb.save(nome_file)
+
+def write_tassative_error_output(df, nome_file):
+    wb = pyxl.Workbook()
+    ws1 = wb.active
+    ws1.title = 'Problemi Tassative (i.e. tassative con release date troppo lontana)'
     
     # Titoli colonne
     nomi_colonne = list(df.columns)

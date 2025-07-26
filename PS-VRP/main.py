@@ -7,12 +7,12 @@ import time
 from colorama import Fore, Style, init
 
 ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
-print(os.getcwd())
-if os.path.basename(os.getcwd()) == "PS-VRP":
+#print(os.getcwd())
+if os.path.basename(os.getcwd()) == "PS-VRP": ##PER PC ISTITUTO STAMPA
     file_macchine_excel= os.getcwd() + '/Dati_input/Scheda_Macchine_Taglio.xlsx'
     file_commesse_excel= os.getcwd() + '/Dati_input/Commesse_da_tagliare.xlsx'
     file_veicoli_excel= os.getcwd() + '/Dati_input/vettori.xlsx'
-elif os.path.basename(os.getcwd()) == "progettoIS":
+elif os.path.basename(os.getcwd()) == "progettoIS": ##PER DEBUGGING
     file_macchine_excel= os.getcwd() + '/PS-VRP/Dati_input/Scheda_Macchine_Taglio.xlsx'
     file_commesse_excel= os.getcwd() + '/PS-VRP//Dati_input/Commesse_da_tagliare.xlsx'
     file_veicoli_excel= os.getcwd() + '/PS-VRP//Dati_input/vettori.xlsx'
