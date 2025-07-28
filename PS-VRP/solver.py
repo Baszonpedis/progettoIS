@@ -1,7 +1,7 @@
 import math
 import pandas as pd
 from veicolo import Veicolo
-from datetime import timedelta
+from datetime import timedelta, date
 import matplotlib.pyplot as plt
 from matplotlib.text import Annotation
 from commessa import Commessa
@@ -335,6 +335,8 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     #TERZO CICLO WHILE
     #Inserisco solo sulle macchine tutte le commesse mancanti (Interne zona chiusa, Esterne non tassative)
     while len(commesse_da_schedulare)>0 and len(lista_macchine)>0:
+        print('macchine',len(lista_macchine))
+        print('commesse',len(commesse_da_schedulare))
         schedulazione_eseguita=False
         lista_macchine=sorted(lista_macchine,key=lambda macchina: macchina._minuti_fine_ultima_lavorazione)
         macchina=lista_macchine[0]
@@ -354,7 +356,32 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
             if schedulazione_eseguita:
                 break
         if not schedulazione_eseguita:
+            #extremis = True
+            #while extremis = True:
+            #    minimo = date.today() + timedelta(days=100000)
+            #    for i in commesse_da_schedulare:
+            #        minimo = min(minimo,i.release_date)
+            #    if macchina.minuti_ultima_lavorazione - minimo < 60:
             lista_macchine.remove(macchina)
+    
+    if len(commesse_da_schedulare) > 0:
+        print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
+        print(f'ATTENZIONE: alcune commesse non possono essere schedulate in quanto rilasciate troppo in là nel tempo:')
+        for i in commesse_da_schedulare:
+            print(i.id_commessa)
+        print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
+
+    df = commesse_da_schedulare
+
+    df = pd.DataFrame([{
+        'id': c.id_commessa,
+        'release_date': c.release_date,
+    } for c in commesse_da_schedulare])
+
+    if os.path.basename(os.getcwd()) == "PS-VRP":
+        output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/commesse_escluse.xlsx')
+    elif os.path.basename(os.getcwd()) == "progettoIS":
+        output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/commesse_escluse.xlsx')
 
     #for i in lista_macchine:
     #    print(i.nome_macchina)

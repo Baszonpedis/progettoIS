@@ -347,7 +347,7 @@ print(f"{Fore.BLUE}TEMPO Greedy (G1+G2) + LS1: {tot_time_eur + tot1:.2f}s")
 print(f"{Fore.BLUE}TEMPO Greedy (G1+G2) + LS1+LS2+LS3: {tot_time_eur + tot1 + tot_tot:.2f}s")
 
 print(f"{Fore.BLUE}TEMPO Greedy (G3): {post_time:.2f}s")
-print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS1 post: {post_time + tot1_post:.2f}s")
+print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS: {post_time + tot1_post:.2f}s")
 #print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS1+LS2+LS3 post: {post_time + tot1 + tot_tot_post:.2f}s")
 
 solver.grafico_schedulazione(soluzionefinale)  # Soluzione finale totale
