@@ -69,7 +69,7 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
         else: #commesse interne tassative correttamente inserite in estrazione
             commessa.ritardo = min(veicolo.data_partenza - fine_lavorazione, timedelta(days = 0))
     elif commessa.veicolo != None: #commesse interne zona aperta
-        commessa.ritardo = min(max(veicolo.data_partenza,commessa.due_date) - fine_lavorazione, timedelta(days = 0))
+        commessa.ritardo = min(max(veicolo.data_partenza, commessa.due_date) - fine_lavorazione, timedelta(days = 0))
     else: #commesse rimanenti (senza veicolo assegnato / gruppo 3)
         commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0)) 
         #commessa.ritardo = timedelta(days = 0) #se non si considera il loro ritardo
@@ -265,10 +265,10 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
 
     #Sorting preliminare dell'input al secondo ciclo While
     commesse_da_schedulare += lista_commesse_tassative
+    
     commesse_da_schedulare.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
 
-    commesse_da_schedulare = GRASP_randomizer(lista_commesse_tassative)
-
+    commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
 
     #SECONDO CICLO WHILE
     #Provo a inserire tutte le commesse interne a zona aperta (su macchine e veicoli)
@@ -343,8 +343,6 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     #TERZO CICLO WHILE
     #Inserisco solo sulle macchine tutte le commesse mancanti (Interne zona chiusa, Esterne non tassative)
     while len(commesse_da_schedulare)>0 and len(lista_macchine)>0:
-        print('macchine',len(lista_macchine))
-        print('commesse',len(commesse_da_schedulare))
         schedulazione_eseguita=False
         lista_macchine=sorted(lista_macchine,key=lambda macchina: macchina._minuti_fine_ultima_lavorazione)
         macchina=lista_macchine[0]
@@ -872,24 +870,27 @@ def check_LS(check, commessa1, commessa):
 
 #Funzione utility per il calcolo del delta migliorativo per le varie ricerche locali, combinando linearmente delta_ritardo (pesato e cumulativo) con delta_setup (cumulativo) in funzione del parametro alfa
 def calcolo_delta(delta_setup,delta_ritardo):
-    alfa = 0.8 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
+    alfa = 0.9 #NB: modifica anche l'altro #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
     delta_ritardo = delta_ritardo.total_seconds()/3600
     delta = alfa*delta_setup+(1-alfa)*delta_ritardo
     return delta
 
 def GRASP_randomizer(lista_commesse):
+    beta = 0.2
     lista_commesse_randomized = []
     score = [(j.priorita_cliente+float((j.due_date).timestamp())/(10^11)) for j in lista_commesse]
-    beta = 0
-    while lista_commesse:
-        minimo = max(score)
-        massimo = min(score)
-        soglia = minimo + beta*(massimo-minimo)
-        rcl = [c for c in lista_commesse if c.priorita_cliente < soglia]
-        selezionata = random.choice(rcl)
-        lista_commesse_randomized.append(selezionata)
-        lista_commesse.remove(selezionata)
-    return lista_commesse_randomized
+    if beta == 0:
+        return lista_commesse
+    else:
+        while lista_commesse:
+            minimo = max(score)
+            massimo = min(score)
+            soglia = minimo + beta*(massimo-minimo)
+            rcl = [c for c in lista_commesse if c.priorita_cliente < soglia]
+            selezionata = random.choice(rcl)
+            lista_commesse_randomized.append(selezionata)
+            lista_commesse.remove(selezionata)
+        return lista_commesse_randomized
 
         
 #GRAFICAZIONE
