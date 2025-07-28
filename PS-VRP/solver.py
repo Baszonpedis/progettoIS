@@ -870,13 +870,13 @@ def check_LS(check, commessa1, commessa):
 
 #Funzione utility per il calcolo del delta migliorativo per le varie ricerche locali, combinando linearmente delta_ritardo (pesato e cumulativo) con delta_setup (cumulativo) in funzione del parametro alfa
 def calcolo_delta(delta_setup,delta_ritardo):
-    alfa = 0.9 #NB: modifica anche l'altro #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
+    alfa = 0.9 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
     delta_ritardo = delta_ritardo.total_seconds()/3600
     delta = alfa*delta_setup+(1-alfa)*delta_ritardo
     return delta
 
 def GRASP_randomizer(lista_commesse):
-    beta = 0.2
+    beta = 0
     lista_commesse_randomized = []
     score = [(j.priorita_cliente+float((j.due_date).timestamp())/(10^11)) for j in lista_commesse]
     if beta == 0:

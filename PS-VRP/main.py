@@ -20,8 +20,6 @@ elif os.path.basename(os.getcwd()) == "progettoIS": ##PER DEBUGGING
     file_veicoli_excel= os.getcwd() + '/PS-VRP//Dati_input/vettori.xlsx'
 else:
     print("ERRORE - file di input non localizzati correttamente")
-#a = 0.5 #parametro "a" per decidere la migliore ricerca locale nei due stadi di ricerca locale
-#NB: questo NON è alfa; alfa è nel solver
 
 ##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
@@ -42,7 +40,6 @@ if os.path.basename(os.getcwd()) == "PS-VRP":
     output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/errori_veicoli.xlsx')
 elif os.path.basename(os.getcwd()) == "progettoIS":
     output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/errori_veicoli.xlsx')
-
 
 ##EURISTICO DI BASE
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
@@ -355,14 +352,14 @@ print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS: {post_time + tot1_post:.2f}s")
 
 ##GRASP
 alfa = 0.9 #NB: modifica anche l'altro
-iterazioni = 5
+iterazioni = 1
 fbest = fprimopost
 fobest = alfa*fprimopost-0.5*((1-alfa)*ritardo_pesato_post_primo.total_seconds()/3600)
 fritardobest = fritardoprimopost
 fritardopesatobest = ritardo_pesato_post_primo
 soluzionebest = soluzionefinale
 
-for _ in range(iterazioni):
+'''for _ in range(iterazioni):
     #NB: gli input sono ricalcolati a ogni iterazione; non è ottimale ma è per evitare problemi con le due strutture dati utilizzate
     lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
     read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
@@ -655,7 +652,7 @@ for _ in range(iterazioni):
 
 print(f"{Fore.YELLOW}SETUP (BEST SOLUTION): {fbest:.2f}s")
 print(f"{Fore.YELLOW}RITARDO (BEST SOLUTION): {-fritardobest}s")
-print(f"{Fore.YELLOW}RITARDO PESATO (BEST SOLUTION): {-fritardopesatobest}s")
+print(f"{Fore.YELLOW}RITARDO PESATO (BEST SOLUTION): {-fritardopesatobest}s")'''
 
 if os.path.basename(os.getcwd()) == "PS-VRP":
     output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/Dati_output/best.xlsx')
