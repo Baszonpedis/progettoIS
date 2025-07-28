@@ -9,6 +9,7 @@ from macchina import Macchina
 from copy import deepcopy
 import output
 import os
+import random
 
 ##FUNZIONI FONDAMENTALI
 #Aggiunge un certo numero di minuti ad una certa data
@@ -212,6 +213,8 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     #Sorting preliminare al primo ciclo while
     lista_commesse_tassative.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
 
+    lista_commesse_tassative = GRASP_randomizer(lista_commesse_tassative)
+
     #PRIMO CICLO WHILE
     #Si assegnano per prime tutte le commesse tassative alle macchine (l'assegnazione al veicolo è fatta dalla funzione apposita)
     while len(lista_commesse_tassative)>0 and len(lista_macchine)>0:
@@ -263,6 +266,9 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     #Sorting preliminare dell'input al secondo ciclo While
     commesse_da_schedulare += lista_commesse_tassative
     commesse_da_schedulare.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
+
+    commesse_da_schedulare = GRASP_randomizer(lista_commesse_tassative)
+
 
     #SECONDO CICLO WHILE
     #Provo a inserire tutte le commesse interne a zona aperta (su macchine e veicoli)
@@ -331,6 +337,8 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     #Sorting preliminare dell'input al terzo ciclo While
     commesse_da_schedulare.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # è il primo lunedi disponibile che è uguale per tutte le macchine
+
+    commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
 
     #TERZO CICLO WHILE
     #Inserisco solo sulle macchine tutte le commesse mancanti (Interne zona chiusa, Esterne non tassative)
@@ -864,10 +872,25 @@ def check_LS(check, commessa1, commessa):
 
 #Funzione utility per il calcolo del delta migliorativo per le varie ricerche locali, combinando linearmente delta_ritardo (pesato e cumulativo) con delta_setup (cumulativo) in funzione del parametro alfa
 def calcolo_delta(delta_setup,delta_ritardo):
-    alfa = 0 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
+    alfa = 0.8 #parametro variante tra zero ed uno; zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
     delta_ritardo = delta_ritardo.total_seconds()/3600
     delta = alfa*delta_setup+(1-alfa)*delta_ritardo
     return delta
+
+def GRASP_randomizer(lista_commesse):
+    lista_commesse_randomized = []
+    score = [(j.priorita_cliente+float((j.due_date).timestamp())/(10^11)) for j in lista_commesse]
+    beta = 0
+    while lista_commesse:
+        minimo = max(score)
+        massimo = min(score)
+        soglia = minimo + beta*(massimo-minimo)
+        rcl = [c for c in lista_commesse if c.priorita_cliente < soglia]
+        selezionata = random.choice(rcl)
+        lista_commesse_randomized.append(selezionata)
+        lista_commesse.remove(selezionata)
+    return lista_commesse_randomized
+
         
 #GRAFICAZIONE
 #import mplcursors

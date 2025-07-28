@@ -56,8 +56,8 @@ class Macchina():
         """
         tempo_setup = 0  # inizializzo il tempo di setup a zero
         if str(self.bobina_foglio).lower()=='bobina': #macchine taglio a bobina
-            if commessa1.metri_da_tagliare == commessa2.metri_da_tagliare and commessa1.kg_da_tagliare == commessa2.kg_da_tagliare and commessa1.due_date == commessa2.due_date:
-                print(f'{commessa1.id_commessa}, {commessa2.id_commessa}')
+            #if commessa1.metri_da_tagliare == commessa2.metri_da_tagliare and commessa1.kg_da_tagliare == commessa2.kg_da_tagliare and commessa1.due_date == commessa2.due_date:
+            #    print(f'{commessa1.id_commessa}, {commessa2.id_commessa}')
             if commessa1.diametro_tubo!=commessa2.diametro_tubo: # se il diametro del tubo tra le due commesse è diverso inserisco un tempo di setup
                 tempo_setup+=self.setup_cambio_albero
             tempo_setup+=self.setup_coltelli_fisso
