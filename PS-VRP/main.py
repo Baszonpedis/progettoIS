@@ -354,10 +354,10 @@ print(f"{Fore.BLUE}TEMPO Greedy (G3): {post_time:.2f}s")
 print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS: {post_time + tot1_post:.2f}s")
 
 ##GRASP
-alfa = 0.9 #NB: modifica anche l'altro
-iterazioni = 5
+alfa = 1 #NB: modifica anche l'altro
+iterazioni = 1
 fbest = fprimopost
-fobest = alfa*fprimopost-0.5*((1-alfa)*ritardo_pesato_post_primo.total_seconds()/3600)
+fobest = alfa*fprimopost-((1-alfa)*ritardo_pesato_post_primo.total_seconds()/3600)
 fritardobest = fritardoprimopost
 fritardopesatobest = ritardo_pesato_post_primo
 soluzionebest = soluzionefinale
@@ -644,7 +644,7 @@ for _ in range(iterazioni):
     print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS: {post_time + tot1_post:.2f}s")
     #print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS1+LS2+LS3 post: {post_time + tot1 + tot_tot_post:.2f}s")
 
-    fo = alfa*fprimopost-0.5*((1-alfa)*ritardo_pesato_post_primo.total_seconds()/3600)
+    fo = alfa*fprimopost-((1-alfa)*ritardo_pesato_post_primo.total_seconds()/3600)
 
     if fo < fobest:
         print(fo,fobest,fprimopost,ritardo_pesato_post_primo,fbest,fritardopesatobest)
