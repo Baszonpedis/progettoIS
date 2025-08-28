@@ -482,7 +482,6 @@ def insert_inter_macchina(lista_macchine: list, f_obj):
     for commessa in schedulazione:
         ritardo_cumul += commessa['ritardo']
         ritardo_cumul_pesato += commessa['ritardo'] / commessa['priorita']
-        #print(ritardo_cumul)
     print(f'Ritardo cumulativo: {-ritardo_cumul}')
 
     #for i in lista_macchine:
