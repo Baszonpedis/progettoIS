@@ -1,6 +1,7 @@
 import os
 import read_excel
 import solver
+from solver import alfa
 import output
 from copy import deepcopy
 import time
@@ -8,20 +9,37 @@ from colorama import Fore, Style, init
 import math
 import pandas as pd
 
+
 ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
-#print(os.getcwd())
-if os.path.basename(os.getcwd()) == "PS-VRP": ##PER PC ISTITUTO STAMPA
-    file_macchine_excel= os.getcwd() + '/Dati_input/Scheda_Macchine_Taglio.xlsx'
-    file_commesse_excel= os.getcwd() + '/Dati_input/Commesse_da_tagliare.xlsx'
-    file_veicoli_excel= os.getcwd() + '/Dati_input/vettori.xlsx'
-elif os.path.basename(os.getcwd()) == "progettoIS": ##PER DEBUGGING
-    file_macchine_excel= os.getcwd() + '/PS-VRP/Dati_input/Scheda_Macchine_Taglio.xlsx'
-    file_commesse_excel= os.getcwd() + '/PS-VRP//Dati_input/Commesse_da_tagliare.xlsx'
-    file_veicoli_excel= os.getcwd() + '/PS-VRP//Dati_input/vettori.xlsx'
+if __name__ == "__main__":
+    file_commesse_excel = os.getenv('FILE_COMMESSE')
+    file_veicoli_excel = os.getenv('FILE_VEICOLI')
+    file_macchine_excel = os.getenv('FILE_MACCHINE')
+    alfa = float(os.getenv('PARAM_ALFA'))
+    beta = float(os.getenv('PARAM_BETA'))
+
+    print(f"main.py avviato con:")
+    print(f"  Commesse: {file_commesse_excel}")
+    print(f"  Veicoli: {file_veicoli_excel}")
+    print(f"  Macchine: {file_macchine_excel}")
+    print(f"  Alfa: {alfa}")
+    print(f"  Beta: {beta}")
+
 else:
-    print("ERRORE - file di input non localizzati correttamente")
-#a = 0.5 #parametro "a" per decidere la migliore ricerca locale nei due stadi di ricerca locale
-#NB: questo NON è alfa; alfa è nel solver
+    ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
+    #print(os.getcwd())
+    if os.path.basename(os.getcwd()) == "PS-VRP": ##PER PC ISTITUTO STAMPA
+        file_macchine_excel= os.getcwd() + '/Dati_input/Scheda_Macchine_Taglio.xlsx'
+        file_commesse_excel= os.getcwd() + '/Dati_input/Commesse_da_tagliare.xlsx'
+        file_veicoli_excel= os.getcwd() + '/Dati_input/vettori.xlsx'
+    elif os.path.basename(os.getcwd()) == "progettoIS": ##PER DEBUGGING
+        file_macchine_excel= os.getcwd() + '/PS-VRP/Dati_input/Scheda_Macchine_Taglio.xlsx'
+        file_commesse_excel= os.getcwd() + '/PS-VRP//Dati_input/Commesse_da_tagliare.xlsx'
+        file_veicoli_excel= os.getcwd() + '/PS-VRP//Dati_input/vettori.xlsx'
+    else:
+        print("ERRORE - file di input non localizzati correttamente")
+
+#NB: Il valore alfa è invece impostato e importato da "solver.py"
 
 ##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
@@ -354,7 +372,6 @@ print(f"{Fore.BLUE}TEMPO Greedy (G3): {post_time:.2f}s")
 print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS: {post_time + tot1_post:.2f}s")
 
 ##GRASP
-alfa = 1 #NB: modifica anche l'altro
 iterazioni = 1
 fbest = fprimopost
 fobest = alfa*fprimopost-((1-alfa)*ritardo_pesato_post_primo.total_seconds()/3600)
@@ -522,7 +539,7 @@ for _ in range(iterazioni):
     soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato = solver.euristico_post(soluzionebest, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
     print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (setup): {fpost} minuti di setup")
     print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-fpost_ritardo} ore di ritardo")
-    #output.write_output_soluzione_euristica(soluzionepost, os.getcwd() + '/Dati_output/euristico_post.xlsx')
+    #output.write_output_soluzione_euristica(soluzionepost, os.getcwd() + '/PS-VRP/Dati_output/euristico_post.xlsx')
     #solver.grafico_schedulazione(soluzionepost)
     post_time = time.time() - start_time_post
 

@@ -1,104 +1,179 @@
-import sys
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
 import subprocess
+import threading
 import os
-from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QPushButton,
-    QLabel, QSlider, QFileDialog, QMessageBox
-)
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QMovie
+import sys
 
-a = 1  # Default α
+# Funzione fittizia per simulare l'importazione e l'esecuzione di solver.py
+# Nel tuo caso, qui importeresti e chiameresti la tua funzione da solver.py
+def run_solver_with_params(alfa_valore, beta_valore):
+    try:
+        # Importa solver.py e chiama la funzione appropriata
+        # Esempio:
+        # from solver import risolvi
+        # risultato = risolvi(alfa_valore, beta_valore)
+        
+        # Per ora, simuliamo un'operazione
+        print(f"Esecuzione di solver.py con alfa={alfa_valore}, beta={beta_valore}")
+        import time
+        time.sleep(2) # Simula un po' di lavoro
+        return f"Solver completato con alfa={alfa_valore}, beta={beta_valore}"
+    except Exception as e:
+        return f"Errore durante l'esecuzione del solver: {e}"
 
-class SchedulerGUI(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Schedulatore Produzione & Logistica")
-        self.setStyleSheet("background-color: #1E3A8A; color: white; font-size: 14px;")
-        self.setFixedSize(400, 500)
+# Funzione per ottenere il percorso base corretto quando si è in un eseguibile PyInstaller
+def get_base_path():
+    if getattr(sys, 'frozen', False):
+        # We are running in a bundle
+        return sys._MEIPASS
+    else:
+        # We are running in a normal Python environment
+        return os.path.dirname(os.path.abspath(__file__))
 
-        layout = QVBoxLayout()
+class App:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Gestore Moduli Python")
+        self.root.geometry("600x500") # Dimensione iniziale della finestra
 
-        # Importa
-        self.import_button = QPushButton("📂 Importa estrazione")
-        self.import_button.clicked.connect(self.import_files)
-        layout.addWidget(self.import_button)
+        self.file_commesse = tk.StringVar()
+        self.file_veicoli = tk.StringVar()
+        self.file_macchine = tk.StringVar()
+        self.alfa_val = tk.DoubleVar(value=0.5) # Valore iniziale per alfa
+        self.beta_val = tk.StringVar(value="10") # Valore iniziale per beta
 
-        # Slider alpha
-        self.alpha_label = QLabel(f"α = {a}")
-        self.alpha_slider = QSlider(Qt.Orientation.Horizontal)
-        self.alpha_slider.setMinimum(0)
-        self.alpha_slider.setMaximum(100)
-        self.alpha_slider.setValue(100)
-        self.alpha_slider.valueChanged.connect(self.update_alpha)
-        layout.addWidget(self.alpha_label)
-        layout.addWidget(self.alpha_slider)
+        self.setup_ui()
 
-        # Avvia main.py
-        self.run_button = QPushButton("🚀 Avvia Schedulazione")
-        self.run_button.clicked.connect(self.run_main)
-        layout.addWidget(self.run_button)
+    def setup_ui(self):
+        # Frame per la selezione dei file
+        file_frame = ttk.LabelFrame(self.root, text="Seleziona File Excel")
+        file_frame.pack(pady=10, padx=10, fill="x")
 
-        # Loader gif
-        self.loading_label = QLabel("")
-        self.loading_movie = QMovie("spinner.gif")  # Inserisci una gif spinner!
-        self.loading_label.setMovie(self.loading_movie)
-        self.loading_label.setVisible(False)
-        layout.addWidget(self.loading_label)
+        ttk.Label(file_frame, text="Estrazione Commesse:").grid(row=0, column=0, sticky="w", padx=5, pady=2)
+        ttk.Entry(file_frame, textvariable=self.file_commesse, width=50).grid(row=0, column=1, padx=5, pady=2)
+        ttk.Button(file_frame, text="Sfoglia", command=lambda: self.select_file(self.file_commesse)).grid(row=0, column=2, padx=5, pady=2)
 
-        # Visualizza Avvisi
-        self.alert_button = QPushButton("⚠️ Visualizza Avvisi")
-        self.alert_button.clicked.connect(self.open_alerts)
-        layout.addWidget(self.alert_button)
+        ttk.Label(file_frame, text="Estrazione Veicoli:").grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        ttk.Entry(file_frame, textvariable=self.file_veicoli, width=50).grid(row=1, column=1, padx=5, pady=2)
+        ttk.Button(file_frame, text="Sfoglia", command=lambda: self.select_file(self.file_veicoli)).grid(row=1, column=2, padx=5, pady=2)
 
-        # Visualizza Gantt
-        self.gantt_button = QPushButton("📊 Visualizza Gantt")
-        self.gantt_button.clicked.connect(self.show_gantt)
-        layout.addWidget(self.gantt_button)
+        ttk.Label(file_frame, text="Estrazione Macchine:").grid(row=2, column=0, sticky="w", padx=5, pady=2)
+        ttk.Entry(file_frame, textvariable=self.file_macchine, width=50).grid(row=2, column=1, padx=5, pady=2)
+        ttk.Button(file_frame, text="Sfoglia", command=lambda: self.select_file(self.file_macchine)).grid(row=2, column=2, padx=5, pady=2)
 
-        # Visualizza Soluzione
-        self.solution_button = QPushButton("📁 Visualizza Soluzione")
-        self.solution_button.clicked.connect(self.open_solution)
-        layout.addWidget(self.solution_button)
+        # Frame per i parametri di solver.py
+        params_frame = ttk.LabelFrame(self.root, text="Parametri Solver (solver.py)")
+        params_frame.pack(pady=10, padx=10, fill="x")
 
-        self.setLayout(layout)
+        ttk.Label(params_frame, text="Parametro Alfa:").grid(row=0, column=0, sticky="w", padx=5, pady=2)
+        self.alfa_slider = ttk.Scale(params_frame, from_=0.0, to=1.0, orient="horizontal", variable=self.alfa_val, length=200)
+        self.alfa_slider.grid(row=0, column=1, padx=5, pady=2)
+        self.alfa_label = ttk.Label(params_frame, text=f"{self.alfa_val.get():.2f}")
+        self.alfa_label.grid(row=0, column=2, padx=5, pady=2)
+        self.alfa_val.trace_add("write", self.update_alfa_label) # Aggiorna la label quando lo slider cambia
 
-    def import_files(self):
-        QMessageBox.information(self, "Importa", "Input importati correttamente!")
+        ttk.Label(params_frame, text="Parametro Beta:").grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        ttk.Entry(params_frame, textvariable=self.beta_val, width=10).grid(row=1, column=1, sticky="w", padx=5, pady=2)
 
-    def update_alpha(self, value):
-        global a
-        a = value / 100
-        self.alpha_label.setText(f"α = {a:.2f}")
+        # Pulsante per avviare main.py
+        self.start_button = ttk.Button(self.root, text="Avvia main.py", command=self.start_main_script)
+        self.start_button.pack(pady=20)
 
-    def run_main(self):
-        self.loading_label.setVisible(True)
-        self.loading_movie.start()
+        # Loading screen / Progress bar
+        self.progress_frame = ttk.Frame(self.root)
+        self.progress_frame.pack(pady=10, padx=10, fill="x")
+        self.progress_frame.pack_forget() # Nascondi all'inizio
+
+        self.progress_bar = ttk.Progressbar(self.progress_frame, orient="horizontal", mode="indeterminate", length=400)
+        self.progress_bar.pack(pady=5)
+        self.progress_label = ttk.Label(self.progress_frame, text="In esecuzione...")
+        self.progress_label.pack(pady=5)
+
+    def update_alfa_label(self, *args):
+        self.alfa_label.config(text=f"{self.alfa_val.get():.2f}")
+
+    def select_file(self, var):
+        file_path = filedialog.askopenfilename(
+            title="Seleziona file Excel",
+            filetypes=[("File Excel", "*.xlsx *.xls")]
+        )
+        if file_path:
+            var.set(file_path)
+
+    def start_main_script(self):
+        # Disabilita il pulsante e mostra la loading screen
+        self.start_button.config(state=tk.DISABLED)
+        self.progress_frame.pack(pady=10, padx=10, fill="x")
+        self.progress_bar.start()
+        self.progress_label.config(text="Avvio script principale...")
+
+        # Avvia lo script in un thread separato per non bloccare la GUI
+        threading.Thread(target=self._run_main_script_thread).start()
+
+    def _run_main_script_thread(self):
         try:
-            subprocess.run(["python", "main.py"], check=True)
-            QMessageBox.information(self, "Completato", "Schedulazione completata.")
-        except subprocess.CalledProcessError:
-            QMessageBox.critical(self, "Errore", "Errore durante l'esecuzione di main.py")
-        self.loading_movie.stop()
-        self.loading_label.setVisible(False)
+            commesse_path = self.file_commesse.get()
+            veicoli_path = self.file_veicoli.get()
+            macchine_path = self.file_macchine.get()
+            alfa = self.alfa_val.get()
+            beta = self.beta_val.get()
 
-    def open_alerts(self):
-        os.startfile("PS-VRP/Dati_output/errori_veicoli.xlsx")
-        os.startfile("PS-VRP/Dati_output/errori_lettura.xlsx")
-        os.startfile("PS-VRP/Dati_output/errori_compatibilità.xlsx")
+            if not all([commesse_path, veicoli_path, macchine_path]):
+                messagebox.showwarning("Attenzione", "Per favore, seleziona tutti i file Excel.")
+                return
 
-    def show_gantt(self):
-        from main import grafico_schedulazione  # Assumendo che funzioni!
-        from main import soluzione_finale
-        import pickle  # O carica da file
-        # schedulazione = carica schedulazione
-        grafico_schedulazione(soluzione_finale)  # Passa la schedulazione giusta!
+            self.progress_label.config(text="Caricamento dati...")
 
-    def open_solution(self):
-        os.startfile("PS-VRP/Dati_output/sequenza_post.xlsx")
+            # --- Qui puoi passare i percorsi dei file e i parametri al tuo main.py ---
+            # Modo 1: Tramite variabili d'ambiente (se main.py le legge)
+            os.environ['FILE_COMMESSE'] = commesse_path
+            os.environ['FILE_VEICOLI'] = veicoli_path
+            os.environ['FILE_MACCHINE'] = macchine_path
+            os.environ['PARAM_ALFA'] = str(alfa)
+            os.environ['PARAM_BETA'] = str(beta)
+
+            # Esegui solver.py con i parametri
+            self.progress_label.config(text="Esecuzione solver.py...")
+            solver_result = run_solver_with_params(alfa, float(beta)) # Assicurati che beta sia un numero
+            print(solver_result) # Stampa il risultato del solver nella console
+
+            # Modo 2: Eseguire main.py come sottoprocesso e passare argomenti
+            # Assicurati che main.py sia in grado di accettare questi argomenti
+            # main_script_path = os.path.join(get_base_path(), "main.py")
+            # cmd = [sys.executable, main_script_path, commesse_path, veicoli_path, macchine_path, str(alfa), str(beta)]
+            #
+            # process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            # stdout, stderr = process.communicate()
+            #
+            # if process.returncode != 0:
+            #     messagebox.showerror("Errore", f"Errore durante l'esecuzione di main.py:\n{stderr}")
+            # else:
+            #     messagebox.showinfo("Successo", f"main.py completato con successo!\nOutput:\n{stdout}")
+
+            # Modo 3: Importare ed eseguire main.py direttamente (più complesso con parametri)
+            # Per importare main.py direttamente, dovresti assicurarti che main.py sia una funzione
+            # che accetta i tuoi input come argomenti.
+
+            # Per la dimostrazione, simuleremo l'esecuzione di main.py
+            self.progress_label.config(text="Esecuzione main.py (simulato)...")
+            import time
+            time.sleep(5) # Simula il tempo di esecuzione di main.py
+            messagebox.showinfo("Completato", "L'esecuzione di main.py è terminata.")
+
+        except ValueError:
+            messagebox.showerror("Errore", "Il parametro Beta deve essere un numero valido.")
+        except Exception as e:
+            messagebox.showerror("Errore", f"Si è verificato un errore: {e}")
+        finally:
+            # Riabilita il pulsante e nascondi la loading screen
+            self.progress_bar.stop()
+            self.progress_frame.pack_forget()
+            self.start_button.config(state=tk.NORMAL)
+            self.progress_label.config(text="In attesa...")
 
 
-app = QApplication(sys.argv)
-window = SchedulerGUI()
-window.show()
-sys.exit(app.exec())
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = App(root)
+    root.mainloop()
