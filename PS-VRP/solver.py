@@ -281,7 +281,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                 f_obj_ritardo_pesato+=commessa.ritardo/commessa.priorita_cliente
                 lista_commesse_tassative.remove(commessa)
                 #In caso di commesse reputate tali (e.g. stessi identici metri da tagliare) si forza, con il codice a seguito, la loro schedulazione in sequenza; questa non è permanente, ed è mutabile dalle ricerche locali in seguito
-                '''for commessa2 in lista_commesse_tassative:
+                for commessa2 in lista_commesse_tassative:
                     if commessa.metri_da_tagliare == commessa2.metri_da_tagliare:
                         print(f"OK1, {commessa.id_commessa} e {commessa2.id_commessa}")
                     if commessa.metri_da_tagliare == commessa2.metri_da_tagliare and commessa2.compatibilita[macchina.nome_macchina] == 1 and commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
@@ -296,7 +296,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                         aggiorna_schedulazione(commessa2,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione,0)
                         f_obj_ritardo+=commessa2.ritardo 
                         f_obj_ritardo_pesato+=commessa2.ritardo/commessa2.priorita_cliente
-                        lista_commesse_tassative.remove(commessa2)'''
+                        lista_commesse_tassative.remove(commessa2)
             if schedulazione_eseguita:
                 #print(f'La commessa {commessa.id_commessa} è associata al veicolo {commessa.veicolo} //////////')
                 break
@@ -355,7 +355,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                         aggiorna_schedulazione(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione,0)
                         commesse_da_schedulare.remove(commessa)
                         #In caso di commesse reputate tali (e.g. stessi identici metri da tagliare) si forza, con il codice a seguito, la loro schedulazione in sequenza; questa non è permanente, ed è mutabile dalle ricerche locali in seguito
-                        '''for commessa2 in commesse_da_schedulare:
+                        for commessa2 in commesse_da_schedulare:
                             if commessa.metri_da_tagliare == commessa2.metri_da_tagliare:
                                 tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
                                 tempo_processamento = commessa2.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
@@ -368,7 +368,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                                     schedulazione_eseguita=True
                                     f_obj+=tempo_setup
                                     aggiorna_schedulazione(commessa2,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione,0)
-                                    commesse_da_schedulare.remove(commessa2)'''
+                                    commesse_da_schedulare.remove(commessa2)
                     elif veicolo.capacita < commessa.kg_da_tagliare:
                         causa_fallimento[commessa.id_commessa] = (
                         f'La commessa è troppo grande per il veicolo {veicolo.nome}'
@@ -438,7 +438,7 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
                 commesse_da_schedulare.remove(commessa)
                 #print(f'INSERITA COMMESSA {commessa.id_commessa} su macchina {macchina.nome_macchina}')
                 #In caso di commesse reputate tali (e.g. stessi identici metri da tagliare) si forza, con il codice a seguito, la loro schedulazione in sequenza; questa non è permanente, ed è mutabile dalle ricerche locali in seguito
-                '''for commessa2 in commesse_da_schedulare:
+                for commessa2 in commesse_da_schedulare:
                     if commessa.metri_da_tagliare == commessa2.metri_da_tagliare:
                         print(f"OK1, {commessa.id_commessa} e {commessa2.id_commessa}")
                     if commessa.metri_da_tagliare == commessa2.metri_da_tagliare and commessa2.compatibilita[macchina.nome_macchina] == 1 and commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
@@ -450,7 +450,7 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
                         aggiorna_schedulazione(commessa2,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,soluzionepost,macchina._minuti_fine_ultima_lavorazione,0)
                         fpost_ritardo+=commessa.ritardo
                         fpost_ritardo_pesato+=commessa2.ritardo/commessa2.priorita_cliente
-                        commesse_da_schedulare.remove(commessa2)'''
+                        commesse_da_schedulare.remove(commessa2)
             if schedulazione_eseguita:
                 break
         if not schedulazione_eseguita:
