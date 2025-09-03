@@ -11,8 +11,31 @@ import output
 import os
 import random
 
-alfa = 1 #Parametro per le ricerche locali - consigliato: [0.7-0.9]; si ricordi che zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
-beta = 0.2 #Parametro per il GRASP (metaeuristico) - consigliato: [0.1-0.3]
+#alfa = 1 #Parametro per le ricerche locali - consigliato: [0.7-0.9]; si ricordi che zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
+#beta = 0.2 #Parametro per il GRASP (metaeuristico) - consigliato: [0.1-0.3]
+
+import os
+import sys
+
+# Leggi i parametri dalle variabili d'ambiente (stesse che legge main.py)
+def get_solver_parameters():
+    """Legge alfa e beta dalle variabili d'ambiente con valori di default"""
+    try:
+        alfa_str = os.getenv('PARAM_ALFA')
+        beta_str = os.getenv('PARAM_BETA')
+        
+        alfa = float(alfa_str) if alfa_str else 0.7  # Default
+        beta = float(beta_str) if beta_str else 0.2  # Default
+        
+        print(f"Solver - Parametri letti: Alfa={alfa}, Beta={beta}")
+        return alfa, beta
+        
+    except (ValueError, TypeError):
+        print("Solver - Errore lettura parametri, uso valori default")
+        return 0.5, 10.0
+
+# Ottieni i parametri una volta all'importazione del modulo
+alfa, beta = get_solver_parameters()
 
 ##FUNZIONI FONDAMENTALI
 #Aggiunge un certo numero di minuti ad una certa data
@@ -258,7 +281,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                 f_obj_ritardo_pesato+=commessa.ritardo/commessa.priorita_cliente
                 lista_commesse_tassative.remove(commessa)
                 #In caso di commesse reputate tali (e.g. stessi identici metri da tagliare) si forza, con il codice a seguito, la loro schedulazione in sequenza; questa non è permanente, ed è mutabile dalle ricerche locali in seguito
-                for commessa2 in lista_commesse_tassative:
+                '''for commessa2 in lista_commesse_tassative:
                     if commessa.metri_da_tagliare == commessa2.metri_da_tagliare:
                         print(f"OK1, {commessa.id_commessa} e {commessa2.id_commessa}")
                     if commessa.metri_da_tagliare == commessa2.metri_da_tagliare and commessa2.compatibilita[macchina.nome_macchina] == 1 and commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
@@ -273,7 +296,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                         aggiorna_schedulazione(commessa2,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione,0)
                         f_obj_ritardo+=commessa2.ritardo 
                         f_obj_ritardo_pesato+=commessa2.ritardo/commessa2.priorita_cliente
-                        lista_commesse_tassative.remove(commessa2)
+                        lista_commesse_tassative.remove(commessa2)'''
             if schedulazione_eseguita:
                 #print(f'La commessa {commessa.id_commessa} è associata al veicolo {commessa.veicolo} //////////')
                 break
@@ -332,7 +355,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                         aggiorna_schedulazione(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione,0)
                         commesse_da_schedulare.remove(commessa)
                         #In caso di commesse reputate tali (e.g. stessi identici metri da tagliare) si forza, con il codice a seguito, la loro schedulazione in sequenza; questa non è permanente, ed è mutabile dalle ricerche locali in seguito
-                        for commessa2 in commesse_da_schedulare:
+                        '''for commessa2 in commesse_da_schedulare:
                             if commessa.metri_da_tagliare == commessa2.metri_da_tagliare:
                                 tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
                                 tempo_processamento = commessa2.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
@@ -345,8 +368,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                                     schedulazione_eseguita=True
                                     f_obj+=tempo_setup
                                     aggiorna_schedulazione(commessa2,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione,0)
-                                    commesse_da_schedulare.remove(commessa2)
-
+                                    commesse_da_schedulare.remove(commessa2)'''
                     elif veicolo.capacita < commessa.kg_da_tagliare:
                         causa_fallimento[commessa.id_commessa] = (
                         f'La commessa è troppo grande per il veicolo {veicolo.nome}'
@@ -416,7 +438,7 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
                 commesse_da_schedulare.remove(commessa)
                 #print(f'INSERITA COMMESSA {commessa.id_commessa} su macchina {macchina.nome_macchina}')
                 #In caso di commesse reputate tali (e.g. stessi identici metri da tagliare) si forza, con il codice a seguito, la loro schedulazione in sequenza; questa non è permanente, ed è mutabile dalle ricerche locali in seguito
-                for commessa2 in commesse_da_schedulare:
+                '''for commessa2 in commesse_da_schedulare:
                     if commessa.metri_da_tagliare == commessa2.metri_da_tagliare:
                         print(f"OK1, {commessa.id_commessa} e {commessa2.id_commessa}")
                     if commessa.metri_da_tagliare == commessa2.metri_da_tagliare and commessa2.compatibilita[macchina.nome_macchina] == 1 and commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
@@ -428,7 +450,7 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
                         aggiorna_schedulazione(commessa2,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,soluzionepost,macchina._minuti_fine_ultima_lavorazione,0)
                         fpost_ritardo+=commessa.ritardo
                         fpost_ritardo_pesato+=commessa2.ritardo/commessa2.priorita_cliente
-                        commesse_da_schedulare.remove(commessa2)
+                        commesse_da_schedulare.remove(commessa2)'''
             if schedulazione_eseguita:
                 break
         if not schedulazione_eseguita:
@@ -941,6 +963,8 @@ def calcolo_delta(delta_setup,delta_ritardo):
     #NB: il valore di alfa è settato da main.py e da lì importato
     delta_ritardo = delta_ritardo.total_seconds()/3600
     delta = alfa*delta_setup+(1-alfa)*delta_ritardo
+    #if delta_ritardo != 0:
+    #    print(delta_setup/delta_ritardo)
     return delta
 
 def GRASP_randomizer(lista_commesse):

@@ -1,4 +1,5 @@
 import os
+import sys
 import read_excel
 import solver
 from solver import alfa
@@ -11,35 +12,78 @@ import pandas as pd
 
 
 ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
+import os
+import sys
+
+##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
 if __name__ == "__main__":
+    print("=== AVVIO ELABORAZIONE ===")
+    
+    # Leggi dalle variabili d'ambiente (passate dalla GUI)
     file_commesse_excel = os.getenv('FILE_COMMESSE')
     file_veicoli_excel = os.getenv('FILE_VEICOLI')
     file_macchine_excel = os.getenv('FILE_MACCHINE')
-    alfa = float(os.getenv('PARAM_ALFA'))
-    beta = float(os.getenv('PARAM_BETA'))
+    alfa_str = os.getenv('PARAM_ALFA')
+    beta_str = os.getenv('PARAM_BETA')
+    iter_str = os.getenv('PARAM_ITER')
+    
+    print(f"File Commesse da GUI: {file_commesse_excel}")
+    print(f"File Veicoli da GUI: {file_veicoli_excel}")
+    print(f"File Macchine da GUI: {file_macchine_excel}")
+    print(f"Parametro Alfa: {alfa_str}")
+    print(f"Parametro Beta: {beta_str}")
+    print(f"Numero di iterazioni: {iter_str}")
+    
+    # Converti i parametri numerici
+    try:
+        alfa = float(alfa_str) if alfa_str else 0.7  # Default
+        beta = float(beta_str) if beta_str else 0.2  # Default
+        iter = int(iter_str) if iter_str else 5 #Default; int per poter essere essere correttamente usato nella funzione range()
+        print(f"Parametri convertiti - Alfa: {alfa}, Beta: {beta}")
+    except (ValueError, TypeError):
+        print("ERRORE: Parametri Alfa o Beta o Iter non validi.", file=sys.stderr)
+        sys.exit(1)
+    
+    # Se i file non sono specificati via environment, usa la logica di fallback
+    if not all([file_commesse_excel, file_veicoli_excel, file_macchine_excel]):
+        print("File non specificati via GUI, uso percorsi default...")
+        
+        current_dir_name = os.path.basename(os.getcwd())
+        print(f"Directory corrente: {current_dir_name}")
+        
+        if current_dir_name == "PS-VRP":
+            file_macchine_excel = os.getcwd() + '/Dati_input/Scheda_Macchine_Taglio.xlsx'
+            file_commesse_excel = os.getcwd() + '/Dati_input/Commesse_da_tagliare.xlsx'
+            file_veicoli_excel = os.getcwd() + '/Dati_input/vettori.xlsx'
+            print("Usando percorsi per PC ISTITUTO STAMPA")
+            
+        elif current_dir_name == "progettoIS":
+            file_macchine_excel = os.getcwd() + '/PS-VRP/Dati_input/Scheda_Macchine_Taglio.xlsx'
+            file_commesse_excel = os.getcwd() + '/PS-VRP/Dati_input/Commesse_da_tagliare.xlsx'
+            file_veicoli_excel = os.getcwd() + '/PS-VRP/Dati_input/vettori.xlsx'
+            print("Usando percorsi per DEBUGGING")
+            
+        else:
+            print("ERRORE - file di input non localizzati correttamente o variabili d'ambiente mancanti.", file=sys.stderr)
+            sys.exit(1)
+    
+    # Verifica che tutti i file esistano
+    files_to_check = {
+        'Commesse': file_commesse_excel,
+        'Veicoli': file_veicoli_excel,
+        'Macchine': file_macchine_excel
+    }
+    
+    for nome, percorso in files_to_check.items():
+        if not os.path.exists(percorso):
+            print(f"ERRORE: File {nome} non trovato: {percorso}", file=sys.stderr)
+            sys.exit(1)
+        else:
+            print(f"✓ File {nome} trovato: {os.path.basename(percorso)}")
+    
+    print("\n=== INIZIO ELABORAZIONE ===")
 
-    print(f"main.py avviato con:")
-    print(f"  Commesse: {file_commesse_excel}")
-    print(f"  Veicoli: {file_veicoli_excel}")
-    print(f"  Macchine: {file_macchine_excel}")
-    print(f"  Alfa: {alfa}")
-    print(f"  Beta: {beta}")
-
-else:
-    ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
-    #print(os.getcwd())
-    if os.path.basename(os.getcwd()) == "PS-VRP": ##PER PC ISTITUTO STAMPA
-        file_macchine_excel= os.getcwd() + '/Dati_input/Scheda_Macchine_Taglio.xlsx'
-        file_commesse_excel= os.getcwd() + '/Dati_input/Commesse_da_tagliare.xlsx'
-        file_veicoli_excel= os.getcwd() + '/Dati_input/vettori.xlsx'
-    elif os.path.basename(os.getcwd()) == "progettoIS": ##PER DEBUGGING
-        file_macchine_excel= os.getcwd() + '/PS-VRP/Dati_input/Scheda_Macchine_Taglio.xlsx'
-        file_commesse_excel= os.getcwd() + '/PS-VRP//Dati_input/Commesse_da_tagliare.xlsx'
-        file_veicoli_excel= os.getcwd() + '/PS-VRP//Dati_input/vettori.xlsx'
-    else:
-        print("ERRORE - file di input non localizzati correttamente")
-
-#NB: Il valore alfa è invece impostato e importato da "solver.py"
+#NB: Il valore alfa è invece impostato e importato da "solver.py" o tramite .exe
 
 ##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
@@ -372,14 +416,14 @@ print(f"{Fore.BLUE}TEMPO Greedy (G3): {post_time:.2f}s")
 print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS: {post_time + tot1_post:.2f}s")
 
 ##GRASP
-iterazioni = 1
+#iter = 1 #Definito prima
 fbest = fprimopost
-fobest = alfa*fprimopost-((1-alfa)*ritardo_pesato_post_primo.total_seconds()/3600)
+fobest = alfa*fprimopost #-((1-alfa)*ritardo_pesato_post_primo.total_seconds()/3600)
 fritardobest = fritardoprimopost
 fritardopesatobest = ritardo_pesato_post_primo
 soluzionebest = soluzionefinale
 
-for _ in range(iterazioni):
+for _ in range(iter):
     #NB: gli input sono ricalcolati a ogni iterazione; non è ottimale ma è per evitare problemi con le due strutture dati utilizzate
     lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
     read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
@@ -661,14 +705,20 @@ for _ in range(iterazioni):
     print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS: {post_time + tot1_post:.2f}s")
     #print(f"{Fore.BLUE}TEMPO Greedy (G3) + LS1+LS2+LS3 post: {post_time + tot1 + tot_tot_post:.2f}s")
 
-    fo = alfa*fprimopost-((1-alfa)*ritardo_pesato_post_primo.total_seconds()/3600)
+    fo = alfa*fprimopost -((1-alfa)*(ritardo_pesato_post_primo.total_seconds()/3600))
+    print(fprimopost, ritardo_pesato_post_primo.total_seconds()/3600)
+
+    print(fo, fobest)
+
+    print(f'RAPPORTO fprimopost fritardopesatobest: {fprimopost/ritardo_pesato_post_primo.total_seconds()/3600}')
 
     if fo < fobest:
         print(fo,fobest,fprimopost,ritardo_pesato_post_primo,fbest,fritardopesatobest)
-        fbest = fprimopost
-        soluzionebest = soluzionefinale
-        fritardobest = fritardoprimopost
-        fritardopesatobest = ritardo_pesato_post_primo
+        fbest = fprimopost #aggiornamento funzione obiettivo solo setup
+        fritardobest = fritardoprimopost #aggiornamento funzione obiettivo solo ritardo non pesato
+        fritardopesatobest = ritardo_pesato_post_primo #aggiornamento funzione obiettivo solo ritardo pesato
+        fobest = fo #aggiornamento funzione obiettivo setup+ritardi pesati
+        soluzionebest = soluzionefinale #aggiornamento soluzione
 
 print(f"{Fore.YELLOW}SETUP (BEST SOLUTION): {fbest:.2f}s")
 print(f"{Fore.YELLOW}RITARDO (BEST SOLUTION): {-fritardobest}s")

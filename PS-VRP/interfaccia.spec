@@ -5,7 +5,7 @@ a = Analysis(
     ['interfaccia.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('main.py', '.'), ('solver.py', '.'), ('read_excel.py', '.'), ('*.py', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
