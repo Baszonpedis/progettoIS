@@ -281,11 +281,11 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                 f_obj_ritardo_pesato+=commessa.ritardo/commessa.priorita_cliente
                 lista_commesse_tassative.remove(commessa)
                 #In caso di commesse reputate tali (e.g. stessi identici metri da tagliare) si forza, con il codice a seguito, la loro schedulazione in sequenza; questa non è permanente, ed è mutabile dalle ricerche locali in seguito
-                '''for commessa2 in lista_commesse_tassative:
-                    if commessa.metri_da_tagliare == commessa2.metri_da_tagliare:
-                        print(f"OK1, {commessa.id_commessa} e {commessa2.id_commessa}")
-                    if commessa.metri_da_tagliare == commessa2.metri_da_tagliare and commessa2.compatibilita[macchina.nome_macchina] == 1 and commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
-                        print(f"OK2, {commessa.id_commessa} e {commessa2.id_commessa}")
+                for commessa2 in lista_commesse_tassative:
+                    #if commessa.metri_da_tagliare == commessa2.metri_da_tagliare:
+                        #print(f"OK1, {commessa.id_commessa} e {commessa2.id_commessa}")
+                    if commessa.id_commessa == commessa2.id_commessa or commessa.fascia_iniziale == commessa2.fascia_iniziale and commessa.fascia_finale == commessa2.fascia_finale and commessa.diametro_tubo == commessa2.diametro_tubo and commessa2.compatibilita[macchina.nome_macchina] == 1 and commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
+                        #print(f"OK2, {commessa.id_commessa} e {commessa2.id_commessa}")
                         tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
                         tempo_processamento = commessa2.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
                         tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa2)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
@@ -296,7 +296,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                         aggiorna_schedulazione(commessa2,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione,0)
                         f_obj_ritardo+=commessa2.ritardo 
                         f_obj_ritardo_pesato+=commessa2.ritardo/commessa2.priorita_cliente
-                        lista_commesse_tassative.remove(commessa2)'''
+                        lista_commesse_tassative.remove(commessa2)
             if schedulazione_eseguita:
                 #print(f'La commessa {commessa.id_commessa} è associata al veicolo {commessa.veicolo} //////////')
                 break
@@ -355,8 +355,8 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                         aggiorna_schedulazione(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione,0)
                         commesse_da_schedulare.remove(commessa)
                         #In caso di commesse reputate tali (e.g. stessi identici metri da tagliare) si forza, con il codice a seguito, la loro schedulazione in sequenza; questa non è permanente, ed è mutabile dalle ricerche locali in seguito
-                        '''for commessa2 in commesse_da_schedulare:
-                            if commessa.metri_da_tagliare == commessa2.metri_da_tagliare:
+                        for commessa2 in commesse_da_schedulare:
+                            if commessa.id_commessa == commessa2.id_commessa or commessa.fascia_iniziale == commessa2.fascia_iniziale and commessa.fascia_finale == commessa2.fascia_finale and commessa.diametro_tubo == commessa2.diametro_tubo:
                                 tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
                                 tempo_processamento = commessa2.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
                                 tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa2)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
@@ -368,7 +368,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                                     schedulazione_eseguita=True
                                     f_obj+=tempo_setup
                                     aggiorna_schedulazione(commessa2,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione,0)
-                                    commesse_da_schedulare.remove(commessa2)'''
+                                    commesse_da_schedulare.remove(commessa2)
                     elif veicolo.capacita < commessa.kg_da_tagliare:
                         causa_fallimento[commessa.id_commessa] = (
                         f'La commessa è troppo grande per il veicolo {veicolo.nome}'
@@ -438,11 +438,11 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
                 commesse_da_schedulare.remove(commessa)
                 #print(f'INSERITA COMMESSA {commessa.id_commessa} su macchina {macchina.nome_macchina}')
                 #In caso di commesse reputate tali (e.g. stessi identici metri da tagliare) si forza, con il codice a seguito, la loro schedulazione in sequenza; questa non è permanente, ed è mutabile dalle ricerche locali in seguito
-                '''for commessa2 in commesse_da_schedulare:
-                    if commessa.metri_da_tagliare == commessa2.metri_da_tagliare:
-                        print(f"OK1, {commessa.id_commessa} e {commessa2.id_commessa}")
-                    if commessa.metri_da_tagliare == commessa2.metri_da_tagliare and commessa2.compatibilita[macchina.nome_macchina] == 1 and commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
-                        print(f"OK2, {commessa.id_commessa} e {commessa2.id_commessa}")
+                for commessa2 in commesse_da_schedulare:
+                    #if commessa.id_commessa == commessa2.id_commessa or commessa.fascia_iniziale == commessa2.fascia_iniziale and commessa.fascia_finale == commessa2.fascia_finale and commessa.diametro_tubo == commessa2.diametro_tubo:
+                        #print(f"OK1, {commessa.id_commessa} e {commessa2.id_commessa}")
+                    if commessa.id_commessa == commessa2.id_commessa or commessa.fascia_iniziale == commessa2.fascia_iniziale and commessa.fascia_finale == commessa2.fascia_finale and commessa.diametro_tubo == commessa2.diametro_tubo and commessa2.compatibilita[macchina.nome_macchina] == 1 and commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
+                        #print(f"OK2, {commessa.id_commessa} e {commessa2.id_commessa}")
                         tempo_processamento = commessa2.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
                         tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa2)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
                         #schedulazione_eseguita=True
@@ -450,7 +450,7 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
                         aggiorna_schedulazione(commessa2,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,soluzionepost,macchina._minuti_fine_ultima_lavorazione,0)
                         fpost_ritardo+=commessa.ritardo
                         fpost_ritardo_pesato+=commessa2.ritardo/commessa2.priorita_cliente
-                        commesse_da_schedulare.remove(commessa2)'''
+                        commesse_da_schedulare.remove(commessa2)
             if schedulazione_eseguita:
                 break
         if not schedulazione_eseguita:
@@ -531,7 +531,7 @@ def insert_inter_macchina(lista_macchine: list, f_obj):
     for commessa in schedulazione:
         ritardo_cumul += commessa['ritardo']
         ritardo_cumul_pesato += commessa['ritardo'] / commessa['priorita']
-    print(f'Ritardo cumulativo: {-ritardo_cumul}')
+    #print(f'Ritardo cumulativo: {-ritardo_cumul}')
 
     #for i in lista_macchine:
     #    print(i.nome_macchina)
@@ -800,7 +800,7 @@ def insert_intra(lista_macchine: list, f_obj):
         ritardo_cumul += commessa['ritardo']
         ritardo_cumul_pesato += commessa['ritardo'] / commessa['priorita']
         #print(ritardo_cumul)
-    print(f'Ritardo cumulativo: {-ritardo_cumul}')
+    #print(f'Ritardo cumulativo: {-ritardo_cumul}')
 
     #for i in lista_macchine:
     #    print(i.nome_macchina)
@@ -921,7 +921,7 @@ def swap_intra(lista_macchine, f_obj):
         ritardo_cumul += commessa['ritardo']
         ritardo_cumul_pesato += commessa['ritardo'] / commessa['priorita']
         #print(ritardo_cumul)
-    print(f'Ritardo cumulativo: {-ritardo_cumul}')
+    #print(f'Ritardo cumulativo: {-ritardo_cumul}')
 
     #for i in lista_macchine:
     #    print(i.nome_macchina)
@@ -963,22 +963,24 @@ def calcolo_delta(delta_setup,delta_ritardo):
     #NB: il valore di alfa è settato da main.py e da lì importato
     delta_ritardo = delta_ritardo.total_seconds()/3600
     delta = alfa*delta_setup+(1-alfa)*delta_ritardo
+    #print(delta_setup, delta_ritardo, delta)
     #if delta_ritardo != 0:
     #    print(delta_setup/delta_ritardo)
     return delta
 
 def GRASP_randomizer(lista_commesse):
+    sigma = 10**11
     #NB: il valore di beta è settato da main.py e da lì importato
     lista_commesse_randomized = []
-    score = [(j.priorita_cliente+float((j.due_date).timestamp())/(10^11)) for j in lista_commesse]
+    score = [(j.priorita_cliente-float((j.due_date).timestamp())/(sigma)) for j in lista_commesse]
     if beta == 0:
         return lista_commesse
     else:
         while lista_commesse:
-            minimo = max(score)
-            massimo = min(score)
-            soglia = minimo + beta*(massimo-minimo)
-            rcl = [c for c in lista_commesse if c.priorita_cliente < soglia]
+            massimo = max(score)
+            minimo = min(score)
+            soglia = massimo - beta*(massimo - minimo)
+            rcl = [c for c,s in zip(lista_commesse, score) if s >= soglia]            
             selezionata = random.choice(rcl)
             lista_commesse_randomized.append(selezionata)
             lista_commesse.remove(selezionata)

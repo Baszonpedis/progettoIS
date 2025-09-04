@@ -4,6 +4,7 @@ import subprocess
 import threading
 import os
 import sys
+from PIL import Image, ImageTk # Importa Pillow per gestire le immagini (se non l'hai, installalo con pip install Pillow)
 
 def get_base_path():
     """Ottiene il percorso base corretto per PyInstaller"""
@@ -13,6 +14,20 @@ def get_base_path():
     else:
         # Esecuzione normale Python
         return os.path.dirname(os.path.abspath(__file__))
+
+# Funzione per ottenere il percorso dell'immagine
+def get_image_path(image_name):
+    base_path = get_base_path()
+    # Controlla prima nella root, poi in una sottocartella 'assets' o 'images'
+    possible_paths = [
+        os.path.join(base_path, image_name),
+        os.path.join(base_path, "assets", image_name),
+        os.path.join(base_path, "images", image_name)
+    ]
+    for path in possible_paths:
+        if os.path.exists(path):
+            return path
+    return None # Ritorna None se l'immagine non viene trovata
 
 def get_main_script_path():
     """Trova il percorso corretto di main.py"""
@@ -37,8 +52,34 @@ class App:
     def __init__(self, root):
         self.root = root
         self.root.title("Schedulatore del taglio")
-        self.root.geometry("650x550")
+        self.root.geometry("800x750") # Aumenta larghezza per il layout affiancato
         self.root.resizable(True, True)
+
+        # --- IMPOSTA L'ICONA DELLA FINESTRA E DELLA BARRA DELLE APPLICAZIONI ---
+        icon_path_ico = get_image_path("istituto_stampa_s_r_l__logo.ico") # Preferito per Windows
+        icon_path_png = get_image_path("istituto_stampa_s_r_l__logo.png") # Alternativa per PNG/GIF
+
+        if icon_path_ico:
+            try:
+                self.root.iconbitmap(icon_path_ico)
+            except tk.TclError:
+                print(f"Attenzione: Impossibile caricare l'icona ICO da {icon_path_ico}. Proverò con PNG.")
+                if icon_path_png:
+                    try:
+                        photo = tk.PhotoImage(file=icon_path_png)
+                        self.root.iconphoto(True, photo)
+                    except tk.TclError:
+                        print(f"Attenzione: Impossibile caricare l'icona PNG da {icon_path_png}.")
+                else:
+                    print("Nessun file icona ICO o PNG trovato per la finestra.")
+        elif icon_path_png:
+            try:
+                photo = tk.PhotoImage(file=icon_path_png)
+                self.root.iconphoto(True, photo)
+            except tk.TclError:
+                print(f"Attenzione: Impossibile caricare l'icona PNG da {icon_path_png}.")
+        else:
+            print("Nessun file icona (ICO o PNG) trovato per la finestra.")
 
         # Variabili per i file
         self.file_commesse = tk.StringVar()
@@ -57,8 +98,79 @@ class App:
         main_frame = ttk.Frame(self.root)
         main_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Frame per la selezione dei file
-        file_frame = ttk.LabelFrame(main_frame, text="Seleziona File Excel di Input", padding=10)
+        # --- HEADER CON LOGO E PARAMETRI AFFIANCATI ---
+        header_frame = ttk.Frame(main_frame)
+        header_frame.pack(fill="x", pady=(0, 15))
+
+        # Frame sinistro per il logo
+        logo_frame = ttk.Frame(header_frame)
+        logo_frame.pack(side="left", anchor="nw")
+
+        # Carica e mostra il logo
+        logo_path = get_image_path("istituto_stampa_s_r_l__logo-removebg-preview.png")
+        self.logo_image = None
+        self.logo_label = None
+
+        if logo_path:
+            try:
+                img = Image.open(logo_path)
+                # Ridimensiona il logo mantenendo le proporzioni originali
+                # Impostiamo un'altezza massima di 120px e calcoliamo la larghezza proporzionale
+                original_width, original_height = img.size
+                max_height = 120
+                aspect_ratio = original_width / original_height
+                new_height = min(max_height, original_height)
+                new_width = int(new_height * aspect_ratio)
+                
+                img = img.resize((new_width, new_height), Image.LANCZOS)
+                self.logo_image = ImageTk.PhotoImage(img)
+                self.logo_label = ttk.Label(logo_frame, image=self.logo_image)
+                self.logo_label.pack()
+            except FileNotFoundError:
+                messagebox.showerror("Errore Logo", f"Immagine del logo non trovata: {logo_path}")
+            except Exception as e:
+                messagebox.showerror("Errore Logo", f"Impossibile caricare l'immagine del logo: {e}")
+        else:
+            print("Nessun file logo interno ('logo_grande.png') trovato.")
+
+        # Frame destro per i parametri di configurazione
+        params_frame = ttk.LabelFrame(header_frame, text="Parametri di Configurazione", padding=15)
+        params_frame.pack(side="right", fill="both", expand=True, padx=(20, 0))
+
+        # Parametro Alfa con slider
+        alfa_frame = ttk.Frame(params_frame)
+        alfa_frame.pack(fill="x", pady=(0,8))
+        
+        ttk.Label(alfa_frame, text="Parametro Alfa:").pack(side="left")
+        self.alfa_slider = ttk.Scale(alfa_frame, from_=0.0, to=1.0, orient="horizontal", 
+                                   variable=self.alfa_val, length=180)
+        self.alfa_slider.pack(side="left", padx=8)
+        self.alfa_label = ttk.Label(alfa_frame, text=f"{self.alfa_val.get():.2f}")
+        self.alfa_label.pack(side="left", padx=(8,0))
+        
+        # Aggiorna label quando slider cambia
+        self.alfa_val.trace_add("write", self.update_alfa_label)
+
+        # Parametro Beta
+        beta_frame = ttk.Frame(params_frame)
+        beta_frame.pack(fill="x", pady=(0,8))
+        
+        ttk.Label(beta_frame, text="Parametro Beta:").pack(side="left")
+        beta_entry = ttk.Entry(beta_frame, textvariable=self.beta_val, width=12)
+        beta_entry.pack(side="left", padx=(8,0))
+        ttk.Label(beta_frame, text="(numero)").pack(side="left", padx=(5,0))
+
+        # Parametro Iter
+        iter_frame = ttk.Frame(params_frame)
+        iter_frame.pack(fill="x")
+
+        ttk.Label(iter_frame, text="Parametro Iter:").pack(side="left")
+        iter_entry = ttk.Entry(iter_frame, textvariable=self.iter_val, width=12)
+        iter_entry.pack(side="left", padx=(8,0))
+        ttk.Label(iter_frame, text="(numero di iterazioni)").pack(side="left", padx=(5,0))
+
+        # --- FRAME PER LA SELEZIONE DEI FILE ---
+        file_frame = ttk.LabelFrame(main_frame, text="Selezionare i file di Input (formato .xlsx)", padding=10)
         file_frame.pack(pady=(0,10), fill="x")
 
         # Configurazione grid per ridimensionamento
@@ -85,43 +197,7 @@ class App:
         ttk.Button(file_frame, text="Sfoglia", 
                   command=lambda: self.select_file(self.file_macchine, "Macchine")).grid(row=2, column=2, padx=(5,0), pady=3)
 
-        # Frame per i parametri
-        params_frame = ttk.LabelFrame(main_frame, text="Parametri di Configurazione", padding=10)
-        params_frame.pack(pady=(0,10), fill="x")
-
-        # Parametro Alfa con slider
-        alfa_frame = ttk.Frame(params_frame)
-        alfa_frame.pack(fill="x", pady=(0,10))
-        
-        ttk.Label(alfa_frame, text="Parametro Alfa:").pack(side="left")
-        self.alfa_slider = ttk.Scale(alfa_frame, from_=0.0, to=1.0, orient="horizontal", 
-                                   variable=self.alfa_val, length=200)
-        self.alfa_slider.pack(side="left", padx=10)
-        self.alfa_label = ttk.Label(alfa_frame, text=f"{self.alfa_val.get():.2f}")
-        self.alfa_label.pack(side="left", padx=(10,0))
-        
-        # Aggiorna label quando slider cambia
-        self.alfa_val.trace_add("write", self.update_alfa_label)
-
-        # Parametro Beta con entry
-        beta_frame = ttk.Frame(params_frame)
-        beta_frame.pack(fill="x")
-        
-        ttk.Label(beta_frame, text="Parametro Beta:").pack(side="left")
-        beta_entry = ttk.Entry(beta_frame, textvariable=self.beta_val, width=15)
-        beta_entry.pack(side="left", padx=(10,0))
-        ttk.Label(beta_frame, text="(numero)").pack(side="left", padx=(5,0))
-
-        # Parametro Iter con entry
-        iter_frame = ttk.Frame(params_frame)
-        iter_frame.pack(fill="x", pady=(10,0))
-
-        ttk.Label(iter_frame, text="Parametro Iter:").pack(side="left")
-        iter_entry = ttk.Entry(iter_frame, textvariable=self.iter_val, width=15)
-        iter_entry.pack(side="left", padx=(10,0))
-        ttk.Label(iter_frame, text="(numero di iterazioni)").pack(side="left", padx=(5,0))
-
-        # Frame per i controlli
+        # --- FRAME PER I CONTROLLI ---
         control_frame = ttk.Frame(main_frame)
         control_frame.pack(pady=(0,10), fill="x")
 
@@ -129,15 +205,15 @@ class App:
         button_frame = ttk.Frame(control_frame)
         button_frame.pack()
 
-        self.start_button = ttk.Button(button_frame, text="🚀 Avvia Elaborazione", 
+        self.start_button = ttk.Button(button_frame, text="🚀 Avvia schedulazione", 
                                      command=self.start_main_script)
         self.start_button.pack(side="left", padx=(0,10))
 
-        ttk.Button(button_frame, text="📁 Apri Cartella Output", 
+        ttk.Button(button_frame, text="📁 Apri cartella Output", 
                   command=self.open_output_folder).pack(side="left")
 
-        # Progress frame (inizialmente nascosto)
-        self.progress_frame = ttk.LabelFrame(main_frame, text="Stato Elaborazione", padding=10)
+        # --- PROGRESS FRAME (inizialmente nascosto) ---
+        self.progress_frame = ttk.LabelFrame(main_frame, text="Stato schedulazione", padding=10)
         
         self.progress_bar = ttk.Progressbar(self.progress_frame, orient="horizontal", 
                                           mode="indeterminate", length=400)
@@ -146,14 +222,14 @@ class App:
         self.progress_label = ttk.Label(self.progress_frame, text="In attesa...")
         self.progress_label.pack()
 
-        # Text widget per l'output (inizialmente nascosto)
+        # --- TEXT WIDGET PER L'OUTPUT CON PIÙ SPAZIO ---
         self.output_frame = ttk.LabelFrame(main_frame, text="Output Elaborazione", padding=5)
         
-        # Text widget con scrollbar
+        # Text widget con scrollbar - altezza aumentata
         text_frame = ttk.Frame(self.output_frame)
         text_frame.pack(fill="both", expand=True)
         
-        self.output_text = tk.Text(text_frame, height=8, wrap="word")
+        self.output_text = tk.Text(text_frame, height=15, wrap="word", font=("Consolas", 9))
         scrollbar = ttk.Scrollbar(text_frame, orient="vertical", command=self.output_text.yview)
         self.output_text.configure(yscrollcommand=scrollbar.set)
         
@@ -174,17 +250,46 @@ class App:
             var.set(file_path)
 
     def open_output_folder(self):
-        """Apre la cartella di output"""
-        output_dir = os.path.join(os.getcwd(), "Dati_output")
-        if os.path.exists(output_dir):
-            if sys.platform == "win32":
-                os.startfile(output_dir)
-            elif sys.platform == "darwin":
-                subprocess.run(["open", output_dir])
-            else:
-                subprocess.run(["xdg-open", output_dir])
+        """Apre la cartella di output con gestione più flessibile"""
+        # Prova diversi percorsi possibili per la cartella di output
+        possible_dirs = [
+            os.path.join(os.getcwd(), "Dati_output"),
+            os.path.join(os.getcwd(), "output"),
+            os.path.join(os.getcwd(), "Output"),
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "Dati_output"),
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
+        ]
+        
+        output_dir = None
+        for directory in possible_dirs:
+            if os.path.exists(directory):
+                output_dir = directory
+                break
+        
+        if output_dir:
+            try:
+                if sys.platform == "win32":
+                    os.startfile(output_dir)
+                elif sys.platform == "darwin":
+                    subprocess.run(["open", output_dir])
+                else:
+                    subprocess.run(["xdg-open", output_dir])
+            except Exception as e:
+                messagebox.showerror("Errore", f"Impossibile aprire la cartella: {e}")
         else:
-            messagebox.showinfo("Info", f"Cartella di output non trovata:\n{output_dir}")
+            # Se non trova nessuna cartella esistente, crea "Dati_output"
+            default_output = os.path.join(os.getcwd(), "Dati_output")
+            try:
+                os.makedirs(default_output, exist_ok=True)
+                messagebox.showinfo("Info", f"Creata cartella di output:\n{default_output}")
+                if sys.platform == "win32":
+                    os.startfile(default_output)
+                elif sys.platform == "darwin":
+                    subprocess.run(["open", default_output])
+                else:
+                    subprocess.run(["xdg-open", default_output])
+            except Exception as e:
+                messagebox.showerror("Errore", f"Impossibile creare/aprire la cartella di output: {e}")
 
     def validate_inputs(self):
         """Valida tutti gli input prima dell'elaborazione"""

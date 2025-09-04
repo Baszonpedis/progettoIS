@@ -238,7 +238,7 @@ def write_veicoli_error_output(df, nome_file):
 def write_tassative_error_output(df, nome_file):
     wb = pyxl.Workbook()
     ws1 = wb.active
-    ws1.title = 'Problemi Tassative'
+    ws1.title = 'Problemi release date'
     
     # Titoli colonne
     nomi_colonne = list(df.columns)
