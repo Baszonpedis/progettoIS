@@ -164,10 +164,10 @@ class App:
         iter_frame = ttk.Frame(params_frame)
         iter_frame.pack(fill="x")
 
-        ttk.Label(iter_frame, text="Parametro Iter:").pack(side="left")
+        ttk.Label(iter_frame, text="Numero di iterazioni:").pack(side="left")
         iter_entry = ttk.Entry(iter_frame, textvariable=self.iter_val, width=12)
         iter_entry.pack(side="left", padx=(8,0))
-        ttk.Label(iter_frame, text="(numero di iterazioni)").pack(side="left", padx=(5,0))
+        ttk.Label(iter_frame, text="(10 per velocità, 20 per qualità)").pack(side="left", padx=(5,0))
 
         # --- FRAME PER LA SELEZIONE DEI FILE ---
         file_frame = ttk.LabelFrame(main_frame, text="Selezionare i file di Input (formato .xlsx)", padding=10)
