@@ -10,6 +10,8 @@ from colorama import Fore, Style, init
 import math
 import pandas as pd
 
+start_time_schedulazione = time.time()
+
 ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
 if __name__ == "__main__":
     print("=== AVVIO SCHEDULAZIONE ===")
@@ -654,6 +656,6 @@ if os.path.basename(os.getcwd()) == "progettoIS":
 
 end_time_schedulazione = time.time()
 
-print(f'La schedulazione ha impiegato: {end_time_schedulazione/60} secondi')
+print(f'La schedulazione ha impiegato: {end_time_schedulazione - start_time_schedulazione}')
 
 solver.grafico_schedulazione(soluzionebest)  # Soluzione finale totale
