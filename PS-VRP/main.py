@@ -81,7 +81,7 @@ if __name__ == "__main__":
 #NB: Il valore divid (fondamentale per il calcolo di fobest) è invece impostato manualmente qui
 #NB2: Idem il valore multip (altro fondamentale per il calcolo di fobest)
 divid = 10
-multip = 0
+multip = 100
 
 ##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
@@ -98,12 +98,11 @@ init(autoreset=True)  # Ripristina i colori dopo ogni print
 commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
 lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
 df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
-commesse_da_schedulare_final = commesse_da_schedulare.copy()
 
 if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/errori_veicoli.xlsx')
+    output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/[ERROR]-veicoli.xlsx')
 elif os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/errori_veicoli.xlsx')
+    output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/[ERROR]-veicoli.xlsx')
 
 
 ##EURISTICO DI BASE
@@ -254,7 +253,7 @@ else:
     soluzionebasepost = soluzione1"""
 
 start_time_post = time.time()
-soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
+soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato, commesse_fallite = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (setup): {fpost} minuti di setup")
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-fpost_ritardo} ore di ritardo")
 #output.write_output_soluzione_euristica(soluzionepost, os.getcwd() + '/Dati_output/euristico_post.xlsx')
@@ -344,17 +343,13 @@ print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (setup): ottenuto {f5post-f4post
 print(f'f5 {f5_ritardo_post}, f4 {f4_ritardo_post}')
 print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-f5_ritardo_post+f4_ritardo_post} ore di ritardo")
 
-#Output di errore - commesse escluse dal filtro + associazione veicoli tassativi
+#Output di errore - commesse con veicolo errato e pertanto escluse (ERRORE NON RISOLUBILE DAL CODICE)
 commesse_in_5post = {c['commessa'] for c in soluzione5post}
-commesse_residue = {c['commessa'] for c in commesse_residue}
 df = pd.DataFrame([
     {
-        'id': c.id_commessa,
-        'release_date': c.release_date,
-        'tassativita': c.tassativita
+        'id': c
     }
-    for c in lista_commesse
-        if c.id_commessa not in commesse_in_5post and c.id_commessa not in commesse_da_schedulare_final and c.id_commessa not in soluzionebasepost
+    for c in commesse_veicoli_errati
 ])
 
 #Output di errore - commesse non schedulate (problemi release date)
@@ -364,25 +359,24 @@ df2 = pd.DataFrame([
         'release_date': c.release_date,
         'tassativita': c.tassativita
     }
-    for c in lista_commesse
-        if c.id_commessa not in commesse_in_5post and (c.id_commessa in soluzionebasepost or c.id_commessa in commesse_da_schedulare_final)
+    for c in commesse_fallite
 ])
 
-if 253393 in [c.id_commessa for c in lista_commesse]:
-    print("OK - è in lista commesse")
-if 253393 in [c.id_commessa for c in commesse_da_schedulare_final]:
-    print("OK - è in schedulare final")
-if 253393 not in [commesse_in_5post]:
-    print("OK - non è in commesse_in_5post")
-if 253393 in [c['commessa'] for c in soluzionebasepost]:
-    print("OK - è in soluzionebasepost")
+#if 253393 in [c.id_commessa for c in lista_commesse]:
+#    print("OK - è in lista commesse")
+#if 253393 in [c.id_commessa for c in commesse_da_schedulare_final]:
+#    print("OK - è in schedulare final")
+#if 253393 not in [commesse_in_5post]:
+#    print("OK - non è in commesse_in_5post")
+#if 253393 in [commesse_residue]:
+#    print("OK - è in commesse residue")
 
 if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/commesse escluse dal filtro (PRE).xlsx')
-    output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/commesse con problemi di release date (PRE).xlsx')
+    output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/[ERROR]-commesse_veicolo.xlsx')
+    output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/[ERROR]-commesse_release_date.xlsx')
 elif os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/commesse escluse dal filtro (PRE).xlsx')
-    output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/commesse con problemi di release date (PRE).xlsx')
+    output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_veicolo.xlsx')
+    output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_release_date.xlsx')
 
 if os.path.basename(os.getcwd()) == "PS-VRP":
     output.write_output_soluzione_euristica(soluzione5post, os.getcwd() + '/Dati_output/output.xlsx')
@@ -445,7 +439,9 @@ fritardopesatobest = ritardo_pesato_post_primo
 soluzionebest = soluzionefinale
 
 for _ in range(iter):
-    print(f'ITERAZIONE: {_} / {iter}')
+    print("\n" + "="*24)
+    print(f"|||ITERAZIONE: {_} / {iter}|||")
+    print("="*24 + "\n")
     #NB: gli input sono ricalcolati a ogni iterazione; non è ottimale ma è per evitare problemi con le due strutture dati utilizzate
     lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
     read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
@@ -460,7 +456,6 @@ for _ in range(iter):
     commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
     lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
     df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
-    commesse_da_schedulare_final = commesse_da_schedulare.copy()
 
     ## EURISTICO COSTRUTTIVO
     start_time_eur = time.time()
@@ -537,7 +532,7 @@ for _ in range(iter):
         soluzionebest = soluzione1"""
 
     start_time_post = time.time()
-    soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
+    soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato, commesse_fallite = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
     #output.write_output_soluzione_euristica(soluzionepost, os.getcwd() + '/PS-VRP/Dati_output/euristico_post.xlsx')
     #solver.grafico_schedulazione(soluzionepost)
     post_time = time.time() - start_time_post
@@ -610,17 +605,12 @@ for _ in range(iter):
         #Output di errore 1 - veicoli problematici
             #write_output a seguito
 
-        #Output di errore 2 - commesse escluse dal filtro + associazione veicoli tassativi
-        commesse_in_best = {c['commessa'] for c in soluzionebest}
-        commesse_residue = {c['commessa'] for c in commesse_residue}
+        #Output di errore 2 - commesse con veicoli errati
         df = pd.DataFrame([
             {
-                'id': c.id_commessa,
-                'release_date': c.release_date,
-                'tassativita': c.tassativita
+                'id': c
             }
-            for c in lista_commesse
-            if c.id_commessa not in commesse_in_best and c.id_commessa not in commesse_da_schedulare_final and c.id_commessa not in commesse_residue
+            for c in commesse_veicoli_errati
         ])
 
         #Output di errore 3 - commesse non schedulate (problemi release date)
@@ -630,18 +620,18 @@ for _ in range(iter):
                 'release_date': c.release_date,
                 'tassativita': c.tassativita
             }
-            for c in lista_commesse
-            if c.id_commessa not in commesse_in_best and (c.id_commessa in commesse_residue or c.id_commessa in commesse_da_schedulare_final)
+            for c in commesse_fallite
         ])
 
         if os.path.basename(os.getcwd()) == "PS-VRP":
-            output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/commesse escluse dal filtro.xlsx')
-            output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/commesse con problemi di release date.xlsx')
-            output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/errori_veicoli.xlsx')
+            output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/[ERROR]-commesse_veicolo.xlsx')
+            output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/[ERROR]-veicoli.xlsx')
+            output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/[ERROR]-commesse_release_date.xlsx')
+
         elif os.path.basename(os.getcwd()) == "progettoIS":
-            output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/commesse escluse dal filtro.xlsx')
-            output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/commesse con problemi di release date.xlsx')
-            output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/errori_veicoli.xlsx')
+            output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_veicolo.xlsx')
+            output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/[ERROR]-veicoli.xlsx')
+            output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_release_date.xlsx')
 
 
 print(f"{Fore.YELLOW}SETUP (BEST SOLUTION): {fbest:.2f}s")
@@ -661,4 +651,9 @@ if os.path.basename(os.getcwd()) == "PS-VRP":
     output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/Dati_output/best_ridotto.txt')
 if os.path.basename(os.getcwd()) == "progettoIS":
     output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/best_ridotto.txt')
+
+end_time_schedulazione = time.time()
+
+print(f'La schedulazione ha impiegato: {end_time_schedulazione/60} secondi')
+
 solver.grafico_schedulazione(soluzionebest)  # Soluzione finale totale

@@ -467,10 +467,12 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     
     if len(commesse_da_schedulare) > 0:
         print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
-        print(f'ATTENZIONE: alcune commesse non possono essere schedulate in quanto rilasciate troppo in là nel tempo:')
+        print(f'ATTENZIONE: alcune commesse non possono essere schedulate (release date troppo avanzata):')
         for i in commesse_da_schedulare:
             print(i.id_commessa)
         print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
+
+    commesse_fallite = [c for c in commesse_da_schedulare]
 
     '''Output spostato in main.py'''
     #df = pd.DataFrame([{
@@ -495,7 +497,7 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     #    print(i.nome_macchina)
     #    for j in i.lista_commesse_processate:
     #        print(j.id_commessa)
-    return soluzionepost, f_obj, fpost_ritardo, fpost_ritardo_pesato
+    return soluzionepost, f_obj, fpost_ritardo, fpost_ritardo_pesato, commesse_fallite
 
 ##INSERT INTER-MACCHINA (Ricerca locale 1)
 def insert_inter_macchina(lista_macchine: list, f_obj):

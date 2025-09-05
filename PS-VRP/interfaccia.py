@@ -179,7 +179,7 @@ class App:
         ttk.Label(iter_frame, text="Numero di iterazioni:").pack(side="left")
         iter_entry = ttk.Entry(iter_frame, textvariable=self.iter_val, width=12)
         iter_entry.pack(side="left", padx=(8,0))
-        ttk.Label(iter_frame, text="(suggerito: 10 per velocità, 20 per qualità)").pack(side="left", padx=(5,0))
+        ttk.Label(iter_frame, text="(suggerito: almeno 10 per una buona schedulazione)").pack(side="left", padx=(5,0))
 
         # --- FRAME PER LA SELEZIONE DEI FILE ---
         file_frame = ttk.LabelFrame(main_frame, text="Selezionare manualmente i file di Input (formato .xlsx) se non rilevati correttamente", padding=10)

@@ -165,48 +165,114 @@ def write_output_ridotto_txt(schedulazione, nome_file):
                     riga += '   '
             f.write(riga + '\n')
 
-def write_error_output(df,nome_file):
+def write_error_output(df, nome_file):
     """
     :param df: dataframe contenente tutte le commesse e tutti i campi
     :param nome_file: percorso che indica dove salvare il file e con che nome
     :return: file excel in cui vado a fare la print delle commesse e i relativi campi vuoti
     """
-    wb=pyxl.Workbook()  #inizializzo il file
-    ws1=wb.active #si prende il foglio attivo
-    ws1.title='Error' #si rinomina il titolo del foglio
-    nomi_colonne=list(df.columns)
-    ws1.append(nomi_colonne) #vado ad inserire il nome delle colonne
-    ws1.column_dimensions['A'].width =30  # si settano le dimensioni delle colonne
-    ws1.column_dimensions['B'].width =30  # si settano le dimensioni delle colonne
-    ws1.column_dimensions['C'].width =30  # si settano le dimensioni delle colonne
-    ws1.column_dimensions['D'].width =30  # si settano le dimensioni delle colonne
-    ws1.column_dimensions['E'].width =30  # si settano le dimensioni delle colonne
-    ws1.column_dimensions['F'].width =30  # si settano le dimensioni delle colonne
-    ws1.column_dimensions['G'].width =30  # si settano le dimensioni delle colonne
-    ws1.column_dimensions['H'].width =30  # si settano le dimensioni delle colonne
-    ws1.column_dimensions['I'].width =30  # si settano le dimensioni delle colonne
-    ws1.column_dimensions['J'].width =30  # si settano le dimensioni delle colonne
-    ws1.column_dimensions['K'].width =30  # si settano le dimensioni delle colonne
-    ws1.column_dimensions['L'].width =30  # si settano le dimensioni delle colonne
-    ws1.column_dimensions['M'].width =35  # si settano le dimensioni delle colonne
-    start_row=2 #inizializzo la riga in cui andrò a printare. si parte dalla seconda in quanto la prima è occupata dai titoli
-    start_column=1 #inizializzo le colonne in cui andrò a printare si parte dalla prima e si andrà avanti fino all'ultimo campo
+    # Nomi dei campi "speciali"
+    FLAG_TASSATIVO_FIELD = "flag tassativo taglio per schedulatore"
+    ID_SPEDIZIONE_FIELD = "id spedizione"
+    CODICE_DI_ZONA_FIELD = "Commesse::CODICE DI ZONA"
 
-    commesse_campi_vuoti=list(df[df.isnull().any(axis=1)].index)
-    #print(f'COMMESSE CON CAMPO MANCANTE: ', len(commesse_campi_vuoti))
-    fill=PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
-    for riga in commesse_campi_vuoti:
-        ws1.cell(row=riga+2,column=1).fill=fill
+    # Assicurati che i campi esistano nel DataFrame
+    required_special_fields = [FLAG_TASSATIVO_FIELD, ID_SPEDIZIONE_FIELD, CODICE_DI_ZONA_FIELD]
+    for field in required_special_fields:
+        if field not in df.columns:
+            print(f"Attenzione: Il campo '{field}' non è presente nel DataFrame. Verrà ignorato nella logica speciale.")
+            # Puoi scegliere di aggiungere il campo con NaN se vuoi che la logica funzioni
+            # df[field] = pd.NA
 
-    df=df.fillna('CAMPO VUOTO')
-    for index, row in df.iterrows():
-        indici_valori=enumerate(row)
-        ws1.cell(row=start_row,column=start_column,value=df['commessa'][index])  # assegno il valore in questione alla cella
-        for indice,valore in indici_valori:
-            if valore=='CAMPO VUOTO':
-                ws1.cell(row=start_row,column=indice+1,value=valore)  # assegno il valore in questione alla cella
-        start_row+=1
-    wb.save(nome_file) #salvo il file excel con il nome che passo come parametro
+
+    wb = pyxl.Workbook()
+    ws1 = wb.active
+    ws1.title = 'Error'
+    nomi_colonne = list(df.columns)
+    
+    # Inizializza un DataFrame per le commesse da includere nel file di output
+    df_to_output = pd.DataFrame(columns=nomi_colonne)
+
+    # Identifica le commesse che devono essere incluse nel file
+    commesse_da_includere_indices = []
+
+    for riga_df_index, row_data in df.iterrows():
+        # Crea una copia temporanea della riga per la valutazione dei campi vuoti rilevanti
+        row_for_evaluation = row_data.copy()
+
+        # Logica speciale per 'flag tassativo taglio per schedulatore' e 'id spedizione'
+        # Se entrambi sono nulli, li consideriamo "non nulli" per la valutazione complessiva della riga
+        if (FLAG_TASSATIVO_FIELD in row_for_evaluation and ID_SPEDIZIONE_FIELD in row_for_evaluation and
+            pd.isna(row_for_evaluation[FLAG_TASSATIVO_FIELD]) and
+            pd.isna(row_for_evaluation[ID_SPEDIZIONE_FIELD])):
+            row_for_evaluation[FLAG_TASSATIVO_FIELD] = "BOTH_NULL_OK"
+            row_for_evaluation[ID_SPEDIZIONE_FIELD] = "BOTH_NULL_OK"
+
+        # Tratta 'codice di zona' come non essenziale
+        if CODICE_DI_ZONA_FIELD in row_for_evaluation and pd.isna(row_for_evaluation[CODICE_DI_ZONA_FIELD]):
+            row_for_evaluation[CODICE_DI_ZONA_FIELD] = "NOT_ESSENTIAL_NULL"
+
+        # Controlla se ci sono ancora campi nulli "rilevanti" nella riga
+        if row_for_evaluation.isnull().any():
+            commesse_da_includere_indices.append(riga_df_index)
+
+    # Filtra il DataFrame originale per includere solo le commesse con campi vuoti rilevanti
+    df_filtered_for_output = df.loc[commesse_da_includere_indices].copy()
+
+    # Se non ci sono commesse con campi vuoti rilevanti, salva un file vuoto o con solo intestazioni
+    if df_filtered_for_output.empty:
+        ws1.append(nomi_colonne)
+        wb.save(nome_file)
+        print(f"Nessuna commessa con campi vuoti rilevanti trovata. Il file '{nome_file}' è stato creato con sole intestazioni.")
+        return
+
+    # Aggiungi le intestazioni al foglio Excel
+    ws1.append(nomi_colonne)
+
+    # Impostazione delle dimensioni delle colonne (basato sul df originale per avere tutte le colonne)
+    for i, col_name in enumerate(nomi_colonne):
+        ws1.column_dimensions[chr(65 + i)].width = 30 # A=65, B=66, etc.
+    # Puoi aggiungere eccezioni specifiche per colonne come prima
+    # ws1.column_dimensions['M'].width = 35 # Esempio
+
+    fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+
+    # Ora iteriamo sul DataFrame filtrato per scrivere e evidenziare
+    # Manteniamo un contatore di riga per Excel
+    excel_row_counter = 2 # Inizia dalla riga 2 dopo le intestazioni
+
+    for riga_df_index, row_data in df_filtered_for_output.iterrows():
+        # Creiamo una versione della riga con 'CAMPO VUOTO' per la stampa
+        row_for_printing = row_data.fillna('CAMPO VUOTO')
+
+        for col_index, col_name in enumerate(nomi_colonne):
+            value_to_print = row_for_printing[col_name]
+            ws1.cell(row=excel_row_counter, column=col_index + 1, value=value_to_print)
+
+            original_value = df.at[riga_df_index, col_name]
+
+            # Logica di evidenziazione
+            if pd.isna(original_value): # Se il campo originale era nullo
+                # Non evidenziare 'codice di zona' se è nullo
+                if col_name == CODICE_DI_ZONA_FIELD:
+                    continue # Passa al prossimo campo senza evidenziare
+
+                # Non evidenziare 'flag tassativo taglio per schedulatore' o 'id spedizione'
+                # se entrambi erano nulli nel DF originale per questa commessa
+                if (col_name == FLAG_TASSATIVO_FIELD or col_name == ID_SPEDIZIONE_FIELD):
+                    if (pd.isna(df.at[riga_df_index, FLAG_TASSATIVO_FIELD]) and
+                        pd.isna(df.at[riga_df_index, ID_SPEDIZIONE_FIELD])):
+                        continue # Entrambi nulli, non evidenziare nessuno dei due
+                    else:
+                        # Uno solo è nullo, l'altro no (o non esiste), quindi evidenzia
+                        ws1.cell(row=excel_row_counter, column=col_index + 1).fill = fill
+                else:
+                    # Per tutti gli altri campi nulli, evidenzia
+                    ws1.cell(row=excel_row_counter, column=col_index + 1).fill = fill
+        
+        excel_row_counter += 1
+
+    wb.save(nome_file)
 
 def write_veicoli_error_output(df, nome_file):
     wb = pyxl.Workbook()
@@ -238,7 +304,7 @@ def write_veicoli_error_output(df, nome_file):
 def write_tassative_error_output(df, nome_file):
     wb = pyxl.Workbook()
     ws1 = wb.active
-    ws1.title = 'Problemi release date'
+    ws1.title = 'Errori'
     
     # Titoli colonne
     nomi_colonne = list(df.columns)
