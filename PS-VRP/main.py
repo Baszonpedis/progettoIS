@@ -656,6 +656,8 @@ if os.path.basename(os.getcwd()) == "progettoIS":
 
 end_time_schedulazione = time.time()
 
-print(f'La schedulazione ha impiegato: {end_time_schedulazione - start_time_schedulazione}')
+seconds = end_time_schedulazione - start_time_schedulazione
+minutes, secs = divmod(round(seconds), 60)
+print(f"La schedulazione ha impiegato: {minutes}:{secs:02d} minuti")  # 2:05
 
 solver.grafico_schedulazione(soluzionebest)  # Soluzione finale totale
