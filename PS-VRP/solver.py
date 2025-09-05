@@ -120,6 +120,7 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
         #commessa.ritardo = timedelta(days = 0) #se non si considera il loro ritardo
     schedulazione.append({"commessa": commessa.id_commessa, # dizionario che contiene le informazioni sulla schedula
                           "macchina": macchina.nome_macchina,
+                          "release date": commessa.release_date,
                           "minuti setup": tempo_setup,
                           "minuti processamento":tempo_processamento,
                           "inizio_setup": aggiungi_minuti(minuti_inizio_lavorazione,inizio_schedulazione),
@@ -186,6 +187,7 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
 def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, minuti_processamento, minuti_fine_ultima_commessa, inizio_schedulazione, schedulazione, tipo):
     id=commessa.id_commessa
     macchina_lavorazione=macchina.nome_macchina
+    release_date=commessa.release_date
     tempo_setup=minuti_setup
     tempo_processamento=minuti_processamento
     data_inizio_setup=aggiungi_minuti(minuti_fine_ultima_commessa,inizio_schedulazione)
@@ -218,6 +220,7 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
         #ritardomossa = timedelta(days = 0)
     schedulazione.append({"commessa": id,
                           "macchina": macchina_lavorazione,
+                          "release date": release_date,
                           "minuti setup": tempo_setup,
                           "minuti processamento":tempo_processamento,
                           "inizio_setup": data_inizio_setup,
@@ -305,7 +308,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     
     if len(lista_commesse_tassative) > 0:
         print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
-        print(f'ATTENZIONE: alcune commesse tassative hanno release date troppo in là nel tempo per essere schedulate appropriatamente; le commesse problematiche sono:')
+        print(f'ATTENZIONE: alcune commesse tassative hanno release date troppo avanzata per essere schedulate come tali / propriamente; le seguenti commesse verranno trattate come commesse normali:')
         for i in lista_commesse_tassative:
             print(i.id_commessa)
         print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
@@ -469,17 +472,16 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
             print(i.id_commessa)
         print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
 
-    df = commesse_da_schedulare
+    '''Output spostato in main.py'''
+    #df = pd.DataFrame([{
+    #    'id': c.id_commessa,
+    #    'release_date': c.release_date,
+    #} for c in commesse_da_schedulare])
 
-    df = pd.DataFrame([{
-        'id': c.id_commessa,
-        'release_date': c.release_date,
-    } for c in commesse_da_schedulare])
-
-    if os.path.basename(os.getcwd()) == "PS-VRP":
-        output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/commesse_escluse.xlsx')
-    elif os.path.basename(os.getcwd()) == "progettoIS":
-        output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/commesse_escluse.xlsx')
+    #if os.path.basename(os.getcwd()) == "PS-VRP":
+    #    output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/commesse_escluse.xlsx')
+    #elif os.path.basename(os.getcwd()) == "progettoIS":
+    #    output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/commesse_escluse.xlsx')
 
     #for i in lista_macchine:
     #    print(i.nome_macchina)

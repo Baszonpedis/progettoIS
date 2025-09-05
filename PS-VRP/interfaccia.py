@@ -4,7 +4,7 @@ import subprocess
 import threading
 import os
 import sys
-from PIL import Image, ImageTk # Importa Pillow per gestire le immagini (se non l'hai, installalo con pip install Pillow)
+from PIL import Image, ImageTk #modulo pillow
 
 def get_base_path():
     """Ottiene il percorso base corretto per PyInstaller"""
@@ -15,8 +15,8 @@ def get_base_path():
         # Esecuzione normale Python
         return os.path.dirname(os.path.abspath(__file__))
 
-# Funzione per ottenere il percorso dell'immagine
 def get_image_path(image_name):
+    '''Funzione per ottenere il percorso dell'immagine'''
     base_path = get_base_path()
     # Controlla prima nella root, poi in una sottocartella 'assets' o 'images'
     possible_paths = [
@@ -47,6 +47,18 @@ def get_main_script_path():
     # Se non troviamo main.py, proviamo a eseguirlo direttamente
     # (utile se è stato incluso nel bundle o è nel PATH)
     return "main.py"
+
+def get_input_file(nome_file):
+    """Restituisce il percorso completo del file in Dati_input se esiste, altrimenti stringa vuota"""
+    base_dirs = [
+        os.path.join(os.getcwd(), "Dati_input"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "Dati_input")
+    ]
+    for base in base_dirs:
+        file_path = os.path.join(base, nome_file)
+        if os.path.exists(file_path):
+            return file_path
+    return ""  # Non trovato
 
 class App:
     def __init__(self, root):
@@ -82,9 +94,9 @@ class App:
             print("Nessun file icona (ICO o PNG) trovato per la finestra.")
 
         # Variabili per i file
-        self.file_commesse = tk.StringVar()
-        self.file_veicoli = tk.StringVar()
-        self.file_macchine = tk.StringVar()
+        self.file_commesse = tk.StringVar(value=get_input_file("Commesse_da_tagliare.xlsx"))
+        self.file_macchine = tk.StringVar(value=get_input_file("Scheda_Macchine_Taglio.xlsx"))
+        self.file_veicoli = tk.StringVar(value=get_input_file("vettori.xlsx"))
         
         # Parametri solver
         self.alfa_val = tk.DoubleVar(value=0.7)
@@ -134,7 +146,7 @@ class App:
             print("Nessun file logo interno ('logo_grande.png') trovato.")
 
         # Frame destro per i parametri di configurazione
-        params_frame = ttk.LabelFrame(header_frame, text="Parametri di Configurazione", padding=15)
+        params_frame = ttk.LabelFrame(header_frame, text="Parametri di configurazione", padding=15)
         params_frame.pack(side="right", fill="both", expand=True, padx=(20, 0))
 
         # Parametro Alfa con slider
@@ -158,7 +170,7 @@ class App:
         ttk.Label(beta_frame, text="Parametro Beta:").pack(side="left")
         beta_entry = ttk.Entry(beta_frame, textvariable=self.beta_val, width=12)
         beta_entry.pack(side="left", padx=(8,0))
-        ttk.Label(beta_frame, text="(numero)").pack(side="left", padx=(5,0))
+        ttk.Label(beta_frame, text="(suggerito: 0.2)").pack(side="left", padx=(5,0))
 
         # Parametro Iter
         iter_frame = ttk.Frame(params_frame)
@@ -167,10 +179,10 @@ class App:
         ttk.Label(iter_frame, text="Numero di iterazioni:").pack(side="left")
         iter_entry = ttk.Entry(iter_frame, textvariable=self.iter_val, width=12)
         iter_entry.pack(side="left", padx=(8,0))
-        ttk.Label(iter_frame, text="(10 per velocità, 20 per qualità)").pack(side="left", padx=(5,0))
+        ttk.Label(iter_frame, text="(suggerito: 10 per velocità, 20 per qualità)").pack(side="left", padx=(5,0))
 
         # --- FRAME PER LA SELEZIONE DEI FILE ---
-        file_frame = ttk.LabelFrame(main_frame, text="Selezionare i file di Input (formato .xlsx)", padding=10)
+        file_frame = ttk.LabelFrame(main_frame, text="Selezionare manualmente i file di Input (formato .xlsx) se non rilevati correttamente", padding=10)
         file_frame.pack(pady=(0,10), fill="x")
 
         # Configurazione grid per ridimensionamento
@@ -183,19 +195,19 @@ class App:
         ttk.Button(file_frame, text="Sfoglia", 
                   command=lambda: self.select_file(self.file_commesse, "Commesse")).grid(row=0, column=2, padx=(5,0), pady=3)
 
-        # File Veicoli
-        ttk.Label(file_frame, text="Estrazione Veicoli:").grid(row=1, column=0, sticky="w", padx=(0,5), pady=3)
-        entry_veicoli = ttk.Entry(file_frame, textvariable=self.file_veicoli)
-        entry_veicoli.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
-        ttk.Button(file_frame, text="Sfoglia", 
-                  command=lambda: self.select_file(self.file_veicoli, "Veicoli")).grid(row=1, column=2, padx=(5,0), pady=3)
-
         # File Macchine
-        ttk.Label(file_frame, text="Estrazione Macchine:").grid(row=2, column=0, sticky="w", padx=(0,5), pady=3)
+        ttk.Label(file_frame, text="Estrazione Macchine:").grid(row=1, column=0, sticky="w", padx=(0,5), pady=3)
         entry_macchine = ttk.Entry(file_frame, textvariable=self.file_macchine)
-        entry_macchine.grid(row=2, column=1, sticky="ew", padx=5, pady=3)
+        entry_macchine.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
         ttk.Button(file_frame, text="Sfoglia", 
-                  command=lambda: self.select_file(self.file_macchine, "Macchine")).grid(row=2, column=2, padx=(5,0), pady=3)
+                  command=lambda: self.select_file(self.file_macchine, "Macchine")).grid(row=1, column=2, padx=(5,0), pady=3)
+
+        # File Veicoli
+        ttk.Label(file_frame, text="Estrazione Veicoli:").grid(row=2, column=0, sticky="w", padx=(0,5), pady=3)
+        entry_veicoli = ttk.Entry(file_frame, textvariable=self.file_veicoli)
+        entry_veicoli.grid(row=2, column=1, sticky="ew", padx=5, pady=3)
+        ttk.Button(file_frame, text="Sfoglia", 
+                  command=lambda: self.select_file(self.file_veicoli, "Veicoli")).grid(row=2, column=2, padx=(5,0), pady=3)
 
         # --- FRAME PER I CONTROLLI ---
         control_frame = ttk.Frame(main_frame)
@@ -223,7 +235,7 @@ class App:
         self.progress_label.pack()
 
         # --- TEXT WIDGET PER L'OUTPUT CON PIÙ SPAZIO ---
-        self.output_frame = ttk.LabelFrame(main_frame, text="Output Elaborazione", padding=5)
+        self.output_frame = ttk.LabelFrame(main_frame, text="Output schedulazione", padding=5)
         
         # Text widget con scrollbar - altezza aumentata
         text_frame = ttk.Frame(self.output_frame)
@@ -292,14 +304,14 @@ class App:
                 messagebox.showerror("Errore", f"Impossibile creare/aprire la cartella di output: {e}")
 
     def validate_inputs(self):
-        """Valida tutti gli input prima dell'elaborazione"""
+        """Valida tutti gli input prima della schedulazione"""
         errors = []
 
         # Controlla i file
         files = {
             "Commesse": self.file_commesse.get(),
-            "Veicoli": self.file_veicoli.get(),
-            "Macchine": self.file_macchine.get()
+            "Macchine": self.file_macchine.get(),
+            "Veicoli": self.file_veicoli.get()
         }
 
         for nome, path in files.items():
@@ -321,23 +333,23 @@ class App:
         return errors
 
     def start_main_script(self):
-        """Avvia l'elaborazione principale"""
+        """Avvia la schedulazione principale"""
         # Valida gli input
         errors = self.validate_inputs()
         if errors:
-            messagebox.showerror("Errori di Input", "\n".join(errors))
+            messagebox.showerror("Errori di input", "\n".join(errors))
             return
 
-        # Prepara l'interfaccia per l'elaborazione
+        # Prepara l'interfaccia per la schedulazione
         self.start_button.config(state=tk.DISABLED)
         self.progress_frame.pack(pady=(0,10), fill="x")
         self.progress_bar.start()
-        self.progress_label.config(text="Avvio elaborazione...")
+        self.progress_label.config(text="Avvio schedulazione...")
         
         # Mostra il frame di output
         self.output_frame.pack(pady=(0,10), fill="both", expand=True)
         self.output_text.delete(1.0, tk.END)
-        self.output_text.insert(tk.END, "=== Avvio Elaborazione ===\n")
+        self.output_text.insert(tk.END, "=== Avvio schedulazione ===\n")
 
         # Avvia in thread separato
         threading.Thread(target=self._run_main_script_thread, daemon=True).start()
@@ -347,8 +359,8 @@ class App:
         try:
             # Prepara i parametri
             commesse_path = self.file_commesse.get()
-            veicoli_path = self.file_veicoli.get()
             macchine_path = self.file_macchine.get()
+            veicoli_path = self.file_veicoli.get()
             alfa = self.alfa_val.get()
             beta = float(self.beta_val.get())
             iter = int(self.iter_val.get())
@@ -356,16 +368,16 @@ class App:
             # Aggiorna il progress
             self.root.after(0, lambda: self.progress_label.config(text="Configurazione parametri..."))
             self.root.after(0, lambda: self.output_text.insert(tk.END, f"File Commesse: {os.path.basename(commesse_path)}\n"))
-            self.root.after(0, lambda: self.output_text.insert(tk.END, f"File Veicoli: {os.path.basename(veicoli_path)}\n"))
             self.root.after(0, lambda: self.output_text.insert(tk.END, f"File Macchine: {os.path.basename(macchine_path)}\n"))
+            self.root.after(0, lambda: self.output_text.insert(tk.END, f"File Veicoli: {os.path.basename(veicoli_path)}\n"))
             self.root.after(0, lambda: self.output_text.insert(tk.END, f"Alfa: {alfa:.2f}, Beta: {beta}, Iter: {iter}\n\n"))
 
             # Prepara l'ambiente
             env_vars = os.environ.copy()
             env_vars.update({
                 'FILE_COMMESSE': commesse_path,
-                'FILE_VEICOLI': veicoli_path,
                 'FILE_MACCHINE': macchine_path,
+                'FILE_VEICOLI': veicoli_path,
                 'PARAM_ALFA': str(alfa),
                 'PARAM_BETA': str(beta),
                 'PARAM_ITER': str(iter)
@@ -414,24 +426,24 @@ class App:
 
     def _show_success(self, stderr_output):
         """Mostra il risultato di successo"""
-        self.progress_label.config(text="✅ Elaborazione completata con successo!")
-        self.output_text.insert(tk.END, "\n=== ELABORAZIONE COMPLETATA ===\n")
+        self.progress_label.config(text="✅ Schedulazione completata con successo!")
+        self.output_text.insert(tk.END, "\n=== SCHEDULAZIONE COMPLETATA ===\n")
         
         if stderr_output:
             self.output_text.insert(tk.END, f"Note/Avvisi:\n{stderr_output}\n")
         
-        messagebox.showinfo("Completato", "L'elaborazione è stata completata con successo!")
+        messagebox.showinfo("Completato", "La schedulazione è stata completata con successo!")
         self._reset_ui()
 
     def _show_error(self, return_code, stderr_output):
-        """Mostra errori di elaborazione"""
-        self.progress_label.config(text="❌ Errore durante l'elaborazione")
+        """Mostra errori di schedulazione"""
+        self.progress_label.config(text="❌ Errore durante la schedulazione")
         self.output_text.insert(tk.END, f"\n=== ERRORE (codice {return_code}) ===\n")
         self.output_text.insert(tk.END, stderr_output)
         
         messagebox.showerror(
             "Errore", 
-            f"L'elaborazione è terminata con errore (codice {return_code}).\n\n"
+            f"La schedulazione è terminata con errore (codice {return_code}).\n\n"
             "Controlla l'output per i dettagli."
         )
         self._reset_ui()
