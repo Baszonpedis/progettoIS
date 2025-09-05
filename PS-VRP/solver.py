@@ -313,17 +313,15 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
             print(i.id_commessa)
         print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
 
-    df = lista_commesse_tassative 
-
     df = pd.DataFrame([{
         'id': c.id_commessa,
         'release_date': c.release_date,
     } for c in lista_commesse_tassative])
 
-    if os.path.basename(os.getcwd()) == "PS-VRP":
-        output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/errori_tassative.xlsx')
-    elif os.path.basename(os.getcwd()) == "progettoIS":
-        output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/errori_tassative.xlsx')
+    #if os.path.basename(os.getcwd()) == "PS-VRP":
+    #    output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/errori_tassative.xlsx')
+    #elif os.path.basename(os.getcwd()) == "progettoIS":
+    #    output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/errori_tassative.xlsx')
 
     #Si ricostituisce la lista delle macchine per il prossimo ciclo  
     lista_macchine = lista_macchine2.copy()

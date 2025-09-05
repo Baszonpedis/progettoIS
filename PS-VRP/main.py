@@ -380,7 +380,7 @@ elif os.path.basename(os.getcwd()) == "progettoIS":
     output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_veicolo.xlsx')
     output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_release_date.xlsx')
 
-if os.path.basename(os.getcwd()) == "PS-VRP":
+'''if os.path.basename(os.getcwd()) == "PS-VRP":
     output.write_output_soluzione_euristica(soluzione5post, os.getcwd() + '/Dati_output/output.xlsx')
 if os.path.basename(os.getcwd()) == "progettoIS":
     output.write_output_soluzione_euristica(soluzione5post, os.getcwd() + '/PS-VRP/Dati_output/output.xlsx')
@@ -392,7 +392,8 @@ if os.path.basename(os.getcwd()) == "PS-VRP":
     output.write_output_ridotto_txt(soluzione5post, os.getcwd() + '/Dati_output/output_ridotto.txt')
 if os.path.basename(os.getcwd()) == "progettoIS":
     output.write_output_ridotto_txt(soluzione5post, os.getcwd() + '/PS-VRP/Dati_output/output_ridotto.txt')
-tot_tot_post = time.time() - start_time_tot_post
+tot_tot_post = time.time() - start_time_tot_pos
+'''
 
 ritardo1 = -f1_ritardo_post.total_seconds()/3600
 ritardo2 = -f2_ritardo_post.total_seconds()/3600
