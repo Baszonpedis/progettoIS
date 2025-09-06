@@ -643,17 +643,17 @@ print(f"{Fore.YELLOW}RITARDO PESATO (BEST SOLUTION): {-fritardopesatobest} ore")
 print(f"{Fore.YELLOW}SCHEDULAZIONI FINALI: {len(soluzionebest)}")
 
 if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/Dati_output/best.xlsx')
+    output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/Dati_output/schedulazione.xlsx')
 if os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/best.xlsx')
+    output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione.xlsx')
 if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_output_ridotto(soluzionebest, os.getcwd() + '/Dati_output/best_ridotto.xlsx')
+    output.write_output_ridotto(soluzionebest, os.getcwd() + '/Dati_output/schedulazione_ridotta.xlsx')
 if os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_output_ridotto(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/best_ridotto.xlsx')
+    output.write_output_ridotto(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.xlsx')
 if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/Dati_output/best_ridotto.txt')
+    output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/Dati_output/schedulazione_ridotta.txt')
 if os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/best_ridotto.txt')
+    output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.txt')
 
 end_time_schedulazione = time.time()
 
