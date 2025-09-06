@@ -259,8 +259,11 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     lista_macchine2 = lista_macchine.copy()
 
     #Sorting preliminare al primo ciclo while
-    lista_commesse_tassative.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
+    lista_commesse_tassative.sort(key=lambda commessa:(+commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
+    #print([c.priorita_cliente for c in lista_commesse_tassative
+    #       ])
 
+    #se beta = 0, la lista commesse tassative non viene cambiata rispetto al sort iniziale
     lista_commesse_tassative = GRASP_randomizer(lista_commesse_tassative)
 
     #PRIMO CICLO WHILE
@@ -329,8 +332,9 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     #Sorting preliminare dell'input al secondo ciclo While
     commesse_da_schedulare += lista_commesse_tassative
     
-    commesse_da_schedulare.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
+    commesse_da_schedulare.sort(key=lambda commessa:(+commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
 
+    #se beta = 0, la lista commesse_da_schedulare non viene cambiata rispetto al sort iniziale
     commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
 
     #SECONDO CICLO WHILE
@@ -413,9 +417,10 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     lista_macchine2 = lista_macchine.copy()
 
     #Sorting preliminare dell'input al terzo ciclo While
-    commesse_da_schedulare.sort(key=lambda commessa:(-commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
+    commesse_da_schedulare.sort(key=lambda commessa:(commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # è il primo lunedi disponibile che è uguale per tutte le macchine
 
+    #se beta = 0, la lista commesse_da_schedulare non viene cambiata rispetto al sort iniziale
     commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
 
     #TERZO CICLO WHILE
@@ -925,19 +930,11 @@ def swap_intra(lista_macchine, f_obj):
         #print(ritardo_cumul)
     #print(f'Ritardo cumulativo: {-ritardo_cumul}')
 
-    #for i in lista_macchine:
-    #    print(i.nome_macchina)
-    #    for j in i.lista_commesse_processate:
-    #        print(j.id_commessa)
-    
-    #for i in soluzione_swap:
-    #    print(i['commessa'],i['macchina'])
-
     return soluzione_swap, f_best, contatoreLS3, ritardo_cumul, ritardo_cumul_pesato
 
-#Funzione utility per fare i check di validità nelle varie ricerche locali
 def check_LS(check, commessa1, commessa):
     '''
+    Funzione utility per fare controlli di validità (check) nelle varie ricerche locali
     commessa - commessa memorizzata come oggetto di una classe
     commessa1 - stessa commessa memorizzata come dizionario di una lista
     '''
@@ -957,35 +954,61 @@ def check_LS(check, commessa1, commessa):
             check = False
         #if commessa.ritardo > commessa1["ritardo mossa"]:
         #    check = False
-    #print(f'tassative: {counter_tass}, tassative interne: {counter_tass_int}, tassative esterne: {counter_tass_ext}, altre: {counter_aliud}')
     return check
 
-#Funzione utility per il calcolo del delta migliorativo per le varie ricerche locali, combinando linearmente delta_ritardo (pesato e cumulativo) con delta_setup (cumulativo) in funzione del parametro alfa
 def calcolo_delta(delta_setup,delta_ritardo):
-    #NB: il valore di alfa è settato da main.py e da lì importato
+    '''
+    Funzione utility per il calcolo del delta, usato nelle varie ricerche locali per capire se una determinata
+    mossa è migliorativa o meno.
+    Delta è ottenuto combinando linearmente:
+        - delta_ritardo (pesato in base a priorità cliente e cumulativo)
+        - delta_setup (cumulativo)
+        in funzione del parametro alfa, impostato in main.py o mediante l'interfaccia e importato in solver.py.
+    Non dovrebbero essere necessari aggiustamenti, in quanto delta_ritardo e delta_setup hanno stesso ordine di grandezza.
+    '''
+
     delta_ritardo = delta_ritardo.total_seconds()/3600
     delta = alfa*delta_setup+(1-alfa)*delta_ritardo
-    #print(delta_setup, delta_ritardo, delta)
-    #if delta_ritardo != 0:
-    #    print(delta_setup/delta_ritardo)
+
     return delta
 
 def GRASP_randomizer(lista_commesse):
-    sigma = 10**11
-    #NB: il valore di beta è settato da main.py e da lì importato
+    #il valore di beta è settato in main.py / dall'interfaccia grafica e da lì importato in solver, e qui utilizzabile
+    sigma = 10**10 #NB: sigma serve ad uniformare i due valori componenti lo score (un timestamp UNIX è nell'ordine dei 10^9/10^10 secondi)
     lista_commesse_randomized = []
-    score = [(j.priorita_cliente-float((j.due_date).timestamp())/(sigma)) for j in lista_commesse]
+
+    '''Il calcolo del costo avviene secondo quattro criteri fondamentali:
+    - La priorità cliente va da 0-7 in ordine DECRESCENTE, quindi avrà contributo positivo al costo
+    - La due date avrà contributo positivo al costo (maggiore è, minore è l'urgenza)
+    - Si vuole MINIMIZZARE il costo
+    - Sigma, se impostato a 10**10, fa sì che la due_date abbia un effetto secondario di "spareggio" tra commesse con identica priorità;
+        è d'altronde lo stesso criterio adottato per il sorting tradizionale senza GRASP'''
+
+    cost = [(+j.priorita_cliente+float((j.due_date).timestamp())/(sigma)) for j in lista_commesse]
+
+    #caso puramente greedy, la lista è già ordinata di conseguenza quando avviene la chiamata nel codice
     if beta == 0:
         return lista_commesse
+    
+    #casi con beta > 0 (elementi randomici)
     else:
         while lista_commesse:
-            massimo = max(score)
-            minimo = min(score)
-            soglia = massimo - beta*(massimo - minimo)
-            rcl = [c for c,s in zip(lista_commesse, score) if s >= soglia]            
+            massimo = max(cost)
+            minimo = min(cost)
+            soglia = minimo + beta*(massimo - minimo)
+            #print(f'MAX {massimo}, MIN {minimo}, SOGLIA {soglia}, COST {cost}')
+            rcl = [c for c,s in zip(lista_commesse, cost) if s <= soglia]
+            #print([c.id_commessa for c in rcl])
+            #si seleziona a caso un elemento dalla RCL (restricted candidate list)            
             selezionata = random.choice(rcl)
+            #print(f'SELECTED {selezionata.id_commessa}')
+            #si aggiunge la selezionata alla soluzione GRC (greedy randomized construction)
             lista_commesse_randomized.append(selezionata)
+            #si toglie la selezionata dalla candidate list
             lista_commesse.remove(selezionata)
+            #si rivalutano i costi dopo ogni inserimento
+            cost = [(+j.priorita_cliente+float((j.due_date).timestamp())/(sigma)) for j in lista_commesse]
+            #print(cost)
         return lista_commesse_randomized
 
         

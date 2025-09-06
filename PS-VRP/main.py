@@ -83,7 +83,7 @@ if __name__ == "__main__":
 #NB: Il valore divid (fondamentale per il calcolo di fobest) è invece impostato manualmente qui
 #NB2: Idem il valore multip (altro fondamentale per il calcolo di fobest)
 divid = 10
-multip = 100
+multip = 1000
 
 ##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
@@ -112,7 +112,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G1+G2)".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
 print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE LETTE CORRETTAMENTE (NO CAMPI MANCANTI, ALMENO UNA COMPATIBILITA' MACCHINA): {len(lista_commesse)}")
-print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE ESCLUSE PER INCOMPATIBILITA' CON TUTTE LE MACCHINE: {len(incompatibili)}")
+print(f"{Fore.GREEN}{Style.BRIGHT}... di cui COMMESSE ESCLUSE PER INCOMPATIBILITA' CON TUTTE LE MACCHINE: {len(incompatibili)}")
 
 start_time_eur = time.time()
 
