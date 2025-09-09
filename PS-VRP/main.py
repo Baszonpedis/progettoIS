@@ -14,7 +14,7 @@ start_time_schedulazione = time.time()
 
 ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
 if __name__ == "__main__":
-    print("=== AVVIO SCHEDULAZIONE ===")
+    print("=== AVVIO MAIN.PY ===")
     
     # Leggi dalle variabili d'ambiente (passate dalla GUI)
     file_commesse_excel = os.getenv('FILE_COMMESSE')
@@ -112,11 +112,11 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G1+G2)".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
 print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE LETTE CORRETTAMENTE (NO CAMPI MANCANTI, ALMENO UNA COMPATIBILITA' MACCHINA): {len(lista_commesse)}")
-print(f"{Fore.GREEN}{Style.BRIGHT}... di cui COMMESSE ESCLUSE PER INCOMPATIBILITA' CON TUTTE LE MACCHINE: {len(incompatibili)}")
+#print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE ESCLUSE PER INCOMPATIBILITA' CON TUTTE LE MACCHINE: {len(incompatibili)}")
 
 start_time_eur = time.time()
 
-schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
+schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato, df_tass = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
 #output.write_output_soluzione_euristica(schedulazione3, os.getcwd() + '/Dati_output/euristico_costruttivo.xlsx')
 print(f'SCARTATI DAL PRIMO EURISTICO - Direttamente al Gruppo tre: {len(dizionario_filtri)}')
 print(f'INPUT AL PRIMO EURISTICO: {len(lista_commesse) - len(dizionario_filtri)}')
@@ -345,6 +345,9 @@ print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (setup): ottenuto {f5post-f4post
 print(f'f5 {f5_ritardo_post}, f4 {f4_ritardo_post}')
 print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-f5_ritardo_post+f4_ritardo_post} ore di ritardo")
 
+#Output di errore - commesse tassative non trattate come tali
+
+
 #Output di errore - commesse con veicolo errato e pertanto escluse (ERRORE NON RISOLUBILE DAL CODICE)
 commesse_in_5post = {c['commessa'] for c in soluzione5post}
 df = pd.DataFrame([
@@ -376,9 +379,12 @@ df2 = pd.DataFrame([
 if os.path.basename(os.getcwd()) == "PS-VRP":
     output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/[ERROR]-commesse_veicolo.xlsx')
     output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/[ERROR]-commesse_release_date.xlsx')
+    output.write_tassative_error_output(df_tass,os.getcwd() + '/Dati_output/[ERROR]-tassative_normalizzate.xlsx')
 elif os.path.basename(os.getcwd()) == "progettoIS":
     output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_veicolo.xlsx')
     output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_release_date.xlsx')
+    output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-tassative_normalizzate.xlsx')
+
 
 '''if os.path.basename(os.getcwd()) == "PS-VRP":
     output.write_output_soluzione_euristica(soluzione5post, os.getcwd() + '/Dati_output/output.xlsx')
@@ -462,7 +468,7 @@ for _ in range(iter):
 
     ## EURISTICO COSTRUTTIVO
     start_time_eur = time.time()
-    schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
+    schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato, df_tass = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
     #output.write_output_soluzione_euristica(schedulazione3, os.getcwd() + '/Dati_output/euristico_costruttivo.xlsx')
     commesse_non_schedulate = causa_fallimento | dizionario_filtri | commesse_veicoli_errati #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
     end_time_eur = time.time()
@@ -616,7 +622,7 @@ for _ in range(iter):
             for c in commesse_veicoli_errati
         ])
 
-        #Output di errore 3 - commesse non schedulate (problemi release date)
+        #Output di errore 3 - commesse non schedulate (problemi release date euristico finale)
         df2 = pd.DataFrame([
             {
                 'id': c.id_commessa,
@@ -626,16 +632,19 @@ for _ in range(iter):
             for c in commesse_fallite
         ])
 
+        #Output di errore 4 - tassative non schedulate come tali (problemi release date euristico ciclo 1)
+
         if os.path.basename(os.getcwd()) == "PS-VRP":
             output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/[ERROR]-commesse_veicolo.xlsx')
             output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/[ERROR]-veicoli.xlsx')
             output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/[ERROR]-commesse_release_date.xlsx')
+            output.write_tassative_error_output(df_tass,os.getcwd() + '/Dati_output/[ERROR]-tassative_normalizzate.xlsx')
 
         elif os.path.basename(os.getcwd()) == "progettoIS":
             output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_veicolo.xlsx')
             output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/[ERROR]-veicoli.xlsx')
             output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_release_date.xlsx')
-
+            output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-tassative_normalizzate.xlsx')
 
 print(f"{Fore.YELLOW}SETUP (BEST SOLUTION): {fbest:.2f}s")
 print(f"{Fore.YELLOW}RITARDO (BEST SOLUTION): {-fritardobest} ore")

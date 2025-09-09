@@ -403,7 +403,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     #for i in schedulazione:
     #    print(i['commessa'],i['macchina'])
 
-    return schedulazione, f_obj, causa_fallimento, lista_macchine, commesse_residue, f_obj_ritardo, f_obj_ritardo_pesato
+    return schedulazione, f_obj, causa_fallimento, lista_macchine, commesse_residue, f_obj_ritardo, f_obj_ritardo_pesato, df
 
 ##EURISTICO POST (Greedy 2)
 def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commesse_scartate: list, f_obj_base, f_obj_ritardo, f_obj_ritardo_pesato):

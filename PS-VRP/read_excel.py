@@ -163,9 +163,9 @@ def read_compatibilita(nome_file,lista_commesse):
         incompatibili_dict = [{'commessa': c.id_commessa, 'motivo': 'nessuna compatibilità con alcuna macchina'} for c in commesse_incompatibili]
         df_incompatibili = pd.DataFrame(incompatibili_dict)
         if os.path.basename(os.getcwd()) == "PS-VRP":
-            df_incompatibili.to_excel( os.getcwd() + '/Dati_output/[ERROR]-compatibilità.xlsx', index=False)
+            df_incompatibili.to_excel( os.getcwd() + '/Dati_output/[ERROR]-incompatibilità.xlsx', index=False)
         elif os.path.basename(os.getcwd()) == "progettoIS":
-            df_incompatibili.to_excel( os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-compatibilità.xlsx', index=False)
+            df_incompatibili.to_excel( os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-incompatibilità.xlsx', index=False)
         else:
             print("ERRORE: la directory di output degli errori compatibilità non è correttamente impostata")
     return incompatibili_dict
