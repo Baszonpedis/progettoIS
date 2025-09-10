@@ -2,7 +2,7 @@ from commessa import Commessa
 import pandas as pd
 
 class Macchina():
-    def __init__(self,nome_macchina,disponibilita,tempo_setup_medio,velocita_taglio_media,bobina_foglio,setup_cambio_albero,setup_coltelli_fisso,setup_cambio_coltelli,tempo_carico_bobina,tempo_avvio_taglio,tempo_scarico_bobina,tempo_confezionamento,data_ora_disponibilita,data_inizio_schedulazione):
+    def __init__(self,nome_macchina,disponibilita,tempo_setup_medio,velocita_taglio_media,bobina_foglio,fascia_ult_lavoro, setup_cambio_albero,setup_coltelli_fisso,setup_cambio_coltelli,tempo_carico_bobina,tempo_avvio_taglio,tempo_scarico_bobina,tempo_confezionamento,data_ora_disponibilita,data_inizio_schedulazione):
         self.nome_macchina=nome_macchina
         self.disponibilita=disponibilita
         #self.tempo_setup_medio=tempo_setup_medio
@@ -31,9 +31,9 @@ class Macchina():
         #self.minuti_processamenti=[self._minuti_fine_ultima_lavorazione]
         #self.minuti_processamenti=self._minuti_fine_ultima_lavorazione
         self.ultima_lavorazione=self._minuti_fine_ultima_lavorazione
+        self.fascia_ult_lavorazione= fascia_ult_lavoro
         #Ritardo aggiunto in euristico
         #(idem veicolo)
-
 
     def inizializza_lista_commesse(self):
         """
@@ -41,7 +41,7 @@ class Macchina():
         il numero di coltelli e il diametro del tubo sono quelli dell'ultima commessa schedulata
         """
         if str(self.bobina_foglio).lower()=='bobina':
-            commessa_dummy=Commessa(-1,pd.to_datetime('03/07/2024'),pd.to_datetime('03/07/2024'),1,0,0,-1,None,1,1,self.attrezzaggio['diametro_tubo'],self.data_inizio_schedulazione,'', 0, 0) #commessa fittizia che viene inserita su ogni macchina
+            commessa_dummy=Commessa(-1,pd.to_datetime('03/07/2024'),pd.to_datetime('03/07/2024'),1,0,0,-1,None,1,self.fascia_ult_lavorazione,self.attrezzaggio['diametro_tubo'],self.data_inizio_schedulazione,'', 0, 0) #commessa fittizia che viene inserita su ogni macchina
             commessa_dummy.numero_coltelli=self.attrezzaggio['numero_coltelli']
             self.lista_commesse_processate.append(commessa_dummy) #si aggiunge la commessa alla lista delle commesse processate dalla macchina
         else:

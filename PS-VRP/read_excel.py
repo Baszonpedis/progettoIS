@@ -11,7 +11,7 @@ import warnings
 import re
 
 #CAMPI DI LETTURA DEI FILE DI INPUT
-campi_input_macchine=['Nome macchina','disponibilita','setup','velocità media','tipologia taglio','dt ultima lavorazione','ora ultima lavorazione','tempo setup cambio alberi','tempo setup prima fila coltelli','tempo setup coltelli','tempo carico bobina','tempo avvio taglio','tempo scarico bobina','tempo confezionamento sacchetti']
+campi_input_macchine=['Nome macchina','disponibilita','setup','velocità media','tipologia taglio','dt ultima lavorazione','ora ultima lavorazione','tempo setup cambio alberi','tempo setup prima fila coltelli','tempo setup coltelli','tempo carico bobina','tempo avvio taglio','tempo scarico bobina','tempo confezionamento sacchetti','fascia ult lavoro']
 campi_attrezzaggio=['numero file ult lavoro','diam tubo ult lavoro']
 campi_input_commesse=['commessa','data fine stampa per schedulatore','stato stampa calc','Commesse::DATA CONSEGNA','Commesse::Priorita cliente','qta da tagliare metri per schedulatore','qta da tagliare per schedulatore','Commesse::CODICE DI ZONA','Anagrafica incarti::tipologia taglio','Commesse::fascia','Commesse::fascia utile','Commesse::Diam int tubo','compatibilità macchine taglio::check dati','Commesse::categoria materiale', 'flag tassativo taglio per schedulatore', 'id spedizione']
 campi_compatibilita=campi_input_commesse+['compatibilità macchine taglio::compat macc taglio 1','compatibilità macchine taglio::compat macc taglio 2','compatibilità macchine taglio::compat macc taglio 3','compatibilità macchine taglio::compat macc taglio 4','compatibilità macchine taglio::compat macc taglio 5','compatibilità macchine taglio::compat macc taglio 6','compatibilità macchine taglio::compat macc taglio 7','compatibilità macchine taglio::compat macc taglio 8','compatibilità macchine taglio::compat macc taglio 9','compatibilità macchine taglio::compat macc taglio 10','compatibilità macchine taglio::compat macc taglio 11','compatibilità macchine taglio::compat macc taglio 12','compatibilità macchine taglio::compat macc taglio 13','compatibilità macchine taglio::compat macc taglio 14','compatibilità macchine taglio::compat macc taglio 15','compatibilità macchine taglio::compat macc taglio 16','compatibilità macchine taglio::compat macc taglio 17']
@@ -45,7 +45,7 @@ def read_excel_macchine(nome_file):
     df=df.drop(columns=['dt ultima lavorazione','ora ultima lavorazione'])
     file=df.loc[df['disponibilita']==1]
     file=file.sort_values('Data e ora disponibilita') # Considera tutte le date di ultima lavorazione delle macchine e le ordina
-    d=file.iat[0,12]  # .iat ritorna un elemento in una posizione particolare di un dataframe d e' la prima data di ultima lavorazione, in altre parole, in posizione 0,13 troviamo la prima (indice 0) macchina disponibile (dato che erano state ordinate per 'data ultima lavorazione') e con indice di colonna = 5 andiamo a prendere il valore di tale data
+    d = file.iloc[0]['Data e ora disponibilita']  # Prende la prima data di disponibilità usando il nome della colonna
     days_ahead=d.weekday()  # days_ahead e' il giorno della settimana corrispondente alla data d, espresso in int (0 = lunedì, 6 = domenica)
     data_inizio_schedulazione=d-timedelta(days_ahead)  # Timedelta può essere usato per sottrarre un tot di giorni ad una certa data, in questo caso d. Sottraendo days_ahead ad una data qualunque si può risalire al primo lunedì antecedente alla data d.
     #print(f'timedelta {timedelta(days_ahead)}')
