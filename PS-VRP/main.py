@@ -7,7 +7,6 @@ import output
 from copy import deepcopy
 import time
 from colorama import Fore, Style, init
-import math
 import pandas as pd
 
 start_time_schedulazione = time.time()

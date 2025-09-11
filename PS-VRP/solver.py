@@ -1,21 +1,17 @@
 import math
 import pandas as pd
 from veicolo import Veicolo
-from datetime import timedelta, date
+from datetime import timedelta
 import matplotlib.pyplot as plt
 from matplotlib.text import Annotation
 from commessa import Commessa
 from macchina import Macchina
 from copy import deepcopy
-import output
 import os
 import random
 
 #alfa = 1 #Parametro per le ricerche locali - consigliato: [0.7-0.9]; si ricordi che zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
 #beta = 0.2 #Parametro per il GRASP (metaeuristico) - consigliato: [0.1-0.3]
-
-import os
-import sys
 
 # Leggi i parametri dalle variabili d'ambiente (stesse che legge main.py)
 def get_solver_parameters():

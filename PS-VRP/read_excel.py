@@ -4,7 +4,6 @@ import pandas as pd
 from macchina import Macchina
 from commessa import Commessa
 from veicolo import Veicolo
-from datetime import datetime
 from datetime import timedelta
 import output
 import warnings
