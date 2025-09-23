@@ -1,5 +1,8 @@
 from collections import defaultdict
 
+'''NB: il debugger è stato scritto per verificare che le due strutture dati utilizzate per la memorizzazione delle commesse
+    combaciassero - in fase di scrittura, verifica e validazione del codice. Non dovrebbe più servire, ma in caso è qua.'''
+
 #Per verificare che ci sia consistency tra le strutture dati ad ogni passaggio del main
 
 block_a_text = """

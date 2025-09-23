@@ -36,7 +36,6 @@ class Commessa():
         m_lavorativi = round(ore_di_lavoro * 60)  # minuti lavorativi (default: 480/gg)
         self._minuti_release_date = max(m_1 - 2 * m_lavorativi * m_2 - 2 * m_lavorativi * m_3, 0)  # minuti lavorativi che separano l'inizio della schedulazione con la prima disponibilita della macchina
         self.materiale=materiale
-        #NUOVI CAMPI IN ITINERE
         self.tassativita=tassativita
         self.id_tassativo=id_tassativo
 

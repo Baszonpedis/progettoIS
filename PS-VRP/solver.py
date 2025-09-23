@@ -10,6 +10,7 @@ from copy import deepcopy
 import os
 import random
 
+#NB: parametri alfa e beta impostati tramite GUI, altrimenti impostati tramite "Default" poco di seguito
 #alfa = 1 #Parametro per le ricerche locali - consigliato: [0.7-0.9]; si ricordi che zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
 #beta = 0.2 #Parametro per il GRASP (metaeuristico) - consigliato: [0.1-0.3]
 
@@ -80,7 +81,7 @@ def associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, 
     } for v in lista_veicoli_errati])
     return(df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati)
 
-def raggruppa_commesse_identiche(lista_commesse):
+'''def raggruppa_commesse_identiche(lista_commesse):
     commesse_raggruppate = []
     
     # Raggruppa le commesse identiche per facilitare la schedulazione
@@ -97,7 +98,7 @@ def raggruppa_commesse_identiche(lista_commesse):
     for key in sorted(commesse_dict.keys()):
         commesse_raggruppate.extend(commesse_dict[key])
         
-    return commesse_raggruppate
+    return commesse_raggruppate'''
 
 #Aggiorna la schedulazione nell'euristico dopo ogni assegnazione
 #NB: Funzione modificata con l'inclusione del concetto di ritardo
@@ -256,8 +257,6 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
 
     #Sorting preliminare al primo ciclo while
     lista_commesse_tassative.sort(key=lambda commessa:(+commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
-    #print([c.priorita_cliente for c in lista_commesse_tassative
-    #       ])
 
     #se beta = 0, la lista commesse tassative non viene cambiata rispetto al sort iniziale
     lista_commesse_tassative = GRASP_randomizer(lista_commesse_tassative)
@@ -316,11 +315,6 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
         'id': c.id_commessa,
         'release_date': c.release_date,
     } for c in lista_commesse_tassative])
-
-    #if os.path.basename(os.getcwd()) == "PS-VRP":
-    #    output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/errori_tassative.xlsx')
-    #elif os.path.basename(os.getcwd()) == "progettoIS":
-    #    output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/errori_tassative.xlsx')
 
     #Si ricostituisce la lista delle macchine per il prossimo ciclo  
     lista_macchine = lista_macchine2.copy()
@@ -390,14 +384,6 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
 
     #Si ricostituisce la lista delle macchine per future chiamate
     lista_macchine = lista_macchine2.copy()
-
-    #for i in lista_macchine:
-    #    print(i.nome_macchina)
-    #    for j in i.lista_commesse_processate:
-    #        print(j.id_commessa)
-    
-    #for i in schedulazione:
-    #    print(i['commessa'],i['macchina'])
 
     return schedulazione, f_obj, causa_fallimento, lista_macchine, commesse_residue, f_obj_ritardo, f_obj_ritardo_pesato, df
 
@@ -492,20 +478,10 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     #Si ricostituisce la lista delle macchine per future chiamate
     lista_macchine = lista_macchine2.copy()
 
-    #for i in lista_macchine:
-    #    print(i.nome_macchina)
-    #    for j in i.lista_commesse_processate:
-    #        print(j.id_commessa)
     return soluzionepost, f_obj, fpost_ritardo, fpost_ritardo_pesato, commesse_fallite
 
 ##INSERT INTER-MACCHINA (Ricerca locale 1)
 def insert_inter_macchina(lista_macchine: list, f_obj):
-    #for m in lista_macchine:
-    #    seen = set()
-    #    for c in m.lista_commesse_processate:
-    #        if c.id_commessa in seen:
-    #            print(f"[DUPLICATE in machine {m.nome_macchina}]: {c.id_commessa}")
-    #        seen.add(c.id_commessa)
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # data in cui inizia la schedulazione
     f_best = f_obj  # funzione obiettivo
     schedulazione = []  # lista contenente tutte le schedule
@@ -534,22 +510,10 @@ def insert_inter_macchina(lista_macchine: list, f_obj):
     for commessa in schedulazione:
         ritardo_cumul += commessa['ritardo']
         ritardo_cumul_pesato += commessa['ritardo'] / commessa['priorita']
-    #print(f'Ritardo cumulativo: {-ritardo_cumul}')
-
-    #for i in lista_macchine:
-    #    print(i.nome_macchina)
-    #    for j in i.lista_commesse_processate:
-    #        print(j.id_commessa)
-    
-    #for i in schedulazione:
-    #    print(i['commessa'],i['macchina'])
-
     return schedulazione,f_best,contatoreLS1,ritardo_cumul,ritardo_cumul_pesato
 
 #Usato da insert_inter_macchina (Ricerca locale 1 - utility)
 def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contatore:int,inizio_schedulazione,f_best):
-    #for i in macchina1.lista_commesse_processate:
-    #    print(i.id_commessa)
     schedula1=macchina1.lista_commesse_processate #copia della lista di commesse schedulate
     schedula2=macchina2.lista_commesse_processate #copia della lista di commesse schedulate
     eps = 0.00001  # parametro per stabilire se il delta è conveniente
@@ -595,10 +559,6 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                 check1 = True
                 check2 = True
 
-                #Effettuo l'insert
-                #ids = [c.id_commessa for c in schedula1]
-                #if ids.count(commessa.id_commessa) > 1:
-                #    print(f"[!!!] DUPLICATE commessa {commessa.id_commessa} in schedula1 before removal!")
                 schedula1.remove(commessa)
                 if j+1==len(schedula2):
                     schedula2.append(commessa)
@@ -639,11 +599,6 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                 delta = math.inf
                 delta = calcolo_delta(delta_setup,delta_ritardo) #calcolo della funzione obiettivo della ricerca locale
                 if delta < -eps and check1 and check2:
-                    #print(f'\n---------------------------')
-                    #print(f'Macchine: {macchina1.nome_macchina}, {macchina2.nome_macchina}; Commessa mossa: {commessa.id_commessa}')
-                    #print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
-                    #print(f'Tempo di setup (delta_setup): {delta_setup}')
-                    #print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
                     #Aggiornamento necessario pena la desincronizzazione tra lista_commesse_processate e la soluzione
                     for entry in s1:
                         for comm in macchina1.lista_commesse_processate:
@@ -653,27 +608,6 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                         for comm in macchina2.lista_commesse_processate:
                             if comm.id_commessa == entry['commessa']:
                                 comm.ritardo = entry['ritardo mossa']
-                    #for entry in s1:
-                        #new_t = entry['ritardo mossa']
-                        #old_t = entry['ritardo']
-                        #pri   = entry['priorita']
-                        #risparmio_tot += (old_t.total_seconds()/3600 - new_t.total_seconds()/3600) / pri
-                        #entry['ritardo'] = entry['ritardo mossa']
-                       # for commessa in schedula1:
-                      #      if commessa.id_commessa == entry['commessa']:
-                     #           commessa.ritardo = entry['ritardo']
-                    #for entry in s2:
-                        #new_t = entry['ritardo mossa']
-                        #old_t = entry['ritardo']
-                        #pri   = entry['priorita']
-                       # entry['ritardo'] = entry['ritardo mossa']
-                        #risparmio_tot += (old_t.total_seconds()/3600 - new_t.total_seconds()/3600) / pri
-                      #  for commessa in schedula2:
-                     #       if commessa.id_commessa == entry['commessa']:
-                    #            commessa.ritardo = entry['ritardo']
-                                #print(f"aggiornamento ritardo: la commessa {commessa.id_commessa} = {entry['commessa']} ha ora ritardo {entry['ritardo']}")
-                    #for k in range(1,len(schedula2)):
-                        #print(f'la commessa {schedula2[k].id_commessa} ha ritardo {schedula2[k].ritardo}')
                     improved=True #miglioramento trovato
                     f_best+=delta_setup #aggiorno funzione obiettivo
                     contatore+=1
@@ -770,11 +704,6 @@ def insert_intra(lista_macchine: list, f_obj):
                         # CONDIZIONE DI MIGLIORAMENTO
                         delta = calcolo_delta(delta_setup, delta_ritardo)
                         if delta < -eps and check:
-                            #print(f'\n---------------------------')
-                            #print(f'Macchina: {macchina.nome_macchina}')
-                            #print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
-                            #print(f'Tempo di setup (delta_setup): {delta_setup}')
-                            #print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
                             f_best += delta_setup
                             contatoreLS2 += 1
                             macchina.lista_commesse_processate = schedula
@@ -802,16 +731,6 @@ def insert_intra(lista_macchine: list, f_obj):
     for commessa in soluzione_move:
         ritardo_cumul += commessa['ritardo']
         ritardo_cumul_pesato += commessa['ritardo'] / commessa['priorita']
-        #print(ritardo_cumul)
-    #print(f'Ritardo cumulativo: {-ritardo_cumul}')
-
-    #for i in lista_macchine:
-    #    print(i.nome_macchina)
-    #    for j in i.lista_commesse_processate:
-    #        print(j.id_commessa)
-    
-    #for i in soluzione_move:
-    #    print(i['commessa'],i['macchina'])
 
     return soluzione_move, f_best, contatoreLS2, ritardo_cumul, ritardo_cumul_pesato
 
@@ -891,11 +810,6 @@ def swap_intra(lista_macchine, f_obj):
                         # CONDIZIONE DI MIGLIORAMENTO (ed eventuali aggiornamenti)
                         delta = calcolo_delta(delta_setup, delta_ritardo)
                         if delta < -eps and check:
-                            #print(f'\n---------------------------')
-                            #print(f'Macchina: {macchina.nome_macchina}')
-                            #print(f'Ritardo non pesato cumulato: {delta_ritardo_print}; Ritardo pesato (delta_ritardo): {delta_ritardo}')
-                            #print(f'Tempo di setup (delta_setup): {delta_setup}')
-                            #print(f'Funzione risultante: alfa({delta_setup})*(1-alfa)({delta_ritardo.total_seconds()/3600})')
                             f_best += delta_setup
                             macchina.lista_commesse_processate = schedula
                             contatoreLS3 += 1
@@ -1010,142 +924,8 @@ def GRASP_randomizer(lista_commesse):
         
 #GRAFICAZIONE
 #import mplcursors
-"""def grafico_schedulazione(schedulazione):
-    macchine = list(set(s["macchina"] for s in schedulazione))
-    macchine.sort(reverse=True)
 
-    veicoli = list(set(s["veicolo"] for s in schedulazione))
-    green_shades = ['#006400']
-    colori_veicoli = {}
-    green_index = 0
-    for veicolo in veicoli:
-        colori_veicoli[veicolo] = '#d9b904' if veicolo is None else green_shades[green_index % len(green_shades)]
-        if veicolo is not None:
-            green_index += 1
-
-    fig, ax = plt.subplots(figsize=(12, 6))
-    bars = []
-    schedula_by_bar = {}
-
-    inizi = [s["inizio_setup"] for s in schedulazione] + [s["inizio_lavorazione"] for s in schedulazione]
-    fine = [s["fine_setup"] for s in schedulazione] + [s["fine_lavorazione"] for s in schedulazione]
-    inizio_timeline = min(inizi)
-    fine_timeline = max(fine)
-
-    intervalli_non_produzione = [] #Tutti i giorni dalle 15.00 alle 7.00 + weekend
-    current_time = inizio_timeline.replace(hour=0, minute=0, second=0, microsecond=0)
-    while current_time < fine_timeline:
-        weekday = current_time.weekday()
-
-        if weekday == 4:  # Venerdì
-            # Unica fascia di non produzione: 15:00 venerdì → 07:00 lunedì
-            weekend_start = current_time + timedelta(hours=15)
-            weekend_end = (current_time + timedelta(days=3)).replace(hour=7)
-
-            start = max(weekend_start, inizio_timeline)
-            end = min(weekend_end, fine_timeline)
-
-            if start < end:
-                intervalli_non_produzione.append((start, end))
-                ax.axvspan(start, end, color='dimgray', alpha=0.4, label='Weekend')
-
-            current_time += timedelta(days=3)  # Salta sabato e domenica
-        else:
-            # Fasce classiche 15:00 → 07:00 del giorno dopo
-            np_start = current_time + timedelta(hours=15)
-            np_end = (current_time + timedelta(days=1)).replace(hour=7)
-
-            start = max(np_start, inizio_timeline)
-            end = min(np_end, fine_timeline)
-
-            if start < end:
-                intervalli_non_produzione.append((start, end))
-                ax.axvspan(start, end, color='gray', alpha=0.3)
-
-            current_time += timedelta(days=1)
-
-    def calcola_durata_netto(start, end, blocchi_np):
-        durata = timedelta(0)
-        cursor = start
-        while cursor < end:
-            prossimo_stop = end
-            for np_start, np_end in blocchi_np:
-                if cursor < np_start < end:
-                    prossimo_stop = min(prossimo_stop, np_start)
-                elif np_start <= cursor < np_end:
-                    cursor = np_end
-                    break
-            else:
-                durata += prossimo_stop - cursor
-                cursor = prossimo_stop
-        return durata
-
-    for s in schedulazione:
-        y = macchine.index(s["macchina"])
-
-        # Setup
-        setup_durata = s["fine_setup"] - s["inizio_setup"]
-        setup_bar = ax.barh(y, setup_durata, left=s["inizio_setup"], height=0.5, color='red', edgecolor='black')[0]
-        bars.append(setup_bar)
-        schedula_by_bar[setup_bar] = {
-            'type': 'setup',
-            'data': s,
-            'durata_netto': calcola_durata_netto(s["inizio_setup"], s["fine_setup"], intervalli_non_produzione)
-        }
-
-        # Lavorazione
-        colore = colori_veicoli[s["veicolo"]]
-        lav_durata = s["fine_lavorazione"] - s["inizio_lavorazione"]
-        lav_bar = ax.barh(y, lav_durata, left=s["inizio_lavorazione"], height=0.5, color=colore, edgecolor='black')[0]
-        bars.append(lav_bar)
-        schedula_by_bar[lav_bar] = {
-            'type': 'lavorazione',
-            'data': s
-        }
-
-    ax.set_yticks(range(len(macchine)))
-    ax.set_yticklabels(macchine)
-    ax.set_xlim(inizio_timeline, fine_timeline)
-    ax.set_ylim(-0.5, len(macchine) - 0.5)
-    fig.autofmt_xdate()
-    ax.set_xlabel('Tempo')
-    ax.set_ylabel('Macchina')
-    ax.set_title('Schedulazione')
-
-    tooltip = Annotation('', xy=(0, 0), xytext=(15, 15), textcoords='offset points',
-                         bbox=dict(boxstyle="round", fc="w", ec="k"),
-                         arrowprops=dict(arrowstyle="->"))
-    tooltip.set_visible(False)
-    ax.add_artist(tooltip)
-
-    def on_motion(event):
-        visibile = False
-        for bar in bars:
-            contains, _ = bar.contains(event)
-            if contains:
-                info = schedula_by_bar[bar]
-                s = info['data']
-                tooltip.xy = (event.xdata, event.ydata)
-                if info['type'] == 'setup':
-                    testo = f"TEMPO DI SETUP\nCommessa: {s['commessa']}\nDurata utile: {info['durata_netto']}"
-                else:
-                    veicolo = s["veicolo"]
-                    nome_veicolo = veicolo.nome if veicolo is not None else "Senza veicolo"
-                    testo = f"Commessa: {s['commessa']}\nVeicolo: {nome_veicolo}"
-                tooltip.set_text(testo)
-                tooltip.set_visible(True)
-                visibile = True
-                break
-        if not visibile:
-            tooltip.set_visible(False)
-        fig.canvas.draw_idle()
-
-    fig.canvas.mpl_connect("motion_notify_event", on_motion)
-
-    plt.tight_layout()
-    plt.show()"""
-
-#Graficazione alternativa
+#Graficazione
 import matplotlib.pyplot as plt
 from matplotlib.text import Annotation
 from datetime import timedelta
@@ -1305,137 +1085,3 @@ def grafico_schedulazione(schedulazione):
 
     plt.tight_layout()
     plt.show()
-
-"""import matplotlib.pyplot as plt
-from matplotlib.text import Annotation
-from datetime import datetime, timedelta
-
-def grafico_schedulazione(schedulazione):
-    macchine = list(set(s["macchina"] for s in schedulazione))
-    macchine.sort(reverse=True)
-
-    veicoli = list(set(s["veicolo"] for s in schedulazione))
-    green_shades = ['#006400']
-    colori_veicoli = {}
-    green_index = 0
-    for veicolo in veicoli:
-        colori_veicoli[veicolo] = '#d9b904' if veicolo is None else green_shades[green_index % len(green_shades)]
-        if veicolo is not None:
-            green_index += 1
-
-    inizi = [s["inizio_setup"] for s in schedulazione] + [s["inizio_lavorazione"] for s in schedulazione]
-    fine = [s["fine_setup"] for s in schedulazione] + [s["fine_lavorazione"] for s in schedulazione]
-    inizio_timeline = min(inizi)
-    fine_timeline = max(fine)
-
-    # Calcola intervalli non produttivi
-    intervalli_non_produzione = []
-    current_time = inizio_timeline.replace(hour=0, minute=0, second=0, microsecond=0)
-    while current_time < fine_timeline:
-        weekday = current_time.weekday()
-
-        if weekday == 4:  # Venerdì
-            weekend_start = current_time + timedelta(hours=15)
-            weekend_end = (current_time + timedelta(days=3)).replace(hour=7)
-
-            start = max(weekend_start, inizio_timeline)
-            end = min(weekend_end, fine_timeline)
-            if start < end:
-                intervalli_non_produzione.append((start, end))
-
-            current_time += timedelta(days=3)
-        else:
-            np_start = current_time + timedelta(hours=15)
-            np_end = (current_time + timedelta(days=1)).replace(hour=7)
-
-            start = max(np_start, inizio_timeline)
-            end = min(np_end, fine_timeline)
-            if start < end:
-                intervalli_non_produzione.append((start, end))
-
-            current_time += timedelta(days=1)
-
-    # Funzione per mappare i tempi produttivi
-    def crea_mappa_tempo(inizio, fine, blocchi_np):
-        mappa = {}
-        tempo_corrente = inizio
-        tempo_asse = 0
-
-        blocchi_np = sorted(blocchi_np)
-
-        while tempo_corrente < fine:
-            in_np = False
-            for np_start, np_end in blocchi_np:
-                if np_start <= tempo_corrente < np_end:
-                    in_np = True
-                    tempo_corrente = np_end  # Salta il blocco NP
-                    break
-            if not in_np:
-                mappa[tempo_corrente] = tempo_asse
-                tempo_corrente += timedelta(minutes=1)
-                tempo_asse += 1  # ogni minuto è un'unità asse
-        return mappa
-
-    def trasforma_tempo(dt, mappa_tempo):
-        dt_rounded = dt.replace(second=0, microsecond=0)
-        return mappa_tempo.get(dt_rounded, None)
-
-    mappa_tempo = crea_mappa_tempo(inizio_timeline, fine_timeline, intervalli_non_produzione)
-
-    fig, ax = plt.subplots(figsize=(12, 6))
-    bars = []
-    schedula_by_bar = {}
-
-    for s in schedulazione:
-        y = macchine.index(s["macchina"])
-
-        # Setup
-        start_setup = trasforma_tempo(s["inizio_setup"], mappa_tempo)
-        end_setup = trasforma_tempo(s["fine_setup"], mappa_tempo)
-        if start_setup is None or end_setup is None:
-            continue  # salta se fuori range
-        durata_setup = end_setup - start_setup
-
-        setup_bar = ax.barh(y, durata_setup, left=start_setup, height=0.5, color='red', edgecolor='black')[0]
-        bars.append(setup_bar)
-        schedula_by_bar[setup_bar] = {
-            'type': 'setup',
-            'data': s
-        }
-
-        # Lavorazione
-        start_lav = trasforma_tempo(s["inizio_lavorazione"], mappa_tempo)
-        end_lav = trasforma_tempo(s["fine_lavorazione"], mappa_tempo)
-        if start_lav is None or end_lav is None:
-            continue
-        durata_lav = end_lav - start_lav
-
-        colore = colori_veicoli[s["veicolo"]]
-        lav_bar = ax.barh(y, durata_lav, left=start_lav, height=0.5, color=colore, edgecolor='black')[0]
-        bars.append(lav_bar)
-        schedula_by_bar[lav_bar] = {
-            'type': 'lavorazione',
-            'data': s
-        }
-
-    ax.set_yticks(range(len(macchine)))
-    ax.set_yticklabels(macchine)
-
-    # Calcola tick asse X
-    ticks = []
-    labels = []
-    tick_set = set()
-    for dt, pos in sorted(mappa_tempo.items()):
-        if dt.hour == 8 and dt.minute == 0 and pos not in tick_set:  # Solo 8:00
-            ticks.append(pos)
-            labels.append(dt.strftime('%d-%m %H:%M'))
-            tick_set.add(pos)
-
-    ax.set_xticks(ticks)
-    ax.set_xticklabels(labels, rotation=45)
-
-    ax.set_xlabel('Tempo (produttivo)')
-    ax.set_ylabel('Macchina')
-    ax.set_title('Schedulazione (tempi non produttivi rimossi)')
-    plt.tight_layout()
-    plt.show()"""
