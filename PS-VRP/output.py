@@ -1,9 +1,9 @@
-
 import openpyxl as pyxl
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+from openpyxl.utils import get_column_letter
 import pandas as pd
 
-campi_risultati_euristico=['commessa','macchina','minuti setup','minuti processamento','inizio setup','fine setup','inizio lavorazione','fine lavorazione','mt da tagliare','taglio','macchine compatibili','numero coltelli','diametro tubo','veicolo', 'tassativita', 'veicolo tassativo', 'due date (non indicativa)', 'ritardo', 'priorita']
+campi_risultati_euristico=['commessa','macchina', 'data fine stampa', 'minuti setup','minuti processamento','inizio setup','fine setup','inizio lavorazione','fine lavorazione','mt da tagliare','taglio','macchine compatibili','numero coltelli','diametro tubo','veicolo', 'tassativita', 'veicolo tassativo', 'due date (non indicativa)', 'ritardo', 'priorita']
 
 def write_output_soluzione_euristica(schedulazione,nome_file):
     """
@@ -15,25 +15,24 @@ def write_output_soluzione_euristica(schedulazione,nome_file):
     ws1=wb.active #si prende il foglio attivo
     ws1.title='Schedulazione' #si rinomina il titolo del foglio
     ws1.append(campi_risultati_euristico) #vado ad inserire il nome delle colonne
-    ws1.column_dimensions['A'].width=15 #si settano le dimensioni delle colonne
-    ws1.column_dimensions['B'].width=15
-    ws1.column_dimensions['C'].width=20
-    ws1.column_dimensions['D'].width=20
-    ws1.column_dimensions['E'].width=50
-    ws1.column_dimensions['F'].width=50
-    ws1.column_dimensions['G'].width=50
-    ws1.column_dimensions['H'].width=50
+    ws1.column_dimensions['A'].width=10 #si settano le dimensioni delle colonne
+    ws1.column_dimensions['B'].width=10
+    ws1.column_dimensions['C'].width=15
+    ws1.column_dimensions['D'].width=15
+    ws1.column_dimensions['E'].width=15
+    ws1.column_dimensions['F'].width=25
+    ws1.column_dimensions['G'].width=25
+    ws1.column_dimensions['H'].width=25
     ws1.column_dimensions['I'].width=15
     ws1.column_dimensions['J'].width=15
-    ws1.column_dimensions['K'].width=90
-    ws1.column_dimensions['L'].width=15
+    ws1.column_dimensions['K'].width=15
+    ws1.column_dimensions['L'].width=50
     ws1.column_dimensions['M'].width=15
     ws1.column_dimensions['N'].width=15
-    ws1.column_dimensions['O'].width=15
-    ws1.column_dimensions['P'].width=15
-    ws1.column_dimensions['Q'].width=20 #si settano le dimensioni delle colonne
-
-
+    ws1.column_dimensions['O'].width=10
+    ws1.column_dimensions['P'].width=10
+    ws1.column_dimensions['Q'].width=15
+    ws1.column_dimensions['R'].width=15
 
     start_row=2 #inizializzo la riga in cui andrò a printare. si parte dalla seconda in quanto la prima è occupata dai titoli
     start_column=1 #inizializzo le colonne in cui andrò a printare si parte dalla prima e si andrà avanti fino all'ultimo campo
@@ -58,7 +57,7 @@ def write_output_ridotto(schedulazione,nome_file):
     :param nome_file: percorso file excel
     :return: file excel abbellito
     """
-    campi_risultati_ridotti = ['commessa', 'macchina', 'inizio_setup', 'inizio_lavorazione', 'tassativita']
+    campi_risultati_ridotti = ['commessa', 'macchina', 'inizio_setup', 'inizio_lavorazione', 'tassativita', 'priorita']
 
     # Colori pastello tenui (HEX)
     colori_pastello = [
@@ -130,7 +129,7 @@ def write_output_ridotto_txt(schedulazione, nome_file):
     """
     Salva la schedulazione in un .txt formattato a tabella leggibile
     """
-    campi_risultati_ridotti = ['commessa', 'macchina', 'inizio_setup', 'inizio_lavorazione']
+    campi_risultati_ridotti = ['commessa', 'macchina', 'inizio_setup', 'inizio_lavorazione', 'tassativita', 'priorita']
 
     # Larghezza colonne di base
     larghezze = [15, 15, 22, 22]  # Ho allargato un po' anche le date
@@ -301,29 +300,52 @@ def write_veicoli_error_output(df, nome_file):
     
     wb.save(nome_file)
 
-def write_tassative_error_output(df, nome_file):
-    wb = pyxl.Workbook()
-    ws1 = wb.active
-    ws1.title = 'Errori'
-    
+
+def write_tassative_error_output(df, nome_file, nome_foglio="Errori"):
+    """
+    Scrive i dati del DataFrame in un foglio Excel con evidenziazione dei campi vuoti.
+    Se il file esiste già, aggiunge un foglio o sovrascrive quello con lo stesso nome.
+    """
+
+    # Se il file esiste già → aprilo, altrimenti creane uno nuovo
+    try:
+        wb = pyxl.load_workbook(nome_file)
+    except FileNotFoundError:
+        wb = pyxl.Workbook()
+        # rimuovi foglio vuoto di default
+        default_sheet = wb.active
+        wb.remove(default_sheet)
+
+    # Se il foglio esiste già → rimuovilo (sovrascrittura)
+    if nome_foglio in wb.sheetnames:
+        std = wb[nome_foglio]
+        wb.remove(std)
+
+    # Crea nuovo foglio
+    ws1 = wb.create_sheet(title=nome_foglio)
+
     # Titoli colonne
     nomi_colonne = list(df.columns)
     ws1.append(nomi_colonne)
     
     # Imposta larghezza colonne dinamicamente
-    for i, col in enumerate(nomi_colonne, start=1):
-        ws1.column_dimensions[chr(64 + i)].width = 30
+    for i, _ in enumerate(nomi_colonne, start=1):
+        col_letter = get_column_letter(i)
+        ws1.column_dimensions[col_letter].width = 30
     
+    # Evidenziazione gialla
     fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
     
     start_row = 2
     df = df.fillna("CAMPO VUOTO")
     
-    for index, row in df.iterrows():
-        for col_index, value in enumerate(row):
-            cell = ws1.cell(row=start_row, column=col_index + 1, value=value)
+    for _, row in df.iterrows():
+        for col_index, value in enumerate(row, start=1):
+            cell = ws1.cell(row=start_row, column=col_index, value=value)
             if value == "CAMPO VUOTO":
                 cell.fill = fill
         start_row += 1
     
+    # Salva file
     wb.save(nome_file)
+    print(f"Foglio '{nome_foglio}' scritto in '{nome_file}' (sovrascrittura se già esisteva).")

@@ -1,4 +1,5 @@
 import tkinter as tk
+import tkinter.font as tkFont
 from tkinter import filedialog, messagebox, ttk
 import subprocess
 import threading
@@ -62,10 +63,16 @@ def get_input_file(nome_file):
 
 class App:
     def __init__(self, root):
+
+        #Parametri per regolare dimensioni, font, etc
         self.root = root
         self.root.title("Schedulatore del taglio")
-        self.root.geometry("800x750") # Aumenta larghezza per il layout affiancato
+        self.root.geometry("800x750")
         self.root.resizable(True, True)
+        default_font = tkFont.nametofont("TkDefaultFont")
+        default_font.configure(size=11, family="Fira Sans")
+
+        self.root.option_add("*Font", default_font)
 
         # --- IMPOSTA L'ICONA DELLA FINESTRA E DELLA BARRA DELLE APPLICAZIONI ---
         icon_path_ico = get_image_path("istituto_stampa_s_r_l__logo.ico") # Preferito per Windows
@@ -153,21 +160,34 @@ class App:
         alfa_frame = ttk.Frame(params_frame)
         alfa_frame.pack(fill="x", pady=(0,8))
         
-        ttk.Label(alfa_frame, text="Parametro Alfa:").pack(side="left")
-        self.alfa_slider = ttk.Scale(alfa_frame, from_=0.0, to=1.0, orient="horizontal", 
-                                   variable=self.alfa_val, length=180)
+        ttk.Label(alfa_frame, text="α (LS):").pack(side="left")
+
+        # Slider più grande e con step 0.1
+        style = ttk.Style()
+        style.configure("TScale", sliderlength=30, troughcolor="#e0e0e0")  # manopola più grande
+
+        self.alfa_slider = ttk.Scale(
+            alfa_frame, 
+            from_=0.0, 
+            to=1.0, 
+            orient="horizontal", 
+            variable=self.alfa_val, 
+            length=180,
+            style="TScale"
+        )
         self.alfa_slider.pack(side="left", padx=8)
-        self.alfa_label = ttk.Label(alfa_frame, text=f"{self.alfa_val.get():.2f}")
+
+        self.alfa_label = ttk.Label(alfa_frame, text=f"{self.alfa_val.get():.1f}")
         self.alfa_label.pack(side="left", padx=(8,0))
-        
-        # Aggiorna label quando slider cambia
+
+        # Aggiorna label quando slider cambia (con arrotondamento a 0.1)
         self.alfa_val.trace_add("write", self.update_alfa_label)
 
         # Parametro Beta
         beta_frame = ttk.Frame(params_frame)
         beta_frame.pack(fill="x", pady=(0,8))
         
-        ttk.Label(beta_frame, text="Parametro Beta:").pack(side="left")
+        ttk.Label(beta_frame, text="β (GRASP):").pack(side="left")
         beta_entry = ttk.Entry(beta_frame, textvariable=self.beta_val, width=12)
         beta_entry.pack(side="left", padx=(8,0))
         ttk.Label(beta_frame, text="(suggerito: 0.2)").pack(side="left", padx=(5,0))
@@ -179,7 +199,7 @@ class App:
         ttk.Label(iter_frame, text="Numero di iterazioni:").pack(side="left")
         iter_entry = ttk.Entry(iter_frame, textvariable=self.iter_val, width=12)
         iter_entry.pack(side="left", padx=(8,0))
-        ttk.Label(iter_frame, text="(suggerito: almeno 10 per una buona schedulazione)").pack(side="left", padx=(5,0))
+        ttk.Label(iter_frame, text="(suggerito: almeno 10)").pack(side="left", padx=(5,0))
 
         # --- FRAME PER LA SELEZIONE DEI FILE ---
         file_frame = ttk.LabelFrame(main_frame, text="Selezionare manualmente i file di Input (formato .xlsx) se non rilevati correttamente", padding=10)
@@ -249,8 +269,10 @@ class App:
         scrollbar.pack(side="right", fill="y")
 
     def update_alfa_label(self, *args):
-        """Aggiorna la label del parametro alfa"""
-        self.alfa_label.config(text=f"{self.alfa_val.get():.2f}")
+        """Aggiorna la label del parametro alfa (step 0.1)"""
+        value = round(self.alfa_val.get(), 1)  # arrotonda al primo decimale
+        self.alfa_val.set(value)               # forza lo slider sul valore arrotondato
+        self.alfa_label.config(text=f"{value:.1f}")
 
     def select_file(self, var, tipo_file):
         """Apre dialog per selezione file Excel"""

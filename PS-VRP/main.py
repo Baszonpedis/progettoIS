@@ -101,9 +101,9 @@ lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita =
 df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
 
 if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/[ERROR]-veicoli.xlsx')
+    output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/Problemi_veicoli.xlsx')
 elif os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/[ERROR]-veicoli.xlsx')
+    output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/Problemi_veicoli.xlsx')
 
 
 ##EURISTICO DI BASE
@@ -335,13 +335,13 @@ df2 = pd.DataFrame([
 
 #L'output di errore legato ai veicoli in sé è precedente (presso "elaborazione input(s)")
 if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/[ERROR]-commesse_veicolo.xlsx')
-    output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/[ERROR]-commesse_release_date.xlsx')
-    output.write_tassative_error_output(df_tass,os.getcwd() + '/Dati_output/[ERROR]-tassative_normalizzate.xlsx')
+    output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
+    output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
+    output.write_tassative_error_output(df_tass,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
 elif os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_veicolo.xlsx')
-    output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_release_date.xlsx')
-    output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-tassative_normalizzate.xlsx')
+    output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
+    output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
+    output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
 
 ritardo1 = -f1_ritardo_post.total_seconds()/3600
 ritardo2 = -f2_ritardo_post.total_seconds()/3600
@@ -536,16 +536,16 @@ for _ in range(iter):
             #write_output a seguito
 
         if os.path.basename(os.getcwd()) == "PS-VRP":
-            output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/[ERROR]-commesse_veicolo.xlsx')
-            output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/[ERROR]-veicoli.xlsx')
-            output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/[ERROR]-commesse_release_date.xlsx')
-            output.write_tassative_error_output(df_tass,os.getcwd() + '/Dati_output/[ERROR]-tassative_normalizzate.xlsx')
+            output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/Problemi_veicoli.xlsx')
+            output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
+            output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
+            output.write_tassative_error_output(df_tass,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
 
         elif os.path.basename(os.getcwd()) == "progettoIS":
-            output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_veicolo.xlsx')
-            output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/[ERROR]-veicoli.xlsx')
-            output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-commesse_release_date.xlsx')
-            output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-tassative_normalizzate.xlsx')
+            output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/Problemi_veicoli.xlsx')
+            output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
+            output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
+            output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
 
 print(f"{Fore.YELLOW}SETUP (BEST SOLUTION): {fbest:.2f}s")
 print(f"{Fore.YELLOW}RITARDO (BEST SOLUTION): {-fritardobest} ore")

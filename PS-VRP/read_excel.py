@@ -81,9 +81,9 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
     for col in colonne_commesse_foglio:
         df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col] = df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col].fillna(0)
     if os.path.basename(os.getcwd()) == "PS-VRP":
-        output.write_error_output(df,os.getcwd() + '/Dati_output/[ERROR]-lettura_Excel.xlsx')
+        output.write_error_output(df,os.getcwd() + '/Dati_output/Problemi_lettura_Excel.xlsx')
     elif os.path.basename(os.getcwd()) == "progettoIS":
-        output.write_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-lettura_Excel.xlsx')
+        output.write_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/Problemi_lettura_Excel.xlsx')
     else:
         print("ERRORE: la directory di output degli errori lettura non è correttamente impostata")
 
@@ -162,9 +162,9 @@ def read_compatibilita(nome_file,lista_commesse):
         incompatibili_dict = [{'commessa': c.id_commessa, 'motivo': 'nessuna compatibilità con alcuna macchina'} for c in commesse_incompatibili]
         df_incompatibili = pd.DataFrame(incompatibili_dict)
         if os.path.basename(os.getcwd()) == "PS-VRP":
-            df_incompatibili.to_excel( os.getcwd() + '/Dati_output/[ERROR]-incompatibilità.xlsx', index=False)
+            df_incompatibili.to_excel( os.getcwd() + '/Dati_output/Problemi_incompatibilità.xlsx', index=False)
         elif os.path.basename(os.getcwd()) == "progettoIS":
-            df_incompatibili.to_excel( os.getcwd() + '/PS-VRP/Dati_output/[ERROR]-incompatibilità.xlsx', index=False)
+            df_incompatibili.to_excel( os.getcwd() + '/PS-VRP/Dati_output/Problemi_incompatibilità.xlsx', index=False)
         else:
             print("ERRORE: la directory di output degli errori compatibilità non è correttamente impostata")
     return incompatibili_dict
