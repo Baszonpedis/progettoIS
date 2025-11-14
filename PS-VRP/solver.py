@@ -695,7 +695,7 @@ def insert_intra(lista_macchine: list, f_obj):
                                 0
                             )
                             ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
-                            check_LS(check, s[-1], schedula[k])
+                            check = check_LS(check, s[-1], schedula[k])
 
                         for k in range(1, len(s)):
                             delta_ritardo += (-s[k]['ritardo mossa'] + s[k]['ritardo']) / s[k]['priorita']
@@ -801,7 +801,7 @@ def swap_intra(lista_macchine, f_obj):
                                 0
                             )
                             ultima_lavorazione += tempo_setup_commessa + tempo_processamento_commessa
-                            check_LS(check,s[-1],schedula[k])
+                            check = check_LS(check,s[-1],schedula[k])
 
                         for k in range(1, len(s)):
                             delta_ritardo += (-s[k]['ritardo mossa'] + s[k]['ritardo']) / s[k]['priorita']
