@@ -112,6 +112,7 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
             commessa.ritardo = min(veicolo.data_partenza - fine_lavorazione, timedelta(days = 0))
     elif commessa.veicolo != None: #commesse interne zona aperta
         commessa.ritardo = min(max(veicolo.data_partenza, commessa.due_date) - fine_lavorazione, timedelta(days = 0))
+        '''commessa.ritardo = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0))'''
     else: #commesse rimanenti (senza veicolo assegnato / gruppo 3)
         commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0)) 
         #commessa.ritardo = timedelta(days = 0) #se non si considera il loro ritardo
@@ -181,7 +182,7 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
 
 #Serve a ricostruire le soluzioni nelle ricerche locali
 #NB: Funzione modificata introducento il concetto di ritardo e ritardomossa
-def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, minuti_processamento, minuti_fine_ultima_commessa, inizio_schedulazione, schedulazione, tipo):
+def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, minuti_processamento, minuti_fine_ultima_commessa, inizio_schedulazione, schedulazione, lista_veicoli):
     id=commessa.id_commessa
     macchina_lavorazione=macchina.nome_macchina
     release_date=commessa.release_date
@@ -211,7 +212,14 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
         else: #tassative interne corrette
             ritardomossa = min(veicolo.data_partenza - data_fine_lavorazione, timedelta(days = 0))
     elif veicolo != None: #interne zona aperta
-        ritardomossa = min(max(veicolo.data_partenza,commessa.due_date) - data_fine_lavorazione, timedelta(days = 0))
+        ritardomossa = min(veicolo.data_partenza - data_fine_lavorazione, timedelta(days = 0))
+        '''if ritardomossa != 0:
+            veicoli_feasible = [v for v in lista_veicoli if (v.zone_coperte in commessa.zona_cliente)]
+            for v in veicoli_feasible:
+                if commessa.data_fine_lavorazione <= v.data_partenza and v.capacita >= commessa.kg_da_tagliare:
+                    veicolo = v
+        ritardomossa = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0)) #E' ricalcolato come questo valore in tutti i casi; andrebbe cambiato anche nei ritardi normali
+        '''
     else: #altre (serve se la funzione dovesse essere mai chiamata anche su commesse solo su macchina, del gruppo 3)
         ritardomossa = min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0))
         #ritardomossa = timedelta(days = 0)
@@ -604,10 +612,16 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                         for comm in macchina1.lista_commesse_processate:
                             if comm.id_commessa == entry['commessa']:
                                 comm.ritardo = entry['ritardo mossa']
+                                #QUI SERVE AGGIORNARE IL VEICOLO PRECEDENTE (RI-AGGIUNGERE CAPACITA' PARI A KG DA TAGLIARE PER COMMESSA PROCESSATA)
+                                #comm.veicolo = entry['veicolo'] #Questo aggiorna il veicolo attuale
+                                #QUI SERVE AGGIORNARE IL VEICOLO ATTUALE (TOGLIERE CAPACITA' PARIA  KG DA TAGLIARE PER COMMESSA PROCESSATA)
                     for entry in s2:
                         for comm in macchina2.lista_commesse_processate:
                             if comm.id_commessa == entry['commessa']:
                                 comm.ritardo = entry['ritardo mossa']
+                                #QUI SERVE AGGIORNARE IL VEICOLO PRECEDENTE (RI-AGGIUNGERE CAPACITA' PARI A KG DA TAGLIARE PER COMMESSA PROCESSATA)
+                                #comm.veicolo = entry['veicolo'] #Questo aggiorna il veicolo attuale
+                                #QUI SERVE AGGIORNARE IL VEICOLO ATTUALE (TOGLIERE CAPACITA' PARIA  KG DA TAGLIARE PER COMMESSA PROCESSATA)
                     improved=True #miglioramento trovato
                     f_best+=delta_setup #aggiorno funzione obiettivo
                     contatore+=1
