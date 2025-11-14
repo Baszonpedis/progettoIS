@@ -111,8 +111,8 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
         else: #commesse interne tassative correttamente inserite in estrazione
             commessa.ritardo = min(veicolo.data_partenza - fine_lavorazione, timedelta(days = 0))
     elif commessa.veicolo != None: #commesse interne zona aperta
-        commessa.ritardo = min(max(veicolo.data_partenza, commessa.due_date) - fine_lavorazione, timedelta(days = 0))
-        '''commessa.ritardo = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0))'''
+        ##OLD - commessa.ritardo = min(max(veicolo.data_partenza, commessa.due_date) - fine_lavorazione, timedelta(days = 0))
+        commessa.ritardo = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0))
     else: #commesse rimanenti (senza veicolo assegnato / gruppo 3)
         commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0)) 
         #commessa.ritardo = timedelta(days = 0) #se non si considera il loro ritardo
@@ -213,8 +213,10 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
             ritardomossa = min(veicolo.data_partenza - data_fine_lavorazione, timedelta(days = 0))
     elif veicolo != None: #interne zona aperta
         ritardomossa = min(veicolo.data_partenza - data_fine_lavorazione, timedelta(days = 0))
-        '''if ritardomossa != 0:
+        ''' Quanto a seguito sarebbe meglio definirlo in una funzione, che prenda in input lista_veicoli
+        if ritardomossa != 0:
             veicoli_feasible = [v for v in lista_veicoli if (v.zone_coperte in commessa.zona_cliente)]
+            #Piuttosto che questo sarebbe meglio creare una lista di veicoli_compatible e prendere quello con data minore
             for v in veicoli_feasible:
                 if commessa.data_fine_lavorazione <= v.data_partenza and v.capacita >= commessa.kg_da_tagliare:
                     veicolo = v
