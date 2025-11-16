@@ -137,6 +137,9 @@ tot_time_eur = end_time_eur - start_time_eur
 lista_macchine_copy = deepcopy(lista_macchine)
 lista_macchine_copy1 = deepcopy(lista_macchine)
 lista_macchine_copy2 = deepcopy(lista_macchine)
+lista_veicoli_copy = deepcopy(lista_veicoli)
+lista_veicoli_copy1 = deepcopy(lista_veicoli)
+lista_veicoli_copy2 = deepcopy(lista_veicoli)
 
 ## RICERCHE LOCALI (su primo euristico)
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
@@ -149,7 +152,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS1 (Insert inter-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start1 = time.time()
-soluzione1, f1, contatoreLS1, f1_ritardo, ritardo_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy, f_obj3)
+soluzione1, f1, contatoreLS1, f1_ritardo, ritardo_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy, f_obj3, lista_veicoli_copy)
 #print(f1)
 print(f"{Fore.YELLOW}Risultato LS1 (setup): ottenuto {f1-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-f1_ritardo + f_obj3_ritardo} ore di ritardo")
@@ -158,43 +161,12 @@ print(f"Mosse LS1: {contatoreLS1}")
 tot1 = time.time() - start1
 #solver.grafico_schedulazione(soluzione1)
 
-# M
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS2 (Insert intra-macchina)")
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-
-start_time_move = time.time()
-soluzione2, f2, contatoreLS2, f2_ritardo, ritardo_pesato_2 = solver.insert_intra(lista_macchine_copy1, f_obj3)
-#soluzione_move = [b for a in soluzione2 for b in a]
-#print(f2)
-print(f"{Fore.YELLOW}Risultato LS2 (setup): ottenuto {f2-f_obj3} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS2 (consegna): ottenuto {-f2_ritardo+f_obj3_ritardo} ore di ritardo")
-print(f"Mosse LS2: {contatoreLS2}")
-#output.write_output_soluzione_euristica(soluzione2, os.getcwd() + '/Dati_output/insert_intra.xlsx')
-tot2 = time.time() - start_time_move
-#solver.grafico_schedulazione(soluzione2)
-
-# S
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS3 (Swap intra-macchina)")
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-
-start_time_swap = time.time()
-soluzione3, f3, contatoreLS3, f3_ritardo, ritardo_pesato_3 = solver.swap_intra(lista_macchine_copy2, f_obj3)
-#print(f3)
-#soluzione_swap = [b for a in soluzione3 for b in a]
-print(f"{Fore.YELLOW}Risultato LS3 (setup): ottenuto {f3-f_obj3} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS3 (consegna): ottenuto {-f3_ritardo+f_obj3_ritardo} ore di ritardo")
-print(f"Mosse LS3: {contatoreLS3}")
-#output.write_output_soluzione_euristica(soluzione3, os.getcwd() + '/Dati_output/swap_intra.xlsx')
-tot3 = time.time() - start_time_swap
-
-# SEQUENZA PARZIALE
+# INSERT INTRA (Sequenza Parziale)
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2 (sequenza parziale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_tot = time.time()
-soluzione4, f4, contatoreLS2, f4_ritardo, ritardo_pesato_4 = solver.insert_intra(lista_macchine_copy, f1)
+soluzione4, f4, contatoreLS2, f4_ritardo, ritardo_pesato_4 = solver.insert_intra(lista_macchine_copy, f1, lista_veicoli_copy)
 print(f'Mosse LS1+LS2: {contatoreLS1+contatoreLS2}')
 #soluzione_parziale = [b for a in soluzione4 for b in a]
 #print(f4)
@@ -203,11 +175,11 @@ print(f'Mosse LS1+LS2: {contatoreLS1+contatoreLS2}')
 print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto {f4-f1} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-f4_ritardo+f1_ritardo} ore di ritardo")
 
-# SEQUENZA COMPLETA
+# INSERT INTER (Sequenza Finale)
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2+LS3 (sequenza finale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-soluzione5, f5, contatoreLS3, f5_ritardo, ritardo_pesato_5 = solver.swap_intra(lista_macchine_copy, f4)
+soluzione5, f5, contatoreLS3, f5_ritardo, ritardo_pesato_5 = solver.swap_intra(lista_macchine_copy, f4, lista_veicoli_copy)
 print(f'Mosse LS1+LS2+LS3: {contatoreLS1+contatoreLS2+contatoreLS3}')
 #soluzione_sequenza = [b for a in soluzione5 for b in a]
 #print(f5_ritardo)
@@ -225,6 +197,7 @@ fprimo = f5
 fritardoprimo = f5_ritardo
 ritardo_pesato_primo = ritardo_pesato_5
 macchine_post = lista_macchine_copy
+#veicoli_post = lista_veicoli_copy
 soluzionebasepost = soluzione5
 
 # EURISTICO NUOVO (gruppo3)
@@ -232,8 +205,8 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G3)".center(40))
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
 ritardo5 = -f5_ritardo.total_seconds()/3600 
-ritardo2 = -f2_ritardo.total_seconds()/3600
-ritardo3 = -f3_ritardo.total_seconds()/3600
+#ritardo2 = -f2_ritardo.total_seconds()/3600
+#ritardo3 = -f3_ritardo.total_seconds()/3600
 
 start_time_post = time.time()
 soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato, commesse_fallite = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
@@ -257,7 +230,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}LS1[G3] (Insert inter-macchina)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start1_post = time.time()
-soluzione1post, f1post, contatoreLS1post, f1_ritardo_post, ritardo_post_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy3, fpost)
+soluzione1post, f1post, contatoreLS1post, f1_ritardo_post, ritardo_post_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy3, fpost, lista_veicoli)
 #print(f1post)
 print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (setup): ottenuto {f1post-fpost} minuti di setup")
 #print(f1_ritardo_post)
@@ -266,36 +239,12 @@ print(f"Mosse LS1 - post: {contatoreLS1post}")
 #output.write_output_soluzione_euristica(soluzione1post, os.getcwd() + '/Dati_output/insert_inter_post.xlsx')
 tot1_post = time.time() - start1_post
 
-# INSERT-INTRA - Bis
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}Insert Intra Bis")
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-start_time_tot_post = time.time()
-soluzione2post, f2post, contatoreLS2post, f2_ritardo_post, ritardo_post_pesato_2 = solver.insert_intra(lista_macchine_copy4, fpost)
-print(f'Mosse LS1+LS2 - post: {contatoreLS2post}')
-#solver.grafico_schedulazione(soluzione2post)
-#output.write_output_soluzione_euristica(soluzione2post, os.getcwd() + '/Dati_output/insert_intra_post.xlsx')
-print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (setup): ottenuto {f2post-fpost} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f2_ritardo_post+fpost_ritardo} ore di ritardo")
-
-# SWAP-INTRA - Bis
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}Swap Intra Bis")
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-start_time_tot_post = time.time()
-soluzione3post, f3post, contatoreLS3post, f3_ritardo_post, ritardo_post_pesato_3 = solver.swap_intra(lista_macchine_copy5, fpost)
-print(f'Mosse LS1+LS2 - post: {contatoreLS3post}')
-#solver.grafico_schedulazione(soluzione_swap_post)
-#output.write_output_soluzione_euristica(soluzione3post, os.getcwd() + '/Dati_output/swap_intra_post.xlsx')
-print(f"{Fore.YELLOW}Risultato LS3[LS[G1+G2]+G3] (setup): ottenuto {f3post-fpost} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS3[LS[G1+G2]+G3] (consegna): ottenuto {-f3_ritardo_post+fpost_ritardo} ore di ritardo")
-
 # SEQUENZA PARZIALE
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}LS1+LS2[LS[G1+G2]+G3] (sequenza parziale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 start_time_tot_post = time.time()
-soluzione4post, f4post, contatoreLS2post, f4_ritardo_post, ritardo_post_pesato_4 = solver.insert_intra(lista_macchine_copy3, f1post)
+soluzione4post, f4post, contatoreLS2post, f4_ritardo_post, ritardo_post_pesato_4 = solver.insert_intra(lista_macchine_copy3, f1post, lista_veicoli)
 print(f'Mosse LS1+LS2 - post: {contatoreLS1post+contatoreLS2post}')
 #solver.grafico_schedulazione(soluzione4post)
 print(f'f4 {f4post}, f1 {f1post}')
@@ -307,7 +256,7 @@ print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f4_r
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 print(f"{Fore.CYAN}{Style.BRIGHT}LS[LS[G1+G2]+G3] (sequenza finale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-soluzione5post, f5post, contatoreLS3post, f5_ritardo_post, ritardo_post_pesato_5 = solver.swap_intra(lista_macchine_copy3, f4post)
+soluzione5post, f5post, contatoreLS3post, f5_ritardo_post, ritardo_post_pesato_5 = solver.swap_intra(lista_macchine_copy3, f4post, lista_veicoli)
 print(f'Mosse LS1+LS2+LS3 - post: {contatoreLS1post+contatoreLS2post+contatoreLS3post}')
 #soluzione_sequenza_post = [b for a in soluzione5post for b in a]
 print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (setup): ottenuto {f5post-f4post} minuti di setup")
@@ -344,8 +293,6 @@ elif os.path.basename(os.getcwd()) == "progettoIS":
     output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
 
 ritardo1 = -f1_ritardo_post.total_seconds()/3600
-ritardo2 = -f2_ritardo_post.total_seconds()/3600
-ritardo3 = -f3_ritardo_post.total_seconds()/3600
 
 #Soluzione finale secondo euristico
 fprimopost = f5post
@@ -373,12 +320,15 @@ fobest = alfa*fprimopost -((1-alfa)*(ritardo_pesato_post_primo.total_seconds()/3
 fritardobest = fritardoprimopost
 fritardopesatobest = ritardo_pesato_post_primo
 soluzionebest = soluzionefinale
+veicoli_best = deepcopy(lista_veicoli)
 
 for _ in range(iter):
     print("\n" + "="*24)
     print(f"|||ITERAZIONE: {_} / {iter}|||")
     print("="*24 + "\n")
+
     #NB: gli input sono ricalcolati a ogni iterazione; non è ottimale ma è per evitare problemi con le due strutture dati utilizzate
+    #NB2: questo si dimostra particolarmente conveniente nella nuova logica di veicoli
     lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
     read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
     inizio_schedulazione=lista_macchine[0].data_inizio_schedulazione
@@ -408,30 +358,17 @@ for _ in range(iter):
 
     ## RICERCHE LOCALI (su primo euristico)
     start1 = time.time()
-    soluzione1, f1, contatoreLS1, f1_ritardo, ritardo_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy, f_obj3)
+    soluzione1, f1, contatoreLS1, f1_ritardo, ritardo_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy, f_obj3, lista_veicoli)
     #output.write_output_soluzione_euristica(soluzione1, os.getcwd() +'/Dati_output/insert_inter.xlsx')
     tot1 = time.time() - start1
 
-    # M
-    start_time_move = time.time()
-    soluzione2, f2, contatoreLS2, f2_ritardo, ritardo_pesato_2 = solver.insert_intra(lista_macchine_copy1, f_obj3)
-    #output.write_output_soluzione_euristica(soluzione2, os.getcwd() + '/Dati_output/insert_intra.xlsx')
-    tot2 = time.time() - start_time_move
-    #solver.grafico_schedulazione(soluzione2)
-
-    # S
-    start_time_swap = time.time()
-    soluzione3, f3, contatoreLS3, f3_ritardo, ritardo_pesato_3 = solver.swap_intra(lista_macchine_copy2, f_obj3)
-    #output.write_output_soluzione_euristica(soluzione3, os.getcwd() + '/Dati_output/swap_intra.xlsx')
-    tot3 = time.time() - start_time_swap
-
     # SEQUENZA PARZIALE
     start_time_tot = time.time()
-    soluzione4, f4, contatoreLS2, f4_ritardo, ritardo_pesato_4 = solver.insert_intra(lista_macchine_copy, f1)
+    soluzione4, f4, contatoreLS2, f4_ritardo, ritardo_pesato_4 = solver.insert_intra(lista_macchine_copy, f1, lista_veicoli)
     #output.write_output_soluzione_euristica(soluzione4, os.getcwd() + '/Dati_output/sequenza_parziale.xlsx')
 
     # SEQUENZA COMPLETA
-    soluzione5, f5, contatoreLS3, f5_ritardo, ritardo_pesato_5 = solver.swap_intra(lista_macchine_copy, f4)
+    soluzione5, f5, contatoreLS3, f5_ritardo, ritardo_pesato_5 = solver.swap_intra(lista_macchine_copy, f4, lista_veicoli)
     #output.write_output_soluzione_euristica(soluzione5, os.getcwd() + '/Dati_output/sequenza.xlsx')
     tot_tot = time.time() - start_time_tot
 
@@ -444,8 +381,6 @@ for _ in range(iter):
 
     # EURISTICO NUOVO (gruppo3)
     ritardo5 = -f5_ritardo.total_seconds()/3600 
-    ritardo2 = -f2_ritardo.total_seconds()/3600
-    ritardo3 = -f3_ritardo.total_seconds()/3600
 
     start_time_post = time.time()
     soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato, commesse_fallite = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
@@ -463,33 +398,18 @@ for _ in range(iter):
 
     # M2M - Bis
     start1_post = time.time()
-    soluzione1post, f1post, contatoreLS1post, f1_ritardo_post, ritardo_post_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy3, fpost)
+    soluzione1post, f1post, contatoreLS1post, f1_ritardo_post, ritardo_post_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy3, fpost, lista_veicoli)
     #output.write_output_soluzione_euristica(soluzione1post, os.getcwd() + '/Dati_output/insert_inter_post.xlsx')
     tot1_post = time.time() - start1_post
 
-    # INSERT-INTRA - Bis
-    start_time_tot_post = time.time()
-    soluzione2post, f2post, contatoreLS2post, f2_ritardo_post, ritardo_post_pesato_2 = solver.insert_intra(lista_macchine_copy4, fpost)
-    #solver.grafico_schedulazione(soluzione2post)
-
-    # SWAP-INTRA - Bis
-    start_time_tot_post = time.time()
-    soluzione3post, f3post, contatoreLS3post, f3_ritardo_post, ritardo_post_pesato_3 = solver.swap_intra(lista_macchine_copy5, fpost)
-    #solver.grafico_schedulazione(soluzione_swap_post)
-
     # SEQUENZA PARZIALE
     start_time_tot_post = time.time()
-    soluzione4post, f4post, contatoreLS2post, f4_ritardo_post, ritardo_post_pesato_4 = solver.insert_intra(lista_macchine_copy3, f1post)
-    #solver.grafico_schedulazione(soluzione4post)
+    soluzione4post, f4post, contatoreLS2post, f4_ritardo_post, ritardo_post_pesato_4 = solver.insert_intra(lista_macchine_copy3, f1post, lista_veicoli)
 
     # SEQUENZA COMPLETA
-    soluzione5post, f5post, contatoreLS3post, f5_ritardo_post, ritardo_post_pesato_5 = solver.swap_intra(lista_macchine_copy3, f4post)
-
+    soluzione5post, f5post, contatoreLS3post, f5_ritardo_post, ritardo_post_pesato_5 = solver.swap_intra(lista_macchine_copy3, f4post, lista_veicoli)
     tot_tot_post = time.time() - start_time_tot_post
-
     ritardo1 = -f1_ritardo_post.total_seconds()/3600
-    ritardo2 = -f2_ritardo_post.total_seconds()/3600
-    ritardo3 = -f3_ritardo_post.total_seconds()/3600
 
     #Soluzione finale secondo euristico
     fprimopost = f5post
@@ -510,6 +430,7 @@ for _ in range(iter):
         fritardopesatobest = ritardo_pesato_post_primo #aggiornamento funzione obiettivo solo ritardo pesato
         fobest = fo #aggiornamento funzione obiettivo setup+ritardi pesati
         soluzionebest = soluzionefinale #aggiornamento soluzione
+        veicoli_best = deepcopy(lista_veicoli)
 
         #Output di errore 1 - veicoli problematici
             #write_output a seguito
@@ -546,6 +467,7 @@ for _ in range(iter):
             output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
             output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
             output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
+
 
 print(f"{Fore.YELLOW}SETUP (BEST SOLUTION): {fbest:.2f}s")
 print(f"{Fore.YELLOW}RITARDO (BEST SOLUTION): {-fritardobest} ore")

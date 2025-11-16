@@ -4,7 +4,8 @@ class Veicolo():
         self.capacita=capacita
         self.zone_coperte=zone_coperte
         self.data_partenza=data_partenza
-
+        self.temp_capacity=capacita #Parametro temporaneo per uso nelle ricerche locali
+        
     def set_data_partenza(self,data):
         self.data_partenza=data
         '''funzione per inizializzare set e get
