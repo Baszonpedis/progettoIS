@@ -153,6 +153,7 @@ print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 
 start1 = time.time()
 soluzione1, f1, contatoreLS1, f1_ritardo, ritardo_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy, f_obj3, lista_veicoli_copy)
+
 #print(f1)
 print(f"{Fore.YELLOW}Risultato LS1 (setup): ottenuto {f1-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-f1_ritardo + f_obj3_ritardo} ore di ritardo")

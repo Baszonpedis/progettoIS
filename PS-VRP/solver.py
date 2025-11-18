@@ -232,14 +232,12 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
                 commessa.veicolo.temp_capacity += commessa.kg_da_tagliare
                 veicolo = None
                 ritardomossa = -timedelta(days = 10000) #Vincolo hard a non compiere mosse che mandano in ritardo veicoli se non si hanno alternative
-        if veicolo != None:
+        if veicolo is not None: #Questo se non si entra nell'if precedente o se ci si entra e se ne esce con un veicolo
             ritardomossa = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0))
-        else:
-            ritardomossa = -timedelta(days = 10000) #Vincolo hard a non compiere mosse che mandano in ritardo veicoli se non si hanno alternative
 
     else: #altre (serve se la funzione dovesse essere mai chiamata anche su commesse solo su macchina, del gruppo 3)
         ritardomossa = min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0))
-        #ritardomossa = timedelta(days = 0)
+
     schedulazione.append({"commessa": id,
                           "macchina": macchina_lavorazione,
                           "release date": release_date,
@@ -637,6 +635,7 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                         for comm in macchina1.lista_commesse_processate:
                             if comm.id_commessa == entry['commessa']:
                                 comm.ritardo = entry['ritardo mossa']
+                                comm.veicolo = entry['veicolo']
                                 '''if (comm.veicolo is None and entry['veicolo'] is not None) or \
                                 (comm.veicolo is not None and entry['veicolo'] is None) or \
                                 (comm.veicolo is not None and entry['veicolo'] is not None and comm.veicolo.nome != entry['veicolo'].nome):
@@ -650,12 +649,13 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                         for comm in macchina2.lista_commesse_processate:
                             if comm.id_commessa == entry['commessa']:
                                 comm.ritardo = entry['ritardo mossa']
+                                comm.veicolo = entry['veicolo']
                                 '''if (comm.veicolo is None and entry['veicolo'] is not None) or \
                                 (comm.veicolo is not None and entry['veicolo'] is None) or \
                                 (comm.veicolo is not None and entry['veicolo'] is not None and comm.veicolo.nome != entry['veicolo'].nome):
-                                    print(f'Il veicolo della commessa {comm.id_commessa} è cambiato! Prima era {comm.veicolo.nome if comm.veicolo is not None else comm.veicolo} con capacità {comm.veicolo.capacita if comm.veicolo is not None else comm.veicolo} e temporanea {comm.veicolo.temp_capacity if comm.veicolo is not None else comm.veicolo}; ora è ...')
-                                    comm.veicolo = entry['veicolo']
-                                    print(f'... {comm.veicolo.nome if comm.veicolo is not None else comm.veicolo}, con capacità {comm.veicolo.capacita if comm.veicolo is not None else comm.veicolo} e capacità temporanea {comm.veicolo.temp_capacity if comm.veicolo is not None else comm.veicolo}')
+                                    #print(f'Il veicolo della commessa {comm.id_commessa} è cambiato! Prima era {comm.veicolo.nome if comm.veicolo is not None else comm.veicolo} con capacità {comm.veicolo.capacita if comm.veicolo is not None else comm.veicolo} e temporanea {comm.veicolo.temp_capacity if comm.veicolo is not None else comm.veicolo}; ora è ...')
+                                   #comm.veicolo = entry['veicolo']
+                                    #print(f'... {comm.veicolo.nome if comm.veicolo is not None else comm.veicolo}, con capacità {comm.veicolo.capacita if comm.veicolo is not None else comm.veicolo} e capacità temporanea {comm.veicolo.temp_capacity if comm.veicolo is not None else comm.veicolo}')
                                 '''
                                 if comm.veicolo is not None:
                                     comm.veicolo.capacita = comm.veicolo.temp_capacity
@@ -947,6 +947,8 @@ def calcolo_delta(delta_setup,delta_ritardo):
     #Unità di misura: minuti
     delta_ritardo = delta_ritardo.total_seconds()/60
     delta = alfa*delta_setup+(1-alfa)*delta_ritardo
+
+    #print(f'delta ritardo pesato {delta_ritardo}, delta_setup {delta_setup}, {alfa}; ergo setup weighted {alfa*delta_setup}; ritardo weighted {(1-alfa)*delta_ritardo}; prevale {alfa * delta_setup if alfa * delta_setup > (1 - alfa) * delta_ritardo else (1 - alfa) * delta_ritardo}')
 
     return delta
 
