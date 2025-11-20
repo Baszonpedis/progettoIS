@@ -531,18 +531,9 @@ def insert_inter_macchina(lista_macchine: list, f_obj, lista_veicoli):
     
     ritardo_cumul = timedelta(days = 0)
     ritardo_cumul_pesato = timedelta(days = 0)
-    #for i in schedulazione:
-    #    print(i['commessa'])
-    #    print(i['veicolo'])
-    #    print(i['ritardo'])
     for commessa in schedulazione:
         ritardo_cumul += commessa['ritardo']
         ritardo_cumul_pesato += commessa['ritardo'] / commessa['priorita']
-
-    #print("Numero di entries in schedulazione:", len(schedulazione))
-    #unique_ids = len(set([c['commessa'] for c in schedulazione]))
-    #print("Commessa uniche:", unique_ids)
-    
     return schedulazione,f_best,contatoreLS1,ritardo_cumul,ritardo_cumul_pesato
 
 #Usato da insert_inter_macchina (Ricerca locale 1 - utility)
@@ -918,28 +909,26 @@ def swap_intra(lista_macchine, f_obj, lista_veicoli):
 
     return soluzione_swap, f_best, contatoreLS3, ritardo_cumul, ritardo_cumul_pesato
 
-def check_LS(check, commessa1, commessa):
+def check_LS(check, commessa_dict, commessa_obj):
     '''
     Funzione utility per fare controlli di validità (check) nelle varie ricerche locali
-    commessa - commessa memorizzata come oggetto di una classe
-    commessa1 - stessa commessa memorizzata come dizionario di una lista
+    commessa_obj - commessa memorizzata come oggetto di una classe
+    commessa_dict - stessa commessa memorizzata come dizionario di una lista
     '''
-    if commessa.tassativita == "X": #tassative
-        if 0 in commessa.zona_cliente: #tassative esterne
-            if commessa1["inizio_lavorazione"] < commessa.release_date:
+    if commessa_obj.tassativita == "X": #tassative
+        if 0 in commessa_obj.zona_cliente: #tassative esterne
+            if commessa_dict["inizio_lavorazione"] < commessa_obj.release_date:
                 check = False
-            if commessa.ritardo / commessa.priorita_cliente > commessa1["ritardo mossa"] / commessa1["priorita"]:
+            if commessa_obj.ritardo / commessa_obj.priorita_cliente > commessa_dict["ritardo mossa"] / commessa_dict["priorita"]:
                 check = False
         else: #tassative interne
-            if commessa1["inizio_lavorazione"] < commessa.release_date:
+            if commessa_dict["inizio_lavorazione"] < commessa_obj.release_date:
                 check = False
-            if commessa.ritardo / commessa.priorita_cliente > commessa1["ritardo mossa"] / commessa1["priorita"]:
+            if commessa_obj.ritardo / commessa_obj.priorita_cliente > commessa_dict["ritardo mossa"] / commessa_dict["priorita"]:
                 check = False
     else: #non tassative
-        if commessa1["inizio_lavorazione"] < commessa.release_date:
+        if commessa_dict["inizio_lavorazione"] < commessa_obj.release_date:
             check = False
-        #if commessa.ritardo > commessa1["ritardo mossa"]:
-        #    check = False
     return check
 
 def calcolo_delta(delta_setup,delta_ritardo):
@@ -953,11 +942,14 @@ def calcolo_delta(delta_setup,delta_ritardo):
     Non dovrebbero essere necessari aggiustamenti, in quanto delta_ritardo e delta_setup hanno stesso ordine di grandezza.
     '''
 
-    #Unità di misura: minuti
-    delta_ritardo = delta_ritardo.total_seconds()/60
+    '''Unità di misura:
+    - minuti (delta_setup)
+    - ore [pesate] (delta_ritardo)
+    Si può eventualmente cambiare; dipende dall'importanza relativa che si dà; un test estensivo sull'estrazione di Settembre 2025
+    mostra però che convenga di più mantenere questo "sbilancio" tra unità di misura, piuttosto che considerare entrambe in minuti
+    '''
+    delta_ritardo = delta_ritardo.total_seconds()/3600
     delta = alfa*delta_setup+(1-alfa)*delta_ritardo
-
-    #print(f'delta ritardo pesato {delta_ritardo}, delta_setup {delta_setup}, {alfa}; ergo setup weighted {alfa*delta_setup}; ritardo weighted {(1-alfa)*delta_ritardo}; prevale {alfa * delta_setup if alfa * delta_setup > (1 - alfa) * delta_ritardo else (1 - alfa) * delta_ritardo}')
 
     return delta
 
@@ -1000,11 +992,7 @@ def GRASP_randomizer(lista_commesse):
             #print(cost)
         return lista_commesse_randomized
 
-        
-#GRAFICAZIONE
-#import mplcursors
-
-#Graficazione
+#GRAFICO
 import matplotlib.pyplot as plt
 from matplotlib.text import Annotation
 from datetime import timedelta
