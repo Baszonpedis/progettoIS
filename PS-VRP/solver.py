@@ -167,7 +167,8 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
     #liste per tenere traccia delle commesse scartate da reinserire solo sulle macchine (anche se non schedulabili sui veicoli)
     commesse_zona_chiusa = [c for c in lista_commesse if c not in commesse_da_tagliare and 0 not in c.zona_cliente and c.tassativita != "X"]
     commesse_veicolo_incompatibile = [c for c in commesse_da_tagliare if c not in commesse_da_schedulare]
-    commesse_scartate = commesse_zona_chiusa + commesse_veicolo_incompatibile + commesse_esterne_non_tassative
+    commesse_scartate = commesse_zona_chiusa + commesse_veicolo_incompatibile #+ commesse_esterne_non_tassative
+    commesse_da_schedulare += commesse_esterne_non_tassative #Nuova logica
 
     #dizionari per tenere traccia dei filtraggi e relativi ragioni
     dizionario_filtri = {
@@ -175,7 +176,7 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
         for commessa in commesse_zona_chiusa},
         **{commessa.id_commessa: "La commessa non può essere schedulata in quanto il veicolo non è compatibile"
         for commessa in commesse_veicolo_incompatibile},
-        **{commessa.id_commessa: "La commessa non può essere schedulata in quanto è esterna ma non tassativa"
+        **{commessa.id_commessa: "La commessa è esterna ma non tassativa"
         for commessa in commesse_esterne_non_tassative}
     }
     return commesse_da_schedulare, dizionario_filtri, commesse_scartate
@@ -351,9 +352,6 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     #se beta = 0, la lista commesse_da_schedulare non viene cambiata rispetto al sort iniziale
     commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
 
-    #for i in commesse_da_schedulare:
-    #    print(i.id_commessa)
-
     #SECONDO CICLO WHILE
     #Provo a inserire tutte le commesse interne a zona aperta (su macchine e veicoli)
     while len(commesse_da_schedulare)>0 and len(lista_macchine)>0:
@@ -390,6 +388,8 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
                                     schedulazione_eseguita=True
                                     f_obj+=tempo_setup
                                     aggiorna_schedulazione(commessa2,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,schedulazione,macchina._minuti_fine_ultima_lavorazione,0)
+                                    f_obj_ritardo+=commessa2.ritardo
+                                    f_obj_ritardo_pesato+=commessa2.ritardo/commessa2.priorita_cliente
                                     commesse_da_schedulare.remove(commessa2)
                         break
                     #elif veicolo.capacita < commessa.kg_da_tagliare:
@@ -528,14 +528,23 @@ def insert_inter_macchina(lista_macchine: list, f_obj, lista_veicoli):
             for pos in range(1,len(m.lista_commesse_processate)):
                 tempo_setup_commessa=m.calcolo_tempi_setup(m.lista_commesse_processate[pos-1],m.lista_commesse_processate[pos])
                 tempo_processamento_commessa=m.lista_commesse_processate[pos].metri_da_tagliare/m.velocita_taglio_media
-                #ritardo_totale_ore += int(m.lista_commesse_processate[pos].ritardo.total_seconds() / 3600)
                 aggiorna_schedulazione(m.lista_commesse_processate[pos], m, tempo_setup_commessa, tempo_processamento_commessa, inizio_schedulazione, schedulazione, ultima_lavorazione,1)
                 ultima_lavorazione = ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa
+    
     ritardo_cumul = timedelta(days = 0)
     ritardo_cumul_pesato = timedelta(days = 0)
+    #for i in schedulazione:
+    #    print(i['commessa'])
+    #    print(i['veicolo'])
+    #    print(i['ritardo'])
     for commessa in schedulazione:
         ritardo_cumul += commessa['ritardo']
         ritardo_cumul_pesato += commessa['ritardo'] / commessa['priorita']
+
+    #print("Numero di entries in schedulazione:", len(schedulazione))
+    #unique_ids = len(set([c['commessa'] for c in schedulazione]))
+    #print("Commessa uniche:", unique_ids)
+    
     return schedulazione,f_best,contatoreLS1,ritardo_cumul,ritardo_cumul_pesato
 
 #Usato da insert_inter_macchina (Ricerca locale 1 - utility)
@@ -634,7 +643,8 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                     for entry in s1:
                         for comm in macchina1.lista_commesse_processate:
                             if comm.id_commessa == entry['commessa']:
-                                comm.ritardo = entry['ritardo mossa']
+                                #print(f'{comm.ritardo-entry['ritardo mossa']}')
+                                #comm.ritardo = entry['ritardo mossa']
                                 comm.veicolo = entry['veicolo']
                                 '''if (comm.veicolo is None and entry['veicolo'] is not None) or \
                                 (comm.veicolo is not None and entry['veicolo'] is None) or \
@@ -648,7 +658,8 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                     for entry in s2:
                         for comm in macchina2.lista_commesse_processate:
                             if comm.id_commessa == entry['commessa']:
-                                comm.ritardo = entry['ritardo mossa']
+                                #print(f'{comm.ritardo-entry['ritardo mossa']}')
+                                #comm.ritardo = entry['ritardo mossa']
                                 comm.veicolo = entry['veicolo']
                                 '''if (comm.veicolo is None and entry['veicolo'] is not None) or \
                                 (comm.veicolo is not None and entry['veicolo'] is None) or \

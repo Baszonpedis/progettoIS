@@ -127,6 +127,7 @@ print(f"\n{Fore.RED}{Style.BRIGHT}COMMESSE NON SCHEDULATE AL PRIMO EURISTICO (su
 print(f"{Fore.RED}Dettaglio motivi: {commesse_non_schedulate}")
 print(f"\n{Fore.YELLOW}Funzione obiettivo euristico (setup): {f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Funzione obiettivo euristico (consegna): {-f_obj3_ritardo} ore di ritardo\n")
+print(f"{Fore.YELLOW}Funzione obiettivo euristico (consegna): {-f_obj3_ritardo_pesato} ore di ritardo pesato\n")
 
 end_time_eur = time.time()
 tot_time_eur = end_time_eur - start_time_eur
@@ -157,6 +158,7 @@ soluzione1, f1, contatoreLS1, f1_ritardo, ritardo_pesato_1 = solver.insert_inter
 #print(f1)
 print(f"{Fore.YELLOW}Risultato LS1 (setup): ottenuto {f1-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-f1_ritardo + f_obj3_ritardo} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-ritardo_pesato_1 + f_obj3_ritardo_pesato} ore di ritardo pesato")
 print(f"Mosse LS1: {contatoreLS1}")
 #output.write_output_soluzione_euristica(soluzione1, os.getcwd() +'/Dati_output/insert_inter.xlsx')
 tot1 = time.time() - start1
@@ -175,6 +177,7 @@ print(f'Mosse LS1+LS2: {contatoreLS1+contatoreLS2}')
 #output.write_output_soluzione_euristica(soluzione4, os.getcwd() + '/Dati_output/sequenza_parziale.xlsx')
 print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto {f4-f1} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-f4_ritardo+f1_ritardo} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-ritardo_pesato_4+ritardo_pesato_1} ore di ritardo pesato")
 
 # INSERT INTER (Sequenza Finale)
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -187,11 +190,13 @@ print(f'Mosse LS1+LS2+LS3: {contatoreLS1+contatoreLS2+contatoreLS3}')
 #print(f4_ritardo)
 print(f"{Fore.YELLOW}Risultato LS1+LS2+LS3 (setup): ottenuto {f5-f4} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1+LS2+LS3 (consegna): ottenuto {-f5_ritardo+f4_ritardo} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS1+LS2+LS3 (consegna): ottenuto {-ritardo_pesato_5+ritardo_pesato_4} ore di ritardo pesato")
 #output.write_output_soluzione_euristica(soluzione5, os.getcwd() + '/Dati_output/sequenza.xlsx')
 tot_tot = time.time() - start_time_tot
 #print(f5)
 print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (setup): ottenuto {f5-f_obj3} minuti di setup")
 print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (consegna): ottenuto {-f5_ritardo+f_obj3_ritardo} ore di ritardo")
+print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (consegna): ottenuto {-ritardo_pesato_5+f_obj3_ritardo_pesato} ore di ritardo pesato")
 
 #Soluzione finale primo euristico
 fprimo = f5
@@ -200,6 +205,10 @@ ritardo_pesato_primo = ritardo_pesato_5
 macchine_post = lista_macchine_copy
 #veicoli_post = lista_veicoli_copy
 soluzionebasepost = soluzione5
+
+print(f"{Fore.YELLOW}RISPARMIO PARZIALE PRIMA SEQUENZA (setup): ottenuto {f5} minuti di setup")
+print(f"{Fore.YELLOW}RISPARMIO PARZIALE PRIMA SEQUENZA (consegna): ottenuto {-f5_ritardo} ore di ritardo")
+print(f"{Fore.YELLOW}RISPARMIO PARZIALE PRIMA SEQUENZA (consegna 'pesata'): ottenuto {-ritardo_pesato_5} ore di ritardo pesato")
 
 # EURISTICO NUOVO (gruppo3)
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
@@ -213,6 +222,7 @@ start_time_post = time.time()
 soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato, commesse_fallite = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (setup): {fpost} minuti di setup")
 print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-fpost_ritardo} ore di ritardo")
+print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-ritardo_post_pesato} ore di ritardo pesato")
 #output.write_output_soluzione_euristica(soluzionepost, os.getcwd() + '/Dati_output/euristico_post.xlsx')
 #solver.grafico_schedulazione(soluzionepost)
 post_time = time.time() - start_time_post
@@ -234,8 +244,8 @@ start1_post = time.time()
 soluzione1post, f1post, contatoreLS1post, f1_ritardo_post, ritardo_post_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy3, fpost, lista_veicoli)
 #print(f1post)
 print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (setup): ottenuto {f1post-fpost} minuti di setup")
-#print(f1_ritardo_post)
 print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (consegna): ottenuto {-f1_ritardo_post + fpost_ritardo} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (consegna): ottenuto {-ritardo_post_pesato_1 + ritardo_post_pesato} ore di ritardo pesato")
 print(f"Mosse LS1 - post: {contatoreLS1post}")
 #output.write_output_soluzione_euristica(soluzione1post, os.getcwd() + '/Dati_output/insert_inter_post.xlsx')
 tot1_post = time.time() - start1_post
@@ -252,6 +262,7 @@ print(f'f4 {f4post}, f1 {f1post}')
 #output.write_output_soluzione_euristica(soluzione4post, os.getcwd() + '/Dati_output/sequenza_parziale_post.xlsx')
 print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (setup): ottenuto {f4post-f1post} minuti di setup")
 print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f4_ritardo_post+f1_ritardo_post} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (consegna): ottenuto {-ritardo_post_pesato_4+ritardo_post_pesato_1} ore di ritardo pesato")
 
 # SEQUENZA COMPLETA
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
@@ -259,10 +270,9 @@ print(f"{Fore.CYAN}{Style.BRIGHT}LS[LS[G1+G2]+G3] (sequenza finale)")
 print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
 soluzione5post, f5post, contatoreLS3post, f5_ritardo_post, ritardo_post_pesato_5 = solver.swap_intra(lista_macchine_copy3, f4post, lista_veicoli)
 print(f'Mosse LS1+LS2+LS3 - post: {contatoreLS1post+contatoreLS2post+contatoreLS3post}')
-#soluzione_sequenza_post = [b for a in soluzione5post for b in a]
 print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (setup): ottenuto {f5post-f4post} minuti di setup")
-print(f'f5 {f5_ritardo_post}, f4 {f4_ritardo_post}')
 print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-f5_ritardo_post+f4_ritardo_post} ore di ritardo")
+print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-ritardo_post_pesato_5+ritardo_post_pesato_4} ore di ritardo pesato")
 
 #Output di errore - commesse con veicolo errato e pertanto escluse (ERRORE NON RISOLUBILE DAL CODICE)
 commesse_in_5post = {c['commessa'] for c in soluzione5post}
