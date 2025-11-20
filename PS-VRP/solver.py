@@ -176,8 +176,6 @@ def filtro_commesse(lista_commesse:list,lista_veicoli):
         for commessa in commesse_zona_chiusa},
         **{commessa.id_commessa: "La commessa non può essere schedulata in quanto il veicolo non è compatibile"
         for commessa in commesse_veicolo_incompatibile},
-        **{commessa.id_commessa: "La commessa è esterna ma non tassativa"
-        for commessa in commesse_esterne_non_tassative}
     }
     return commesse_da_schedulare, dizionario_filtri, commesse_scartate
 

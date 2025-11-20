@@ -115,6 +115,7 @@ print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE LETTE CORRETTAMENTE (NO CAMPI MANCANT
 
 start_time_eur = time.time()
 
+print(len(commesse_da_schedulare))
 schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato, df_tass = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
 #output.write_output_soluzione_euristica(schedulazione3, os.getcwd() + '/Dati_output/euristico_costruttivo.xlsx')
 print(f'SCARTATI DAL PRIMO EURISTICO - Direttamente al Gruppo tre: {len(dizionario_filtri)}')
