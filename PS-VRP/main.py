@@ -93,8 +93,10 @@ schedulabili = len(lista_commesse)
 incompatibili = read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse); estraggo le eventuali incompatibili con ogni macchina
 lista_veicoli=read_excel.read_excel_veicoli(file_veicoli_excel) #Lista base oggetti veicolo
 lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
+lista_veicoli=sorted(lista_veicoli,key=lambda veicolo:veicolo.data_partenza)
 
 init(autoreset=True)  # Ripristina i colori dopo ogni print
+
 
 commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
 lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
@@ -207,9 +209,9 @@ macchine_post = lista_macchine_copy
 #veicoli_post = lista_veicoli_copy
 soluzionebasepost = soluzione5
 
-print(f"{Fore.YELLOW}RISPARMIO PARZIALE PRIMA SEQUENZA (setup): ottenuto {f5} minuti di setup")
-print(f"{Fore.YELLOW}RISPARMIO PARZIALE PRIMA SEQUENZA (consegna): ottenuto {-f5_ritardo} ore di ritardo")
-print(f"{Fore.YELLOW}RISPARMIO PARZIALE PRIMA SEQUENZA (consegna 'pesata'): ottenuto {-ritardo_pesato_5} ore di ritardo pesato")
+print(f"{Fore.YELLOW}RISULTATO PARZIALE PRIMA SEQUENZA (setup): ottenuto {f5} minuti di setup")
+print(f"{Fore.YELLOW}RISULTATO PARZIALE PRIMA SEQUENZA (consegna): ottenuto {-f5_ritardo} ore di ritardo")
+print(f"{Fore.YELLOW}RISULTATO PARZIALE PRIMA SEQUENZA (consegna 'pesata'): ottenuto {-ritardo_pesato_5} ore di ritardo pesato")
 
 # EURISTICO NUOVO (gruppo3)
 print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
@@ -348,6 +350,7 @@ for _ in range(iter):
     incompatibili = read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse); estraggo le eventuali incompatibili con ogni macchina
     lista_veicoli=read_excel.read_excel_veicoli(file_veicoli_excel) #Lista base oggetti veicolo
     lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
+    lista_veicoli=sorted(lista_veicoli,key=lambda veicolo:veicolo.data_partenza)
 
     init(autoreset=True)  # Ripristina i colori dopo ogni print
 

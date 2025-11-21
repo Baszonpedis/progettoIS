@@ -113,8 +113,11 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
     elif commessa.veicolo != None: #commesse interne zona aperta
         ##OLD - commessa.ritardo = min(max(veicolo.data_partenza, commessa.due_date) - fine_lavorazione, timedelta(days = 0))
         commessa.ritardo = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0))
-    else: #commesse rimanenti (senza veicolo assegnato / gruppo 3)
-        commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0)) 
+    else: #commesse rimanenti (senza veicolo assegnato)
+        if 0 in commessa.zona_cliente: #commesse esterne non tassative (non avere veicolo assegnato è normale)
+            commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
+        else: #commesse interne a zona chiusa (non avere veicolo assegnato è da penalizzare con il tempo medio di attesa per un nuovo veicolo)
+            commessa.ritardo = min(commessa.due_date - fine_lavorazione - timedelta(days = 10), timedelta(days = 0)) 
         #commessa.ritardo = timedelta(days = 0) #se non si considera il loro ritardo
     schedulazione.append({"commessa": commessa.id_commessa, # dizionario che contiene le informazioni sulla schedula
                           "macchina": macchina.nome_macchina,
@@ -229,8 +232,8 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
             if changed == False: #Disassociazione in assenza di veicoli alternativi
                 #print(f'Commessa {commessa.id_commessa} disassociata in assenza di altri veicoli coerenti')
                 commessa.veicolo.temp_capacity += commessa.kg_da_tagliare
+                ritardomossa =  min(commessa.due_date - veicolo.data_partenza - timedelta(days = 10), timedelta(days = 0)) #Vincolo SOFT a non compiere mosse che mandano in ritardo veicoli se non si hanno alternative
                 veicolo = None
-                ritardomossa = -timedelta(days = 10000) #Vincolo hard a non compiere mosse che mandano in ritardo veicoli se non si hanno alternative
         if veicolo is not None: #Questo se non si entra nell'if precedente o se ci si entra e se ne esce con un veicolo
             ritardomossa = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0))
 
@@ -278,7 +281,9 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     lista_macchine2 = lista_macchine.copy()
 
     #Sorting preliminare al primo ciclo while
-    lista_commesse_tassative.sort(key=lambda commessa:(+commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
+    lista_commesse_tassative.sort(key=lambda commessa:(commessa.due_date.timestamp(), +commessa.priorita_cliente)) #Ordinamento: prima in base alla due date; a parità, in base alla priorità del cliente
+    #for i in lista_commesse_tassative:
+    #    print(i.priorita_cliente, i.due_date.timestamp())
 
     #se beta = 0, la lista commesse tassative non viene cambiata rispetto al sort iniziale
     lista_commesse_tassative = GRASP_randomizer(lista_commesse_tassative)
@@ -345,7 +350,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     #Sorting preliminare dell'input al secondo ciclo While
     commesse_da_schedulare += lista_commesse_tassative
     
-    commesse_da_schedulare.sort(key=lambda commessa:(+commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
+    commesse_da_schedulare.sort(key=lambda commessa:(commessa.due_date.timestamp(), +commessa.priorita_cliente)) #Ordinamento: prima in base alla due date; a parità, in base alla priorità del cliente
 
     #se beta = 0, la lista commesse_da_schedulare non viene cambiata rispetto al sort iniziale
     commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
@@ -425,7 +430,7 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     lista_macchine2 = lista_macchine.copy()
 
     #Sorting preliminare dell'input al terzo ciclo While
-    commesse_da_schedulare.sort(key=lambda commessa:(commessa.priorita_cliente,commessa.due_date.timestamp())) # ordino la lista sulla base della priorita e successivamente della due date
+    commesse_da_schedulare.sort(key=lambda commessa:(commessa.due_date.timestamp(), +commessa.priorita_cliente)) #Ordinamento: prima in base alla due date; a parità, in base alla priorità del cliente
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # è il primo lunedi disponibile che è uguale per tutte le macchine
 
     #se beta = 0, la lista commesse_da_schedulare non viene cambiata rispetto al sort iniziale
@@ -948,6 +953,7 @@ def calcolo_delta(delta_setup,delta_ritardo):
     Si può eventualmente cambiare; dipende dall'importanza relativa che si dà; un test estensivo sull'estrazione di Settembre 2025
     mostra però che convenga di più mantenere questo "sbilancio" tra unità di misura, piuttosto che considerare entrambe in minuti
     '''
+
     delta_ritardo = delta_ritardo.total_seconds()/3600
     delta = alfa*delta_setup+(1-alfa)*delta_ritardo
 
@@ -955,7 +961,7 @@ def calcolo_delta(delta_setup,delta_ritardo):
 
 def GRASP_randomizer(lista_commesse):
     #il valore di beta è settato in main.py / dall'interfaccia grafica e da lì importato in solver, e qui utilizzabile
-    sigma = 10**10 #NB: sigma serve ad uniformare i due valori componenti lo score (un timestamp UNIX è nell'ordine dei 10^9/10^10 secondi)
+    sigma = 10**9 #NB: sigma serve ad uniformare i due valori componenti lo score (un timestamp UNIX è nell'ordine dei 10^9/10^10 secondi)
     lista_commesse_randomized = []
 
     '''Il calcolo del costo avviene secondo quattro criteri fondamentali:
@@ -963,9 +969,12 @@ def GRASP_randomizer(lista_commesse):
     - La due date avrà contributo positivo al costo (maggiore è, minore è l'urgenza)
     - Si vuole MINIMIZZARE il costo
     - Sigma, se impostato a 10**10, fa sì che la due_date abbia un effetto secondario di "spareggio" tra commesse con identica priorità;
-        è d'altronde lo stesso criterio adottato per il sorting tradizionale senza GRASP'''
+    - Se invece Sigma + impostato a 10**9 e la priorità cliente divisa per 10, si ottiene l'effetto inverso (nuova logica di sorting)'''
 
-    cost = [(+j.priorita_cliente+float((j.due_date).timestamp())/(sigma)) for j in lista_commesse]
+    cost = [(+j.priorita_cliente/10+float((j.due_date).timestamp())/(sigma)) for j in lista_commesse]
+    
+    #for j in lista_commesse:
+    #    print(j.priorita_cliente/10, float((j.due_date).timestamp())/(sigma), j.priorita_cliente/10+float((j.due_date).timestamp())/(sigma))
 
     #caso puramente greedy, la lista è già ordinata di conseguenza quando avviene la chiamata nel codice
     if beta == 0:

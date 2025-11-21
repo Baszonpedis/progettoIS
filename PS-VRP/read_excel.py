@@ -142,16 +142,26 @@ def read_compatibilita(nome_file,lista_commesse):
     pattern_ok = r'^OK.*$' #pattern che inizia con OK
     pattern_err = r'^ERR.*$' #pattern che inizia con ERR
     df[macchine]=df[macchine].replace({pattern_ok: 1, pattern_err: 0}, regex=True).astype(int) #dove c'è OK metto 1, dove c'è ERR metto 0
+    df.to_excel("C:\\Users\\Frenc\\Documents\\GitHub\\progettoIS\\PS-VRP\\test_output_test.xlsx", index=False)
     commesse_compatibili = []
     commesse_incompatibili = []
 
     for i, f in df.iterrows(): #itero lungo le righe del df (la i indica l'indice della riga; da notare che vi è corrispondenza tra la i del df pandas e la i della commessa)
+        #print(i)
         compat = dict(f)
+        #if lista_commesse[i].id_commessa == 254339:
+        #    print(compat)
         if sum([compat[m] for m in macchine]) > 0:
             lista_commesse[i].compatibilita = compat #assegno all'attributo compatibilita un dizionario con chiave=nome della macchina e valore=0/1 a seconda che la commessa non possa/possa essere schedulata sulla macchina
             commesse_compatibili.append(lista_commesse[i])
+            #if lista_commesse[i].id_commessa == 254339:
+            #    for c in commesse_compatibili:
+            #        print(c.id_commessa)
         else:
             commesse_incompatibili.append(lista_commesse[i])
+    #print("COMMESSE INCOMPATIBILI")
+    #for c in commesse_incompatibili:
+    #    print(c.id_commessa)
 
     # Sovrascrive lista_commesse con solo quelle compatibili
     lista_commesse[:] = commesse_compatibili
