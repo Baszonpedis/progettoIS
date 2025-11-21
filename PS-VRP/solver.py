@@ -139,8 +139,8 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
                           "due date": commessa.due_date,
                           "ritardo": commessa.ritardo,
                           "priorita": commessa.priorita_cliente})
-    macchina._minuti_fine_ultima_lavorazione = minuti_inizio_lavorazione+tempo_setup+tempo_processamento
     if tipo == 0:
+        macchina._minuti_fine_ultima_lavorazione = minuti_inizio_lavorazione+tempo_setup+tempo_processamento
         macchina.lista_commesse_processate.append(commessa)  # aggiungo la commessa alla macchina che eseguirà la lavorazione
 
 #Filtra tutte le commesse lette correttamente in base alle zone aperte ed alle partenze dei veicoli
@@ -528,12 +528,35 @@ def insert_inter_macchina(lista_macchine: list, f_obj, lista_veicoli):
     for m in lista_macchine:
         if len(m.lista_commesse_processate)>1:
             ultima_lavorazione=m.ultima_lavorazione
+            print("LS1\n")
             for pos in range(1,len(m.lista_commesse_processate)):
+                commessa = m.lista_commesse_processate[pos]
+                print(commessa.id_commessa, commessa.ritardo/commessa.priorita_cliente)
                 tempo_setup_commessa=m.calcolo_tempi_setup(m.lista_commesse_processate[pos-1],m.lista_commesse_processate[pos])
-                tempo_processamento_commessa=m.lista_commesse_processate[pos].metri_da_tagliare/m.velocita_taglio_media
-                aggiorna_schedulazione(m.lista_commesse_processate[pos], m, tempo_setup_commessa, tempo_processamento_commessa, inizio_schedulazione, schedulazione, ultima_lavorazione,1)
+                tempo_processamento_commessa=commessa.metri_da_tagliare/m.velocita_taglio_media
+                fine_lavorazione = aggiungi_minuti(ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa,inizio_schedulazione)
+                schedulazione.append({"commessa": commessa.id_commessa, # dizionario che contiene le informazioni sulla schedula
+                        "macchina": m.nome_macchina,
+                        "release date": commessa.release_date,
+                        "minuti setup": tempo_setup_commessa,
+                        "minuti processamento":tempo_processamento_commessa,
+                        "inizio_setup": aggiungi_minuti(ultima_lavorazione,inizio_schedulazione),
+                        "fine_setup": aggiungi_minuti(ultima_lavorazione + tempo_setup_commessa,inizio_schedulazione),
+                        "inizio_lavorazione": aggiungi_minuti(ultima_lavorazione + tempo_setup_commessa,inizio_schedulazione),
+                        "fine_lavorazione": fine_lavorazione,
+                        "mt da tagliare": commessa.metri_da_tagliare,
+                        "taglio": commessa.tipologia_taglio,
+                        "macchine compatibili": [machine for machine, value in commessa.compatibilita.items() if value == 1],
+                        "nr coltelli": commessa.numero_coltelli,
+                        "diametro_tubo": commessa.diametro_tubo,
+                        "veicolo": commessa.veicolo,
+                        "tassativita": commessa.tassativita,
+                        "id_tassativo": commessa.id_tassativo,
+                        "due date": commessa.due_date,
+                        "ritardo": commessa.ritardo,
+                        "priorita": commessa.priorita_cliente})
                 ultima_lavorazione = ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa
-    
+
     ritardo_cumul = timedelta(days = 0)
     ritardo_cumul_pesato = timedelta(days = 0)
     for commessa in schedulazione:
@@ -638,7 +661,7 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                         for comm in macchina1.lista_commesse_processate:
                             if comm.id_commessa == entry['commessa']:
                                 #print(f'{comm.ritardo-entry['ritardo mossa']}')
-                                #comm.ritardo = entry['ritardo mossa']
+                                comm.ritardo = entry['ritardo mossa']
                                 comm.veicolo = entry['veicolo']
                                 '''if (comm.veicolo is None and entry['veicolo'] is not None) or \
                                 (comm.veicolo is not None and entry['veicolo'] is None) or \
@@ -653,7 +676,7 @@ def insert_inter_macchina_utility(macchina1:Macchina,macchina2:Macchina,contator
                         for comm in macchina2.lista_commesse_processate:
                             if comm.id_commessa == entry['commessa']:
                                 #print(f'{comm.ritardo-entry['ritardo mossa']}')
-                                #comm.ritardo = entry['ritardo mossa']
+                                comm.ritardo = entry['ritardo mossa']
                                 comm.veicolo = entry['veicolo']
                                 '''if (comm.veicolo is None and entry['veicolo'] is not None) or \
                                 (comm.veicolo is not None and entry['veicolo'] is None) or \
@@ -771,6 +794,7 @@ def insert_intra(lista_macchine: list, f_obj, lista_veicoli):
                             for entry in s:
                                 for comm in macchina.lista_commesse_processate:
                                     if comm.id_commessa == entry['commessa']:
+                                        comm.ritardo = entry['ritardo mossa']
                                         comm.veicolo = entry['veicolo']
                                         if comm.veicolo is not None:
                                             comm.veicolo.capacita = comm.veicolo.temp_capacity
@@ -787,10 +811,33 @@ def insert_intra(lista_macchine: list, f_obj, lista_veicoli):
     for m in lista_macchine:
         if len(m.lista_commesse_processate)>1:
             ultima_lavorazione=m.ultima_lavorazione
+            print("LS2\n")
             for pos in range(1,len(m.lista_commesse_processate)):
+                commessa = m.lista_commesse_processate[pos]
+                print(commessa.id_commessa, commessa.ritardo/commessa.priorita_cliente)
                 tempo_setup_commessa=m.calcolo_tempi_setup(m.lista_commesse_processate[pos-1],m.lista_commesse_processate[pos])
-                tempo_processamento_commessa=m.lista_commesse_processate[pos].metri_da_tagliare/m.velocita_taglio_media
-                aggiorna_schedulazione(m.lista_commesse_processate[pos], m, tempo_setup_commessa, tempo_processamento_commessa, inizio_schedulazione, soluzione_move, ultima_lavorazione,1)
+                tempo_processamento_commessa=commessa.metri_da_tagliare/m.velocita_taglio_media
+                fine_lavorazione = aggiungi_minuti(ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa,inizio_schedulazione)
+                soluzione_move.append({"commessa": commessa.id_commessa, # dizionario che contiene le informazioni sulla schedula
+                        "macchina": m.nome_macchina,
+                        "release date": commessa.release_date,
+                        "minuti setup": tempo_setup_commessa,
+                        "minuti processamento":tempo_processamento_commessa,
+                        "inizio_setup": aggiungi_minuti(ultima_lavorazione,inizio_schedulazione),
+                        "fine_setup": aggiungi_minuti(ultima_lavorazione + tempo_setup_commessa,inizio_schedulazione),
+                        "inizio_lavorazione": aggiungi_minuti(ultima_lavorazione + tempo_setup_commessa,inizio_schedulazione),
+                        "fine_lavorazione": fine_lavorazione,
+                        "mt da tagliare": commessa.metri_da_tagliare,
+                        "taglio": commessa.tipologia_taglio,
+                        "macchine compatibili": [machine for machine, value in commessa.compatibilita.items() if value == 1],
+                        "nr coltelli": commessa.numero_coltelli,
+                        "diametro_tubo": commessa.diametro_tubo,
+                        "veicolo": commessa.veicolo,
+                        "tassativita": commessa.tassativita,
+                        "id_tassativo": commessa.id_tassativo,
+                        "due date": commessa.due_date,
+                        "ritardo": commessa.ritardo,
+                        "priorita": commessa.priorita_cliente})
                 ultima_lavorazione = ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa
 
     ritardo_cumul = timedelta(days = 0)
@@ -882,6 +929,7 @@ def swap_intra(lista_macchine, f_obj, lista_veicoli):
                             for entry in s:
                                 for comm in macchina.lista_commesse_processate:
                                     if comm.id_commessa == entry['commessa']:
+                                        comm.ritardo = entry['ritardo mossa']
                                         comm.veicolo = entry['veicolo']
                                         if comm.veicolo is not None:
                                             comm.veicolo.capacita = comm.veicolo.temp_capacity
@@ -898,10 +946,33 @@ def swap_intra(lista_macchine, f_obj, lista_veicoli):
     for m in lista_macchine:
         if len(m.lista_commesse_processate)>1:
             ultima_lavorazione=m.ultima_lavorazione
+            print("LS3\n")
             for pos in range(1,len(m.lista_commesse_processate)):
+                commessa = m.lista_commesse_processate[pos]
+                print(commessa.id_commessa, commessa.ritardo/commessa.priorita_cliente)
                 tempo_setup_commessa=m.calcolo_tempi_setup(m.lista_commesse_processate[pos-1],m.lista_commesse_processate[pos])
-                tempo_processamento_commessa=m.lista_commesse_processate[pos].metri_da_tagliare/m.velocita_taglio_media
-                aggiorna_schedulazione(m.lista_commesse_processate[pos], m, tempo_setup_commessa, tempo_processamento_commessa, inizio_schedulazione, soluzione_swap, ultima_lavorazione,1)
+                tempo_processamento_commessa=commessa.metri_da_tagliare/m.velocita_taglio_media
+                fine_lavorazione = aggiungi_minuti(ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa,inizio_schedulazione)
+                soluzione_swap.append({"commessa": commessa.id_commessa, # dizionario che contiene le informazioni sulla schedula
+                        "macchina": m.nome_macchina,
+                        "release date": commessa.release_date,
+                        "minuti setup": tempo_setup_commessa,
+                        "minuti processamento":tempo_processamento_commessa,
+                        "inizio_setup": aggiungi_minuti(ultima_lavorazione,inizio_schedulazione),
+                        "fine_setup": aggiungi_minuti(ultima_lavorazione + tempo_setup_commessa,inizio_schedulazione),
+                        "inizio_lavorazione": aggiungi_minuti(ultima_lavorazione + tempo_setup_commessa,inizio_schedulazione),
+                        "fine_lavorazione": fine_lavorazione,
+                        "mt da tagliare": commessa.metri_da_tagliare,
+                        "taglio": commessa.tipologia_taglio,
+                        "macchine compatibili": [machine for machine, value in commessa.compatibilita.items() if value == 1],
+                        "nr coltelli": commessa.numero_coltelli,
+                        "diametro_tubo": commessa.diametro_tubo,
+                        "veicolo": commessa.veicolo,
+                        "tassativita": commessa.tassativita,
+                        "id_tassativo": commessa.id_tassativo,
+                        "due date": commessa.due_date,
+                        "ritardo": commessa.ritardo,
+                        "priorita": commessa.priorita_cliente})
                 ultima_lavorazione = ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa
 
     ritardo_cumul = timedelta(days = 0)
