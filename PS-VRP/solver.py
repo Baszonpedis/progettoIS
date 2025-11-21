@@ -114,10 +114,12 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
         ##OLD - commessa.ritardo = min(max(veicolo.data_partenza, commessa.due_date) - fine_lavorazione, timedelta(days = 0))
         commessa.ritardo = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0))
     else: #commesse rimanenti (senza veicolo assegnato)
-        if 0 in commessa.zona_cliente: #commesse esterne non tassative (non avere veicolo assegnato è normale)
+        '''if 0 in commessa.zona_cliente: #commesse esterne non tassative (non avere veicolo assegnato è normale)
             commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
         else: #commesse interne a zona chiusa (non avere veicolo assegnato è da penalizzare con il tempo medio di attesa per un nuovo veicolo)
             commessa.ritardo = min(commessa.due_date - fine_lavorazione - timedelta(days = 10), timedelta(days = 0)) 
+        '''
+        commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
         #commessa.ritardo = timedelta(days = 0) #se non si considera il loro ritardo
     schedulazione.append({"commessa": commessa.id_commessa, # dizionario che contiene le informazioni sulla schedula
                           "macchina": macchina.nome_macchina,
@@ -232,8 +234,9 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
             if changed == False: #Disassociazione in assenza di veicoli alternativi
                 #print(f'Commessa {commessa.id_commessa} disassociata in assenza di altri veicoli coerenti')
                 commessa.veicolo.temp_capacity += commessa.kg_da_tagliare
-                ritardomossa =  min(commessa.due_date - veicolo.data_partenza - timedelta(days = 10), timedelta(days = 0)) #Vincolo SOFT a non compiere mosse che mandano in ritardo veicoli se non si hanno alternative
+                #ritardomossa =  min(commessa.due_date - veicolo.data_partenza - timedelta(days = 10), timedelta(days = 0)) #Vincolo SOFT a non compiere mosse che mandano in ritardo veicoli se non si hanno alternative
                 veicolo = None
+                ritardomossa = -timedelta(days = 10000)
         if veicolo is not None: #Questo se non si entra nell'if precedente o se ci si entra e se ne esce con un veicolo
             ritardomossa = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0))
 

@@ -142,7 +142,6 @@ def read_compatibilita(nome_file,lista_commesse):
     pattern_ok = r'^OK.*$' #pattern che inizia con OK
     pattern_err = r'^ERR.*$' #pattern che inizia con ERR
     df[macchine]=df[macchine].replace({pattern_ok: 1, pattern_err: 0}, regex=True).astype(int) #dove c'è OK metto 1, dove c'è ERR metto 0
-    df.to_excel("C:\\Users\\Frenc\\Documents\\GitHub\\progettoIS\\PS-VRP\\test_output_test.xlsx", index=False)
     commesse_compatibili = []
     commesse_incompatibili = []
 
