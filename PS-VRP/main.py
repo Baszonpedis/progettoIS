@@ -336,6 +336,7 @@ fritardobest = fritardoprimopost
 fritardopesatobest = ritardo_pesato_post_primo
 soluzionebest = soluzionefinale
 veicoli_best = deepcopy(lista_veicoli)
+commesse_fallite_best = commesse_fallite
 
 for _ in range(iter):
     print("\n" + "="*24)
@@ -431,22 +432,24 @@ for _ in range(iter):
     fprimopost = f5post
     fritardoprimopost = f5_ritardo_post
     ritardo_pesato_post_primo = ritardo_post_pesato_5
-    soluzionefinale = soluzione5post
+    soluzionequasifinale = soluzione5post
+
+    soluzionefinale, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionequasifinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo)
 
     ## STAMPE FINALI
-    fo = alfa*fprimopost -((1-alfa)*(ritardo_pesato_post_primo.total_seconds()/3600)/divid) #+ multip*(-len(soluzionefinale) + schedulabili)
-    print(fprimopost, ritardo_pesato_post_primo.total_seconds()/3600)
+    fo = alfa*f_obj_final -((1-alfa)*(f_ritardo_pesato_final.total_seconds()/3600)/divid) #+ multip*(-len(soluzionefinale) + schedulabili)
+    print(f_obj_final, f_ritardo_pesato_final.total_seconds()/3600)
     print(fo, fobest)
 
     if fo < fobest and len(soluzionefinale) >= len(soluzionebest):
         print(len(soluzionefinale), len(soluzionebest))
-        print(fo,fobest,fprimopost,ritardo_pesato_post_primo,fbest,fritardopesatobest)
-        fbest = fprimopost #aggiornamento funzione obiettivo solo setup
-        fritardobest = fritardoprimopost #aggiornamento funzione obiettivo solo ritardo non pesato
-        fritardopesatobest = ritardo_pesato_post_primo #aggiornamento funzione obiettivo solo ritardo pesato
+        fbest = f_obj_final #aggiornamento funzione obiettivo solo setup
+        fritardobest = f_ritardo_final #aggiornamento funzione obiettivo solo ritardo non pesato
+        fritardopesatobest = f_ritardo_pesato_final #aggiornamento funzione obiettivo solo ritardo pesato
         fobest = fo #aggiornamento funzione obiettivo setup+ritardi pesati
         soluzionebest = soluzionefinale #aggiornamento soluzione
         veicoli_best = deepcopy(lista_veicoli)
+        commesse_fallite_best = commesse_fallite
 
         #Output di errore 1 - veicoli problematici
             #write_output a seguito
@@ -490,27 +493,18 @@ print(f"{Fore.YELLOW}RITARDO (BEST SOLUTION): {-fritardobest} ore")
 print(f"{Fore.YELLOW}RITARDO PESATO (BEST SOLUTION): {-fritardopesatobest} ore")
 print(f"{Fore.YELLOW}SCHEDULAZIONI FINALI: {len(soluzionebest)}")
 
-soluzionefinale, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionebest, commesse_fallite, lista_macchine, fbest, fritardobest, fritardopesatobest)
-
 if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_output_soluzione_euristica(soluzionefinale, os.getcwd() + '/Dati_output/schedulazione.xlsx')
+    output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/Dati_output/schedulazione.xlsx')
 if os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_output_soluzione_euristica(soluzionefinale, os.getcwd() + '/PS-VRP/Dati_output/schedulazione.xlsx')
+    output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione.xlsx')
 if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_output_ridotto(soluzionefinale, os.getcwd() + '/Dati_output/schedulazione_ridotta.xlsx')
+    output.write_output_ridotto(soluzionebest, os.getcwd() + '/Dati_output/schedulazione_ridotta.xlsx')
 if os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_output_ridotto(soluzionefinale, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.xlsx')
+    output.write_output_ridotto(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.xlsx')
 if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_output_ridotto_txt(soluzionefinale, os.getcwd() + '/Dati_output/schedulazione_ridotta.txt')
+    output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/Dati_output/schedulazione_ridotta.txt')
 if os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_output_ridotto_txt(soluzionefinale, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.txt')
-
-print(f"{Fore.YELLOW}SETUP (FINAL SOLUTION): {f_obj_final:.2f}s")
-print(f"{Fore.YELLOW}RITARDO (FINAL SOLUTION): {-f_ritardo_final} ore")
-print(f"{Fore.YELLOW}RITARDO PESATO (FINAL SOLUTION): {-f_ritardo_pesato_final} ore")
-print(f"{Fore.YELLOW}SCHEDULAZIONI <<FINALI FINALI>>: {len(soluzionefinale)}")
-print(f"{Fore.YELLOW}SCHEDULAZIONI <<FINALI FINALI>>: {len(soluzionebest)}")
-
+    output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.txt')
 
 end_time_schedulazione = time.time()
 
@@ -518,4 +512,4 @@ seconds = end_time_schedulazione - start_time_schedulazione
 minutes, secs = divmod(round(seconds), 60)
 print(f"La schedulazione ha impiegato: {minutes}:{secs:02d} minuti")  # formato x:yz
 
-solver.grafico_schedulazione(soluzionefinale)  #Graficazione finale
+solver.grafico_schedulazione(soluzionebest)  #Graficazione finale
