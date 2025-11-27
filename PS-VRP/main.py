@@ -84,6 +84,7 @@ if __name__ == "__main__":
 divid = 10
 multip = 1000
 
+
 ##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
 read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)

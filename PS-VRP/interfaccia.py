@@ -156,32 +156,47 @@ class App:
         params_frame = ttk.LabelFrame(header_frame, text="Parametri di configurazione", padding=15)
         params_frame.pack(side="right", fill="both", expand=True, padx=(20, 0))
 
-        # Parametro Alfa con slider
+        # Parametro Alfa con slider + input manuale
         alfa_frame = ttk.Frame(params_frame)
         alfa_frame.pack(fill="x", pady=(0,8))
-        
+
         ttk.Label(alfa_frame, text="α (LS):").pack(side="left")
 
-        # Slider più grande e con step 0.1
-        style = ttk.Style()
-        style.configure("TScale", sliderlength=30, troughcolor="#e0e0e0")  # manopola più grande
+        # Variabile stringa per input manuale
+        self.alfa_str = tk.StringVar(value=str(self.alfa_val.get()))
 
+        # Slider
         self.alfa_slider = ttk.Scale(
-            alfa_frame, 
-            from_=0.0, 
-            to=1.0, 
-            orient="horizontal", 
-            variable=self.alfa_val, 
-            length=180,
-            style="TScale"
+            alfa_frame,
+            from_=0.0,
+            to=1.0,
+            orient="horizontal",
+            variable=self.alfa_val,
+            length=180
         )
         self.alfa_slider.pack(side="left", padx=8)
 
-        self.alfa_label = ttk.Label(alfa_frame, text=f"{self.alfa_val.get():.1f}")
-        self.alfa_label.pack(side="left", padx=(8,0))
+        # Entry per input manuale
+        alfa_entry = ttk.Entry(alfa_frame, textvariable=self.alfa_str, width=6)
+        alfa_entry.pack(side="left", padx=(8,0))
 
-        # Aggiorna label quando slider cambia (con arrotondamento a 0.1)
-        self.alfa_val.trace_add("write", self.update_alfa_label)
+        # Aggiorna Entry quando cambia slider
+        def on_slider_change(*args):
+            value = round(self.alfa_val.get(), 3)  # più preciso
+            self.alfa_str.set(str(value))
+
+        self.alfa_val.trace_add("write", on_slider_change)
+
+        # Aggiorna slider quando cambia input manuale
+        def on_entry_change(*args):
+            try:
+                value = float(self.alfa_str.get())
+                self.alfa_val.set(value)
+            except ValueError:
+                pass  # Ignora input non numerici
+
+        self.alfa_str.trace_add("write", on_entry_change)
+
 
         # Parametro Beta
         beta_frame = ttk.Frame(params_frame)
