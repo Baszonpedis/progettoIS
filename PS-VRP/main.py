@@ -509,6 +509,8 @@ print(f"{Fore.YELLOW}SETUP (FINAL SOLUTION): {f_obj_final:.2f}s")
 print(f"{Fore.YELLOW}RITARDO (FINAL SOLUTION): {-f_ritardo_final} ore")
 print(f"{Fore.YELLOW}RITARDO PESATO (FINAL SOLUTION): {-f_ritardo_pesato_final} ore")
 print(f"{Fore.YELLOW}SCHEDULAZIONI <<FINALI FINALI>>: {len(soluzionefinale)}")
+print(f"{Fore.YELLOW}SCHEDULAZIONI <<FINALI FINALI>>: {len(soluzionebest)}")
+
 
 end_time_schedulazione = time.time()
 

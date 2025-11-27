@@ -105,6 +105,7 @@ def associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, 
 def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, tempo_processamento, inizio_schedulazione, schedulazione: list, minuti_inizio_lavorazione, tipo):
     fine_lavorazione = aggiungi_minuti(minuti_inizio_lavorazione + tempo_setup + tempo_processamento,inizio_schedulazione)
     veicolo = commessa.veicolo
+    tempo_medio_attesa = timedelta(days = 10)
     if commessa.tassativita == "X":
         if 0 in commessa.zona_cliente: #commesse esterne tassative
             commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
@@ -114,8 +115,10 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
         ##OLD - commessa.ritardo = min(max(veicolo.data_partenza, commessa.due_date) - fine_lavorazione, timedelta(days = 0))
         commessa.ritardo = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0))
     else: #commesse rimanenti (senza veicolo assegnato)
-        commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
-        #commessa.ritardo = timedelta(days = 0) #se non si considera il loro ritardo
+        if 0 in commessa.zona_cliente: #commesse esterne non tassative (non avere veicolo assegnato è normale)
+            commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
+        else: #commesse interne a zona chiusa (non avere veicolo assegnato è da penalizzare con il tempo medio di attesa per un nuovo veicolo)
+            commessa.ritardo = min(commessa.due_date - fine_lavorazione - tempo_medio_attesa, timedelta(days = 0)) 
     schedulazione.append({"commessa": commessa.id_commessa, # dizionario che contiene le informazioni sulla schedula
                           "macchina": macchina.nome_macchina,
                           "release date": commessa.release_date,
@@ -236,10 +239,8 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
                 veicolo = None
         if veicolo is not None: #Questo se non si entra nell'if precedente o se ci si entra e se ne esce con un veicolo
             ritardomossa = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0))
-
     else: #altre (serve se la funzione dovesse essere mai chiamata anche su commesse solo su macchina, del gruppo 3)
         ritardomossa = min(commessa.due_date - data_fine_lavorazione - tempo_medio_attesa, timedelta(days = 0))
-
     schedulazione.append({"commessa": id,
                           "macchina": macchina_lavorazione,
                           "release date": release_date,
@@ -540,7 +541,7 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
                 if commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
                     tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
                 else:
-                    tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione + (macchina._minuti_fine_ultima_lavorazione - commessa._minuti_release_date)
+                    tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione + (commessa._minuti_release_date - macchina._minuti_fine_ultima_lavorazione)
                 tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
                 tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
                 #tempo_fine_lavorazione = tempo_inizio_taglio + tempo_processamento + tempo_setup
@@ -558,7 +559,7 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
                         if commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
                             tempo_inizio_taglio_2 = macchina._minuti_fine_ultima_lavorazione
                         else:
-                            tempo_inizio_taglio_2 = macchina._minuti_fine_ultima_lavorazione + (macchina._minuti_fine_ultima_lavorazione - commessa2._minuti_release_date)
+                            tempo_inizio_taglio_2 = macchina._minuti_fine_ultima_lavorazione + (commessa2._minuti_release_date - macchina._minuti_fine_ultima_lavorazione)
                         tempo_processamento = commessa2.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
                         tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa2)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
                         f_obj+=tempo_setup

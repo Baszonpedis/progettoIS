@@ -131,7 +131,7 @@ def read_compatibilita(nome_file,lista_commesse):
     df['id spedizione'] = df['id spedizione'].fillna(0)
 
     df=df.dropna()
-    df=df[~df['compatibilità macchine taglio::check dati'].str.startswith('ERR')]
+    df = df[~df['compatibilità macchine taglio::check dati'].str.contains(r'^\s*ERR')]
     df=df.drop(columns=campi_input_commesse)
     #df=df.drop(columns=['compatibilità macchine taglio::check dati'])
     df=df.reset_index(drop=True)
@@ -142,15 +142,17 @@ def read_compatibilita(nome_file,lista_commesse):
     pattern_ok = r'^OK.*$' #pattern che inizia con OK
     pattern_err = r'^ERR.*$' #pattern che inizia con ERR
     df[macchine]=df[macchine].replace({pattern_ok: 1, pattern_err: 0}, regex=True).astype(int) #dove c'è OK metto 1, dove c'è ERR metto 0
-    df.to_excel("C:\\Users\\Frenc\\Documents\\GitHub\\progettoIS\\PS-VRP\\test_output_test.xlsx", index=False)
+    #df.to_excel("C:\\Users\\Frenc\\Documents\\GitHub\\progettoIS\\PS-VRP\\test_output_test.xlsx", index=False)
     commesse_compatibili = []
     commesse_incompatibili = []
 
     for i, f in df.iterrows(): #itero lungo le righe del df (la i indica l'indice della riga; da notare che vi è corrispondenza tra la i del df pandas e la i della commessa)
         #print(i)
         compat = dict(f)
-        #if lista_commesse[i].id_commessa == 254339:
-        #    print(compat)
+        if lista_commesse[i].id_commessa == 235572:
+            print(compat)
+        if lista_commesse[i].id_commessa == 233333:
+            print(compat)
         if sum([compat[m] for m in macchine]) > 0:
             lista_commesse[i].compatibilita = compat #assegno all'attributo compatibilita un dizionario con chiave=nome della macchina e valore=0/1 a seconda che la commessa non possa/possa essere schedulata sulla macchina
             commesse_compatibili.append(lista_commesse[i])
