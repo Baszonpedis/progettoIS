@@ -81,8 +81,8 @@ if __name__ == "__main__":
 
 #NB: Il valore divid (fondamentale per il calcolo di fobest) è invece impostato manualmente qui
 #NB2: Idem il valore multip (altro fondamentale per il calcolo di fobest)
-divid = 10
-multip = 1000
+divid = 1
+#multip = 1000
 
 
 ##ELABORAZIONI SU INPUT(s)
@@ -331,7 +331,7 @@ print(f"{Fore.YELLOW}SCHEDULATE FINALI: {len(soluzionefinale)}")
 #Impostazione migliore soluzione per il GRASP; parametri divid e multip definiti in precedenza
 fbest = fprimopost
 print(fprimopost, ritardo_pesato_post_primo.total_seconds()/3600)
-fobest = alfa*fprimopost -((1-alfa)*(ritardo_pesato_post_primo.total_seconds()/3600)/divid) + multip*(-len(soluzionefinale) + schedulabili)
+fobest = alfa*fprimopost -((1-alfa)*(ritardo_pesato_post_primo.total_seconds()/3600)/divid) #+ multip*(-len(soluzionefinale) + schedulabili)
 fritardobest = fritardoprimopost
 fritardopesatobest = ritardo_pesato_post_primo
 soluzionebest = soluzionefinale
@@ -434,7 +434,7 @@ for _ in range(iter):
     soluzionefinale = soluzione5post
 
     ## STAMPE FINALI
-    fo = alfa*fprimopost -((1-alfa)*(ritardo_pesato_post_primo.total_seconds()/3600)/divid) + multip*(-len(soluzionefinale) + schedulabili)
+    fo = alfa*fprimopost -((1-alfa)*(ritardo_pesato_post_primo.total_seconds()/3600)/divid) #+ multip*(-len(soluzionefinale) + schedulabili)
     print(fprimopost, ritardo_pesato_post_primo.total_seconds()/3600)
     print(fo, fobest)
 
