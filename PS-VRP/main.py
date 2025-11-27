@@ -84,6 +84,7 @@ if __name__ == "__main__":
 divid = 10
 multip = 1000
 
+
 ##ELABORAZIONI SU INPUT(s)
 lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
 read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
@@ -502,6 +503,13 @@ if os.path.basename(os.getcwd()) == "PS-VRP":
 if os.path.basename(os.getcwd()) == "progettoIS":
     output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.txt')
 
+soluzionefinale, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionebest, commesse_fallite, lista_macchine, fbest, fritardobest, fritardopesatobest)
+
+print(f"{Fore.YELLOW}SETUP (FINAL SOLUTION): {f_obj_final:.2f}s")
+print(f"{Fore.YELLOW}RITARDO (FINAL SOLUTION): {-f_ritardo_final} ore")
+print(f"{Fore.YELLOW}RITARDO PESATO (FINAL SOLUTION): {-f_ritardo_pesato_final} ore")
+print(f"{Fore.YELLOW}SCHEDULAZIONI <<FINALI FINALI>>: {len(soluzionefinale)}")
+
 end_time_schedulazione = time.time()
 
 seconds = end_time_schedulazione - start_time_schedulazione
@@ -509,3 +517,4 @@ minutes, secs = divmod(round(seconds), 60)
 print(f"La schedulazione ha impiegato: {minutes}:{secs:02d} minuti")  # formato x:yz
 
 solver.grafico_schedulazione(soluzionebest)  #Graficazione finale
+solver.grafico_schedulazione(soluzionefinale)  #Graficazione finale
