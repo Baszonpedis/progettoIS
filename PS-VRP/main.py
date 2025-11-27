@@ -490,20 +490,20 @@ print(f"{Fore.YELLOW}RITARDO (BEST SOLUTION): {-fritardobest} ore")
 print(f"{Fore.YELLOW}RITARDO PESATO (BEST SOLUTION): {-fritardopesatobest} ore")
 print(f"{Fore.YELLOW}SCHEDULAZIONI FINALI: {len(soluzionebest)}")
 
-if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/Dati_output/schedulazione.xlsx')
-if os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione.xlsx')
-if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_output_ridotto(soluzionebest, os.getcwd() + '/Dati_output/schedulazione_ridotta.xlsx')
-if os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_output_ridotto(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.xlsx')
-if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/Dati_output/schedulazione_ridotta.txt')
-if os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.txt')
-
 soluzionefinale, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionebest, commesse_fallite, lista_macchine, fbest, fritardobest, fritardopesatobest)
+
+if os.path.basename(os.getcwd()) == "PS-VRP":
+    output.write_output_soluzione_euristica(soluzionefinale, os.getcwd() + '/Dati_output/schedulazione.xlsx')
+if os.path.basename(os.getcwd()) == "progettoIS":
+    output.write_output_soluzione_euristica(soluzionefinale, os.getcwd() + '/PS-VRP/Dati_output/schedulazione.xlsx')
+if os.path.basename(os.getcwd()) == "PS-VRP":
+    output.write_output_ridotto(soluzionefinale, os.getcwd() + '/Dati_output/schedulazione_ridotta.xlsx')
+if os.path.basename(os.getcwd()) == "progettoIS":
+    output.write_output_ridotto(soluzionefinale, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.xlsx')
+if os.path.basename(os.getcwd()) == "PS-VRP":
+    output.write_output_ridotto_txt(soluzionefinale, os.getcwd() + '/Dati_output/schedulazione_ridotta.txt')
+if os.path.basename(os.getcwd()) == "progettoIS":
+    output.write_output_ridotto_txt(soluzionefinale, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.txt')
 
 print(f"{Fore.YELLOW}SETUP (FINAL SOLUTION): {f_obj_final:.2f}s")
 print(f"{Fore.YELLOW}RITARDO (FINAL SOLUTION): {-f_ritardo_final} ore")
@@ -518,5 +518,4 @@ seconds = end_time_schedulazione - start_time_schedulazione
 minutes, secs = divmod(round(seconds), 60)
 print(f"La schedulazione ha impiegato: {minutes}:{secs:02d} minuti")  # formato x:yz
 
-solver.grafico_schedulazione(soluzionebest)  #Graficazione finale
 solver.grafico_schedulazione(soluzionefinale)  #Graficazione finale

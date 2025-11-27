@@ -88,15 +88,19 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
         print("ERRORE: la directory di output degli errori lettura non è correttamente impostata")
 
 
-    #Campi riempiti per evitare che vengano rimossi dal .dropna (campi "facoltativi")zz
+    #Campi riempiti per evitare che vengano rimossi dal .dropna (campi "facoltativi")
     df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].fillna(0)
     df['flag tassativo taglio per schedulatore'] = df['flag tassativo taglio per schedulatore'].fillna(0)
     df['id spedizione'] = df['id spedizione'].fillna(0)
 
-    df = df.dropna()
-    lista_commesse=[] #lista commesse inizialmente vuota
-    df=df[~df['compatibilità macchine taglio::check dati'].str.startswith('ERR')] #elimino tutte le righe del df che presentano errori nell'estrazione filemaker
+    # Filtro delle righe con compatibilità dati assente in input (spostato PRIMA di .dropna() per evitare problemi)
+    df = df[~df['compatibilità macchine taglio::check dati']
+        .str.contains(r'ERR', na=False, case=False)]
     df=df.drop(columns=['compatibilità macchine taglio::check dati']) #elimino la colonna dopo averla utilizzata per filtrare le commesse
+
+    df = df.dropna()
+
+    lista_commesse=[] #lista commesse inizialmente vuota
     df=df.reset_index(drop=True)
     df['Release date']=pd.to_datetime(df['data fine stampa per schedulatore']).apply(lambda x: x.replace(hour=14, minute=0, second=0))
     if df['Commesse::CODICE DI ZONA'] is not int:
@@ -131,7 +135,8 @@ def read_compatibilita(nome_file,lista_commesse):
     df['id spedizione'] = df['id spedizione'].fillna(0)
 
     df=df.dropna()
-    df = df[~df['compatibilità macchine taglio::check dati'].str.contains(r'^\s*ERR')]
+    df = df[~df['compatibilità macchine taglio::check dati']
+        .str.contains(r'ERR', na=False, case=False)]
     df=df.drop(columns=campi_input_commesse)
     #df=df.drop(columns=['compatibilità macchine taglio::check dati'])
     df=df.reset_index(drop=True)
@@ -167,6 +172,10 @@ def read_compatibilita(nome_file,lista_commesse):
 
     # Sovrascrive lista_commesse con solo quelle compatibili
     lista_commesse[:] = commesse_compatibili
+
+    for c in lista_commesse:
+        print(c.id_commessa, c.compatibilita)
+
 
     # Esporta le commesse incompatibili in un file Excel
     if commesse_incompatibili:

@@ -115,10 +115,7 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
         ##OLD - commessa.ritardo = min(max(veicolo.data_partenza, commessa.due_date) - fine_lavorazione, timedelta(days = 0))
         commessa.ritardo = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0))
     else: #commesse rimanenti (senza veicolo assegnato)
-        if 0 in commessa.zona_cliente: #commesse esterne non tassative (non avere veicolo assegnato è normale)
-            commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
-        else: #commesse interne a zona chiusa (non avere veicolo assegnato è da penalizzare con il tempo medio di attesa per un nuovo veicolo)
-            commessa.ritardo = min(commessa.due_date - fine_lavorazione - tempo_medio_attesa, timedelta(days = 0)) 
+        commessa.ritardo = min(commessa.due_date - fine_lavorazione - tempo_medio_attesa, timedelta(days = 0)) 
     schedulazione.append({"commessa": commessa.id_commessa, # dizionario che contiene le informazioni sulla schedula
                           "macchina": macchina.nome_macchina,
                           "release date": commessa.release_date,
@@ -541,7 +538,7 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
                 if commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
                     tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
                 else:
-                    tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione + (commessa._minuti_release_date - macchina._minuti_fine_ultima_lavorazione)
+                    tempo_inizio_taglio = commessa._minuti_release_date
                 tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
                 tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
                 #tempo_fine_lavorazione = tempo_inizio_taglio + tempo_processamento + tempo_setup
@@ -552,14 +549,14 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
                 fpost_ritardo+=commessa.ritardo
                 fpost_ritardo_pesato+=commessa.ritardo/commessa.priorita_cliente
                 commesse_da_schedulare.remove(commessa)
-                #print(f'INSERITA COMMESSA {commessa.id_commessa} su macchina {macchina.nome_macchina}')
+                print(f'INSERITA COMMESSA {commessa.id_commessa} su macchina {macchina.nome_macchina} con tempo di inizio taglio {tempo_inizio_taglio} e considerando che la macchina avveva tempo {macchina._minuti_fine_ultima_lavorazione}')
                 #In caso di commesse reputate tali (e.g. stessi identici metri da tagliare) si forza, con il codice a seguito, la loro schedulazione in sequenza; questa non è permanente, ed è mutabile dalle ricerche locali in seguito
                 for commessa2 in commesse_da_schedulare:
                     if commessa.id_commessa == commessa2.id_commessa or commessa.fascia_iniziale == commessa2.fascia_iniziale and commessa.fascia_finale == commessa2.fascia_finale and commessa.diametro_tubo == commessa2.diametro_tubo and commessa2.compatibilita[macchina.nome_macchina] == 1: #and commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
                         if commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
                             tempo_inizio_taglio_2 = macchina._minuti_fine_ultima_lavorazione
                         else:
-                            tempo_inizio_taglio_2 = macchina._minuti_fine_ultima_lavorazione + (commessa2._minuti_release_date - macchina._minuti_fine_ultima_lavorazione)
+                            tempo_inizio_taglio_2 = commessa2._minuti_release_date
                         tempo_processamento = commessa2.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
                         tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa2)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
                         f_obj+=tempo_setup
