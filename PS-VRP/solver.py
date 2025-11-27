@@ -511,6 +511,75 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
 
     return soluzionepost, f_obj, fpost_ritardo, fpost_ritardo_pesato, commesse_fallite
 
+##EURISTICO RICOSTRUTTIVO (Greedy 3)
+def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base, f_obj_ritardo, f_obj_ritardo_pesato):
+    
+    commesse_da_schedulare = commesse_residue #Tutte le commesse residue, per problemi di release date
+
+    f_obj = f_obj_base  #Funzione obiettivo (somma pesata dei tempi di setup)
+    fpost_ritardo = f_obj_ritardo
+    fpost_ritardo_pesato = f_obj_ritardo_pesato
+    soluzionepost = soluzione #si parte con la schedulazione già effettuata (euristico + ricerche locali + GRASP)
+    lista_macchine2 = lista_macchine.copy()
+
+    #Sorting preliminare dell'input al terzo ciclo While
+    commesse_da_schedulare.sort(key=lambda commessa:(commessa.due_date.timestamp(), +commessa.priorita_cliente)) #Ordinamento: prima in base alla due date; a parità, in base alla priorità del cliente
+    inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # è il primo lunedi disponibile che è uguale per tutte le macchine
+
+    #se beta = 0, la lista commesse_da_schedulare non viene cambiata rispetto al sort iniziale
+    commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
+
+    #QUARTO CICLO WHILE
+    #Inserisco solo sulle macchine tutte le commesse mancanti (per problemi di release_date)
+    while len(commesse_da_schedulare)>0 and len(lista_macchine)>0:
+        schedulazione_eseguita=False
+        lista_macchine=sorted(lista_macchine,key=lambda macchina: macchina._minuti_fine_ultima_lavorazione)
+        macchina=lista_macchine[0]
+        for commessa in commesse_da_schedulare:
+            if macchina.disponibilita == 1 and commessa.compatibilita[macchina.nome_macchina] == 1: #and commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
+                if commessa._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
+                    tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione
+                else:
+                    tempo_inizio_taglio = macchina._minuti_fine_ultima_lavorazione + (macchina._minuti_fine_ultima_lavorazione - commessa._minuti_release_date)
+                tempo_processamento = commessa.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
+                tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
+                #tempo_fine_lavorazione = tempo_inizio_taglio + tempo_processamento + tempo_setup
+                #data_fine_lavorazione = aggiungi_minuti(tempo_fine_lavorazione, inizio_schedulazione)
+                schedulazione_eseguita=True
+                f_obj+=tempo_setup
+                aggiorna_schedulazione(commessa,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,soluzionepost,tempo_inizio_taglio,0)
+                fpost_ritardo+=commessa.ritardo
+                fpost_ritardo_pesato+=commessa.ritardo/commessa.priorita_cliente
+                commesse_da_schedulare.remove(commessa)
+                #print(f'INSERITA COMMESSA {commessa.id_commessa} su macchina {macchina.nome_macchina}')
+                #In caso di commesse reputate tali (e.g. stessi identici metri da tagliare) si forza, con il codice a seguito, la loro schedulazione in sequenza; questa non è permanente, ed è mutabile dalle ricerche locali in seguito
+                for commessa2 in commesse_da_schedulare:
+                    if commessa.id_commessa == commessa2.id_commessa or commessa.fascia_iniziale == commessa2.fascia_iniziale and commessa.fascia_finale == commessa2.fascia_finale and commessa.diametro_tubo == commessa2.diametro_tubo and commessa2.compatibilita[macchina.nome_macchina] == 1: #and commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
+                        if commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
+                            tempo_inizio_taglio_2 = macchina._minuti_fine_ultima_lavorazione
+                        else:
+                            tempo_inizio_taglio_2 = macchina._minuti_fine_ultima_lavorazione + (macchina._minuti_fine_ultima_lavorazione - commessa2._minuti_release_date)
+                        tempo_processamento = commessa2.metri_da_tagliare / macchina.velocita_taglio_media  # calcolo il tempo necessario per processare la commessa che è dato dai metri da tagliare/velocita taglio (tempo=spazio/velocita)
+                        tempo_setup = macchina.calcolo_tempi_setup(macchina.lista_commesse_processate[-1],commessa2)  # calcolo il tempo di setup come il tempo necessario a passare dall'ultima lavorazione alla lavorazione in questione
+                        f_obj+=tempo_setup
+                        aggiorna_schedulazione(commessa2,macchina,tempo_setup,tempo_processamento,inizio_schedulazione,soluzionepost,tempo_inizio_taglio_2,0)
+                        fpost_ritardo+=commessa.ritardo
+                        fpost_ritardo_pesato+=commessa2.ritardo/commessa2.priorita_cliente
+                        commesse_da_schedulare.remove(commessa2)
+            if schedulazione_eseguita:
+                break
+        if not schedulazione_eseguita:
+            lista_macchine.remove(macchina)
+
+    commesse_fallite = [c for c in commesse_da_schedulare]
+
+    if commesse_fallite == []:
+        print("TUTTE LE COMMESSE RESIDUE CORRETTAMENTE SCHEDULATE!")
+
+    lista_macchine = lista_macchine2.copy()
+
+    return soluzionepost, f_obj, fpost_ritardo, fpost_ritardo_pesato
+
 ##INSERT INTER-MACCHINA (Ricerca locale 1)
 def insert_inter_macchina(lista_macchine: list, f_obj, lista_veicoli):
 
