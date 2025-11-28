@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
 #NB: Il valore divid (fondamentale per il calcolo di fobest) è invece impostato manualmente qui
 #NB2: Idem il valore multip (altro fondamentale per il calcolo di fobest)
-divid = 1
+#divid = 10 (impostato dinamicamente)
 #multip = 1000
 
 
@@ -325,18 +325,25 @@ print(f"{Fore.YELLOW}RISULTATO FINALE (CONSEGNE): {-fritardoprimopost} ore di ri
 print(f"{Fore.YELLOW}RISULTATO FINALE (CONSEGNE): {-ritardo_pesato_post_primo} ore di ritardo pesato\n")
 print(f"{Fore.YELLOW}SCHEDULATE FINALI: {len(soluzionefinale)}")
 
+soluzionefinale2, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionefinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo)
+
 ##GRASP
 #iter = 1 #Definito prima o dal GUI
 
-#Impostazione migliore soluzione per il GRASP; parametri divid e multip definiti in precedenza
-fbest = fprimopost
-print(fprimopost, ritardo_pesato_post_primo.total_seconds()/3600)
-fobest = alfa*fprimopost -((1-alfa)*(ritardo_pesato_post_primo.total_seconds()/3600)/divid) #+ multip*(-len(soluzionefinale) + schedulabili)
-fritardobest = fritardoprimopost
-fritardopesatobest = ritardo_pesato_post_primo
-soluzionebest = soluzionefinale
+#Impostazione migliore soluzione per il GRASP
+fbest = f_obj_final
+fritardobest = f_ritardo_final
+fritardopesatobest = f_ritardo_pesato_final
+soluzionebest = soluzionefinale2
 veicoli_best = deepcopy(lista_veicoli)
 commesse_fallite_best = commesse_fallite
+
+#Calcolo del divisore, per porre i setup ed i ritardi più o meno nello stesso ordine di grandezza
+raw_divid = abs(f_ritardo_pesato_final.total_seconds()/3600) / fbest
+divid = round(raw_divid / 10) * 10
+
+#Calcolo della funzione obiettivo migliore come input al GRASP
+fobest = alfa*fbest -((1-alfa)*(fritardopesatobest.total_seconds()/3600)/divid) #+ multip*(-len(soluzionefinale) + schedulabili)
 
 for _ in range(iter):
     print("\n" + "="*24)
@@ -437,7 +444,10 @@ for _ in range(iter):
     soluzionefinale, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionequasifinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo)
 
     ## STAMPE FINALI
-    fo = alfa*f_obj_final -((1-alfa)*(f_ritardo_pesato_final.total_seconds()/3600)/divid) #+ multip*(-len(soluzionefinale) + schedulabili)
+    raw_divid = abs(f_ritardo_pesato_final.total_seconds()/3600) / f_obj_final
+    divid = round(raw_divid / 10) * 10
+    
+    fo = alfa*f_obj_final - ((1-alfa)*(f_ritardo_pesato_final.total_seconds()/3600/divid))
     print(f_obj_final, f_ritardo_pesato_final.total_seconds()/3600)
     print(fo, fobest)
 
