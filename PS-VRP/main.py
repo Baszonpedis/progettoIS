@@ -447,10 +447,10 @@ for _ in range(iter):
 
     ## STAMPE FINALI
     delta_fo_setup = f_obj_final - fbest
-    delta_fo_ritardo_pesato = f_ritardo_pesato_final - fritardopesatobest
+    delta_fo_ritardo_pesato = -f_ritardo_pesato_final + fritardopesatobest
     delta = solver.calcolo_delta(delta_fo_setup, delta_fo_ritardo_pesato)
     #fo = alfa*f_obj_final - ((1-alfa)*(f_ritardo_pesato_final.total_seconds()/3600/divid))
-    #print(f_obj_final, f_ritardo_pesato_final.total_seconds()/3600)
+    print(f_obj_final, f_ritardo_pesato_final.total_seconds()/3600)
     #print(fo, fobest)
     eps = 0.00001
 
