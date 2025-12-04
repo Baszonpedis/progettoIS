@@ -135,6 +135,15 @@ def read_compatibilita(nome_file,lista_commesse):
     df['id spedizione'] = df['id spedizione'].fillna(0)
 
     df=df.dropna()
+
+    # Print di errore per dati errati
+    count_removed_err_rows = df['compatibilità macchine taglio::check dati'] \
+        .str.contains(r'ERR', na=False, case=False).sum()
+
+    print("Commesse rimosse per check dati ERR in estrazione")
+    print(count_removed_err_rows)
+
+
     df = df[~df['compatibilità macchine taglio::check dati']
         .str.contains(r'ERR', na=False, case=False)]
     df=df.drop(columns=campi_input_commesse)

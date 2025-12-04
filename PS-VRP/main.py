@@ -341,6 +341,8 @@ commesse_fallite_best = commesse_fallite
 #Calcolo del divisore, per porre i setup ed i ritardi più o meno nello stesso ordine di grandezza
 raw_divid = abs(f_ritardo_pesato_final.total_seconds()/3600) / fbest
 divid = round(raw_divid / 10) * 10
+if divid == 0:
+    divid = 1
 
 #Calcolo della funzione obiettivo migliore come input al GRASP
 fobest = alfa*fbest -((1-alfa)*(fritardopesatobest.total_seconds()/3600)/divid) #+ multip*(-len(soluzionefinale) + schedulabili)
@@ -444,19 +446,20 @@ for _ in range(iter):
     soluzionefinale, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionequasifinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo)
 
     ## STAMPE FINALI
-    raw_divid = abs(f_ritardo_pesato_final.total_seconds()/3600) / f_obj_final
-    divid = round(raw_divid / 10) * 10
-    
-    fo = alfa*f_obj_final - ((1-alfa)*(f_ritardo_pesato_final.total_seconds()/3600/divid))
-    print(f_obj_final, f_ritardo_pesato_final.total_seconds()/3600)
-    print(fo, fobest)
+    delta_fo_setup = f_obj_final - fbest
+    delta_fo_ritardo_pesato = f_ritardo_pesato_final - fritardopesatobest
+    delta = solver.calcolo_delta(delta_fo_setup, delta_fo_ritardo_pesato)
+    #fo = alfa*f_obj_final - ((1-alfa)*(f_ritardo_pesato_final.total_seconds()/3600/divid))
+    #print(f_obj_final, f_ritardo_pesato_final.total_seconds()/3600)
+    #print(fo, fobest)
+    eps = 0.00001
 
-    if fo < fobest and len(soluzionefinale) >= len(soluzionebest):
+    if delta < -eps: #and len(soluzionefinale) >= len(soluzionebest):
         print(len(soluzionefinale), len(soluzionebest))
         fbest = f_obj_final #aggiornamento funzione obiettivo solo setup
         fritardobest = f_ritardo_final #aggiornamento funzione obiettivo solo ritardo non pesato
         fritardopesatobest = f_ritardo_pesato_final #aggiornamento funzione obiettivo solo ritardo pesato
-        fobest = fo #aggiornamento funzione obiettivo setup+ritardi pesati
+        #fobest = fo #aggiornamento funzione obiettivo setup+ritardi pesati
         soluzionebest = soluzionefinale #aggiornamento soluzione
         veicoli_best = deepcopy(lista_veicoli)
         commesse_fallite_best = commesse_fallite

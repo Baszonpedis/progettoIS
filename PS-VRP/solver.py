@@ -14,6 +14,8 @@ import random
 #alfa = 1 #Parametro per le ricerche locali - consigliato: [0.7-0.9]; si ricordi che zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
 #beta = 0.2 #Parametro per il GRASP (metaeuristico) - consigliato: [0.1-0.3]
 
+max_ritardo = timedelta(days = 60)
+
 # Leggi i parametri dalle variabili d'ambiente (stesse che legge main.py)
 def get_solver_parameters():
     """Legge alfa e beta dalle variabili d'ambiente con valori di default"""
@@ -108,14 +110,14 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
     tempo_medio_attesa = timedelta(days = 10)
     if commessa.tassativita == "X":
         if 0 in commessa.zona_cliente: #commesse esterne tassative
-            commessa.ritardo = min(commessa.due_date - fine_lavorazione, timedelta(days = 0))
+            commessa.ritardo = max(min(commessa.due_date - fine_lavorazione, timedelta(days = 0)), -max_ritardo)
         else: #commesse interne tassative correttamente inserite in estrazione
-            commessa.ritardo = min(veicolo.data_partenza - fine_lavorazione, timedelta(days = 0))
+            commessa.ritardo = max(min(veicolo.data_partenza - fine_lavorazione, timedelta(days = 0)), -max_ritardo)
     elif commessa.veicolo != None: #commesse interne zona aperta
         ##OLD - commessa.ritardo = min(max(veicolo.data_partenza, commessa.due_date) - fine_lavorazione, timedelta(days = 0))
-        commessa.ritardo = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0))
+        commessa.ritardo = max(min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0)), -max_ritardo)
     else: #commesse rimanenti (senza veicolo assegnato)
-        commessa.ritardo = min(commessa.due_date - fine_lavorazione - tempo_medio_attesa, timedelta(days = 0)) 
+        commessa.ritardo = max(min(commessa.due_date - fine_lavorazione - tempo_medio_attesa, timedelta(days = 0)), -max_ritardo)
     schedulazione.append({"commessa": commessa.id_commessa, # dizionario che contiene le informazioni sulla schedula
                           "macchina": macchina.nome_macchina,
                           "release date": commessa.release_date,
@@ -210,11 +212,11 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
     
     if commessa.tassativita == "X": #tassative
         if 0 in commessa.zona_cliente: #tassative esterne
-            ritardomossa = min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0))
+            ritardomossa = max(min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0)), -max_ritardo)
         else: #tassative interne corrette
-            ritardomossa = min(veicolo.data_partenza - data_fine_lavorazione, timedelta(days = 0))
+            ritardomossa = max(min(veicolo.data_partenza - data_fine_lavorazione, timedelta(days = 0)), -max_ritardo)
     elif veicolo != None: #interne zona aperta
-        ritardomossa = min(veicolo.data_partenza - data_fine_lavorazione, timedelta(days = 0))
+        ritardomossa = max(min(veicolo.data_partenza - data_fine_lavorazione, timedelta(days = 0)), -max_ritardo)
         ''' Quanto a seguito sarebbe meglio definirlo in una funzione, che prenda in input lista_veicoli'''
         changed = False
         if ritardomossa != timedelta(days = 0):
@@ -232,12 +234,12 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
             if changed == False: #Disassociazione in assenza di veicoli alternativi
                 #print(f'Commessa {commessa.id_commessa} disassociata in assenza di altri veicoli coerenti')
                 commessa.veicolo.temp_capacity += commessa.kg_da_tagliare
-                ritardomossa =  min(commessa.due_date - data_fine_lavorazione - tempo_medio_attesa, timedelta(days = 0)) #Vincolo SOFT a non compiere mosse che mandano in ritardo veicoli se non si hanno alternative
+                ritardomossa =  max(min(commessa.due_date - data_fine_lavorazione - tempo_medio_attesa, timedelta(days = 0)), -max_ritardo) #Vincolo SOFT a non compiere mosse che mandano in ritardo veicoli se non si hanno alternative
                 veicolo = None
         if veicolo is not None: #Questo se non si entra nell'if precedente o se ci si entra e se ne esce con un veicolo
-            ritardomossa = min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0))
+            ritardomossa = max(min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0)), -max_ritardo)
     else: #altre (serve se la funzione dovesse essere mai chiamata anche su commesse solo su macchina, del gruppo 3)
-        ritardomossa = min(commessa.due_date - data_fine_lavorazione - tempo_medio_attesa, timedelta(days = 0))
+        ritardomossa = max(min(commessa.due_date - data_fine_lavorazione - tempo_medio_attesa, timedelta(days = 0)), -max_ritardo)
     schedulazione.append({"commessa": id,
                           "macchina": macchina_lavorazione,
                           "release date": release_date,
