@@ -134,14 +134,14 @@ def read_compatibilita(nome_file,lista_commesse):
     df['flag tassativo taglio per schedulatore'] = df['flag tassativo taglio per schedulatore'].fillna(0)
     df['id spedizione'] = df['id spedizione'].fillna(0)
 
-    df=df.dropna()
-
     # Print di errore per dati errati
     count_removed_err_rows = df['compatibilità macchine taglio::check dati'] \
         .str.contains(r'ERR', na=False, case=False).sum()
 
     print("Commesse rimosse per check dati ERR in estrazione")
     print(count_removed_err_rows)
+
+    df=df.dropna()
 
 
     df = df[~df['compatibilità macchine taglio::check dati']

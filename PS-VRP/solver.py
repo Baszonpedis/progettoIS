@@ -1137,7 +1137,7 @@ def GRASP_randomizer(lista_commesse):
             #si toglie la selezionata dalla candidate list
             lista_commesse.remove(selezionata)
             #si rivalutano i costi dopo ogni inserimento
-            cost = [(+j.priorita_cliente+float((j.due_date).timestamp())/(sigma)) for j in lista_commesse]
+            cost = [(+j.priorita_cliente/10+float((j.due_date).timestamp())/(sigma)) for j in lista_commesse]
             #print(cost)
         return lista_commesse_randomized
 
