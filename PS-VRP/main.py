@@ -324,17 +324,17 @@ def esecuzione():
     ritardo_pesato_post_primo = ritardo_post_pesato_5
     soluzionefinale = soluzione5post
 
+    soluzionefinale2, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionefinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo)
+
     ## STAMPE FINALI
     print(f"{Fore.MAGENTA}{Style.BRIGHT}\n{'='*40}")
     print(f"{Fore.MAGENTA}{Style.BRIGHT}RISULTATI FINALI".center(40))
     print(f"{Fore.MAGENTA}{Style.BRIGHT}{'='*40}\n")
 
-    print(f"{Fore.YELLOW}RISULTATO FINALE (SETUP): {fprimopost} minuti di setup\n")
-    print(f"{Fore.YELLOW}RISULTATO FINALE (CONSEGNE): {-fritardoprimopost} ore di ritardo\n")
-    print(f"{Fore.YELLOW}RISULTATO FINALE (CONSEGNE): {-ritardo_pesato_post_primo} ore di ritardo pesato\n")
-    print(f"{Fore.YELLOW}SCHEDULATE FINALI: {len(soluzionefinale)}")
-
-    soluzionefinale2, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionefinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo)
+    print(f"{Fore.YELLOW}RISULTATO FINALE (SETUP): {f_obj_final} minuti di setup\n")
+    print(f"{Fore.YELLOW}RISULTATO FINALE (CONSEGNE): {-f_ritardo_final} ore di ritardo\n")
+    print(f"{Fore.YELLOW}RISULTATO FINALE (CONSEGNE): {-f_ritardo_pesato_final} ore di ritardo pesato\n")
+    print(f"{Fore.YELLOW}SCHEDULATE FINALI: {len(soluzionefinale2)}")
 
     ##GRASP
     #iter = 1 #Definito prima o dal GUI
@@ -348,13 +348,13 @@ def esecuzione():
     commesse_fallite_best = commesse_fallite
 
     #Calcolo del divisore, per porre i setup ed i ritardi più o meno nello stesso ordine di grandezza
-    raw_divid = abs(f_ritardo_pesato_final.total_seconds()/3600) / fbest
-    divid = round(raw_divid / 10) * 10
-    if divid == 0:
-        divid = 1
+    #raw_divid = abs(f_ritardo_pesato_final.total_seconds()/3600) / fbest
+    #divid = round(raw_divid / 10) * 10
+    #if divid == 0:
+    #    divid = 1
 
     #Calcolo della funzione obiettivo migliore come input al GRASP
-    fobest = alfa*fbest -((1-alfa)*(fritardopesatobest.total_seconds()/3600)/divid) #+ multip*(-len(soluzionefinale) + schedulabili)
+    #fobest = alfa*fbest -((1-alfa)*(fritardopesatobest.total_seconds()/3600)/divid) #+ multip*(-len(soluzionefinale) + schedulabili)
 
     for _ in range(iter):
         print("\n" + "="*24)
@@ -465,7 +465,7 @@ def esecuzione():
         eps = 0.00001
 
         if delta < -eps: #and len(soluzionefinale) >= len(soluzionebest):
-            print(len(soluzionefinale), len(soluzionebest))
+            #print(len(soluzionefinale), len(soluzionebest))
             fbest = f_obj_final #aggiornamento funzione obiettivo solo setup
             fritardobest = f_ritardo_final #aggiornamento funzione obiettivo solo ritardo non pesato
             fritardopesatobest = f_ritardo_pesato_final #aggiornamento funzione obiettivo solo ritardo pesato

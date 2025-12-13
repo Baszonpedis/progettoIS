@@ -163,10 +163,6 @@ def read_compatibilita(nome_file,lista_commesse):
     for i, f in df.iterrows(): #itero lungo le righe del df (la i indica l'indice della riga; da notare che vi è corrispondenza tra la i del df pandas e la i della commessa)
         #print(i)
         compat = dict(f)
-        if lista_commesse[i].id_commessa == 235572:
-            print(compat)
-        if lista_commesse[i].id_commessa == 233333:
-            print(compat)
         if sum([compat[m] for m in macchine]) > 0:
             lista_commesse[i].compatibilita = compat #assegno all'attributo compatibilita un dizionario con chiave=nome della macchina e valore=0/1 a seconda che la commessa non possa/possa essere schedulata sulla macchina
             commesse_compatibili.append(lista_commesse[i])
@@ -182,8 +178,8 @@ def read_compatibilita(nome_file,lista_commesse):
     # Sovrascrive lista_commesse con solo quelle compatibili
     lista_commesse[:] = commesse_compatibili
 
-    for c in lista_commesse:
-        print(c.id_commessa, c.compatibilita)
+    #for c in lista_commesse:
+    #    print(c.id_commessa, c.compatibilita)
 
 
     # Esporta le commesse incompatibili in un file Excel
