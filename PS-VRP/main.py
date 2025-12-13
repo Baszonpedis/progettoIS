@@ -9,11 +9,20 @@ import time
 from colorama import Fore, Style, init
 import pandas as pd
 
-start_time_schedulazione = time.time()
+def esecuzione():
+    start_time_schedulazione = time.time()
 
-##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
-if __name__ == "__main__":
+    ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
     print("=== AVVIO MAIN.PY ===")
+
+    path_output = os.path.join(os.getcwd(), "Dati_output")
+
+    if not os.path.exists(path_output):
+        try:
+            os.makedirs(path_output)
+            print(f"Creata cartella output: {path_output}")
+        except OSError as e:
+            print(f"Errore creazione cartella output: {e}")
     
     # Leggi dalle variabili d'ambiente (passate dalla GUI)
     file_commesse_excel = os.getenv('FILE_COMMESSE')
@@ -62,7 +71,7 @@ if __name__ == "__main__":
         else:
             print("ERRORE - file di input non localizzati correttamente o variabili d'ambiente mancanti.", file=sys.stderr)
             sys.exit(1)
-    
+        
     # Verifica che tutti i file esistano
     files_to_check = {
         'Commesse': file_commesse_excel,
@@ -79,285 +88,18 @@ if __name__ == "__main__":
     
     print("\n=== INIZIO SCHEDULAZIONE ===")
 
-#NB: Il valore divid (fondamentale per il calcolo di fobest) è invece impostato manualmente qui
-#NB2: Idem il valore multip (altro fondamentale per il calcolo di fobest)
-#divid = 10 (impostato dinamicamente)
-#multip = 1000
+    #NB: Il valore divid (fondamentale per il calcolo di fobest) è invece impostato manualmente qui
+    #NB2: Idem il valore multip (altro fondamentale per il calcolo di fobest)
+    #divid = 10 (impostato dinamicamente)
+    #multip = 1000
 
 
-##ELABORAZIONI SU INPUT(s)
-lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
-read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
-inizio_schedulazione=lista_macchine[0].data_inizio_schedulazione
-lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedulazione) #Lista base oggetti commessa
-schedulabili = len(lista_commesse)
-incompatibili = read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse); estraggo le eventuali incompatibili con ogni macchina
-lista_veicoli=read_excel.read_excel_veicoli(file_veicoli_excel) #Lista base oggetti veicolo
-lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
-lista_veicoli=sorted(lista_veicoli,key=lambda veicolo:veicolo.data_partenza)
-
-init(autoreset=True)  # Ripristina i colori dopo ogni print
-
-
-commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
-lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
-df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
-
-if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/Problemi_veicoli.xlsx')
-elif os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/Problemi_veicoli.xlsx')
-
-
-##EURISTICO DI BASE
-print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G1+G2)".center(40))
-print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
-print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE LETTE CORRETTAMENTE (NO CAMPI MANCANTI, ALMENO UNA COMPATIBILITA' MACCHINA): {len(lista_commesse)}")
-#print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE ESCLUSE PER INCOMPATIBILITA' CON TUTTE LE MACCHINE: {len(incompatibili)}")
-
-start_time_eur = time.time()
-
-print(len(commesse_da_schedulare))
-schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato, df_tass = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
-#output.write_output_soluzione_euristica(schedulazione3, os.getcwd() + '/Dati_output/euristico_costruttivo.xlsx')
-print(f'SCARTATI DAL PRIMO EURISTICO - Direttamente al Gruppo tre: {len(dizionario_filtri)}')
-print(f'INPUT AL PRIMO EURISTICO: {len(lista_commesse) - len(dizionario_filtri)}')
-print(f'FALLIMENTI PRIMO EURISTICO: {len(causa_fallimento)}')
-print(f'ASSEGNATI PRIMO EURISTICO: {len(lista_commesse) - len(dizionario_filtri) - len(causa_fallimento)}')
-commesse_non_schedulate = causa_fallimento | dizionario_filtri | commesse_veicoli_errati #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
-
-print(f"\n{Fore.RED}{Style.BRIGHT}COMMESSE NON SCHEDULATE AL PRIMO EURISTICO (su veicoli): {len(commesse_non_schedulate)}")
-print(f"{Fore.RED}Dettaglio motivi: {commesse_non_schedulate}")
-print(f"\n{Fore.YELLOW}Funzione obiettivo euristico (setup): {f_obj3} minuti di setup")
-print(f"{Fore.YELLOW}Funzione obiettivo euristico (consegna): {-f_obj3_ritardo} ore di ritardo\n")
-print(f"{Fore.YELLOW}Funzione obiettivo euristico (consegna): {-f_obj3_ritardo_pesato} ore di ritardo pesato\n")
-
-end_time_eur = time.time()
-tot_time_eur = end_time_eur - start_time_eur
-
-#solver.grafico_schedulazione(schedulazione3)
-
-## DEEPCOPIES PER RICERCHE LOCALI (prima fase)
-lista_macchine_copy = deepcopy(lista_macchine)
-lista_macchine_copy1 = deepcopy(lista_macchine)
-lista_macchine_copy2 = deepcopy(lista_macchine)
-lista_veicoli_copy = deepcopy(lista_veicoli)
-lista_veicoli_copy1 = deepcopy(lista_veicoli)
-lista_veicoli_copy2 = deepcopy(lista_veicoli)
-
-## RICERCHE LOCALI (su primo euristico)
-print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}RICERCHE LOCALI".center(40))
-print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
-
-# M2M
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS1 (Insert inter-macchina)")
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-
-start1 = time.time()
-soluzione1, f1, contatoreLS1, f1_ritardo, ritardo_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy, f_obj3, lista_veicoli_copy)
-
-#print(f1)
-print(f"{Fore.YELLOW}Risultato LS1 (setup): ottenuto {f1-f_obj3} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-f1_ritardo + f_obj3_ritardo} ore di ritardo")
-print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-ritardo_pesato_1 + f_obj3_ritardo_pesato} ore di ritardo pesato")
-print(f"Mosse LS1: {contatoreLS1}")
-#output.write_output_soluzione_euristica(soluzione1, os.getcwd() +'/Dati_output/insert_inter.xlsx')
-tot1 = time.time() - start1
-#solver.grafico_schedulazione(soluzione1)
-
-# INSERT INTRA (Sequenza Parziale)
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2 (sequenza parziale)")
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-start_time_tot = time.time()
-soluzione4, f4, contatoreLS2, f4_ritardo, ritardo_pesato_4 = solver.insert_intra(lista_macchine_copy, f1, lista_veicoli_copy)
-print(f'Mosse LS1+LS2: {contatoreLS1+contatoreLS2}')
-#soluzione_parziale = [b for a in soluzione4 for b in a]
-#print(f4)
-#print(-f4_ritardo)
-#output.write_output_soluzione_euristica(soluzione4, os.getcwd() + '/Dati_output/sequenza_parziale.xlsx')
-print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto {f4-f1} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-f4_ritardo+f1_ritardo} ore di ritardo")
-print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-ritardo_pesato_4+ritardo_pesato_1} ore di ritardo pesato")
-
-# INSERT INTER (Sequenza Finale)
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2+LS3 (sequenza finale)")
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-soluzione5, f5, contatoreLS3, f5_ritardo, ritardo_pesato_5 = solver.swap_intra(lista_macchine_copy, f4, lista_veicoli_copy)
-print(f'Mosse LS1+LS2+LS3: {contatoreLS1+contatoreLS2+contatoreLS3}')
-#soluzione_sequenza = [b for a in soluzione5 for b in a]
-#print(f5_ritardo)
-#print(f4_ritardo)
-print(f"{Fore.YELLOW}Risultato LS1+LS2+LS3 (setup): ottenuto {f5-f4} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS1+LS2+LS3 (consegna): ottenuto {-f5_ritardo+f4_ritardo} ore di ritardo")
-print(f"{Fore.YELLOW}Risultato LS1+LS2+LS3 (consegna): ottenuto {-ritardo_pesato_5+ritardo_pesato_4} ore di ritardo pesato")
-#output.write_output_soluzione_euristica(soluzione5, os.getcwd() + '/Dati_output/sequenza.xlsx')
-tot_tot = time.time() - start_time_tot
-#print(f5)
-print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (setup): ottenuto {f5-f_obj3} minuti di setup")
-print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (consegna): ottenuto {-f5_ritardo+f_obj3_ritardo} ore di ritardo")
-print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (consegna): ottenuto {-ritardo_pesato_5+f_obj3_ritardo_pesato} ore di ritardo pesato")
-
-#Soluzione finale primo euristico
-fprimo = f5
-fritardoprimo = f5_ritardo
-ritardo_pesato_primo = ritardo_pesato_5
-macchine_post = lista_macchine_copy
-#veicoli_post = lista_veicoli_copy
-soluzionebasepost = soluzione5
-
-print(f"{Fore.YELLOW}RISULTATO PARZIALE PRIMA SEQUENZA (setup): ottenuto {f5} minuti di setup")
-print(f"{Fore.YELLOW}RISULTATO PARZIALE PRIMA SEQUENZA (consegna): ottenuto {-f5_ritardo} ore di ritardo")
-print(f"{Fore.YELLOW}RISULTATO PARZIALE PRIMA SEQUENZA (consegna 'pesata'): ottenuto {-ritardo_pesato_5} ore di ritardo pesato")
-
-# EURISTICO NUOVO (gruppo3)
-print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G3)".center(40))
-print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
-ritardo5 = -f5_ritardo.total_seconds()/3600 
-#ritardo2 = -f2_ritardo.total_seconds()/3600
-#ritardo3 = -f3_ritardo.total_seconds()/3600
-
-start_time_post = time.time()
-soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato, commesse_fallite = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
-print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (setup): {fpost} minuti di setup")
-print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-fpost_ritardo} ore di ritardo")
-print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-ritardo_post_pesato} ore di ritardo pesato")
-#output.write_output_soluzione_euristica(soluzionepost, os.getcwd() + '/Dati_output/euristico_post.xlsx')
-#solver.grafico_schedulazione(soluzionepost)
-post_time = time.time() - start_time_post
-
-## DEEPCOPIES PER RICERCHE LOCALI (seconda fase)
-lista_macchine_copy3 = deepcopy(macchine_post)
-lista_macchine_copy4 = deepcopy(macchine_post)
-lista_macchine_copy5 = deepcopy(macchine_post)
-
-
-## RICERCHE LOCALI (su secondo euristico)
-
-# M2M - Bis
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}LS1[G3] (Insert inter-macchina)")
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-
-start1_post = time.time()
-soluzione1post, f1post, contatoreLS1post, f1_ritardo_post, ritardo_post_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy3, fpost, lista_veicoli)
-#print(f1post)
-print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (setup): ottenuto {f1post-fpost} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (consegna): ottenuto {-f1_ritardo_post + fpost_ritardo} ore di ritardo")
-print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (consegna): ottenuto {-ritardo_post_pesato_1 + ritardo_post_pesato} ore di ritardo pesato")
-print(f"Mosse LS1 - post: {contatoreLS1post}")
-#output.write_output_soluzione_euristica(soluzione1post, os.getcwd() + '/Dati_output/insert_inter_post.xlsx')
-tot1_post = time.time() - start1_post
-
-# SEQUENZA PARZIALE
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}LS1+LS2[LS[G1+G2]+G3] (sequenza parziale)")
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-start_time_tot_post = time.time()
-soluzione4post, f4post, contatoreLS2post, f4_ritardo_post, ritardo_post_pesato_4 = solver.insert_intra(lista_macchine_copy3, f1post, lista_veicoli)
-print(f'Mosse LS1+LS2 - post: {contatoreLS1post+contatoreLS2post}')
-#solver.grafico_schedulazione(soluzione4post)
-print(f'f4 {f4post}, f1 {f1post}')
-#output.write_output_soluzione_euristica(soluzione4post, os.getcwd() + '/Dati_output/sequenza_parziale_post.xlsx')
-print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (setup): ottenuto {f4post-f1post} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f4_ritardo_post+f1_ritardo_post} ore di ritardo")
-print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (consegna): ottenuto {-ritardo_post_pesato_4+ritardo_post_pesato_1} ore di ritardo pesato")
-
-# SEQUENZA COMPLETA
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-print(f"{Fore.CYAN}{Style.BRIGHT}LS[LS[G1+G2]+G3] (sequenza finale)")
-print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
-soluzione5post, f5post, contatoreLS3post, f5_ritardo_post, ritardo_post_pesato_5 = solver.swap_intra(lista_macchine_copy3, f4post, lista_veicoli)
-print(f'Mosse LS1+LS2+LS3 - post: {contatoreLS1post+contatoreLS2post+contatoreLS3post}')
-print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (setup): ottenuto {f5post-f4post} minuti di setup")
-print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-f5_ritardo_post+f4_ritardo_post} ore di ritardo")
-print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-ritardo_post_pesato_5+ritardo_post_pesato_4} ore di ritardo pesato")
-
-#Output di errore - commesse con veicolo errato e pertanto escluse (ERRORE NON RISOLUBILE DAL CODICE)
-commesse_in_5post = {c['commessa'] for c in soluzione5post}
-df = pd.DataFrame([
-    {
-        'id': c
-    }
-    for c in commesse_veicoli_errati
-])
-
-#Output di errore - commesse non schedulate (problemi release date)
-df2 = pd.DataFrame([
-    {
-        'id': c.id_commessa,
-        'release_date': c.release_date,
-        'tassativita': c.tassativita
-    }
-    for c in commesse_fallite
-])
-
-#L'output di errore legato ai veicoli in sé è precedente (presso "elaborazione input(s)")
-if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
-    output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
-    output.write_tassative_error_output(df_tass,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
-elif os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
-    output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
-    output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
-
-ritardo1 = -f1_ritardo_post.total_seconds()/3600
-
-#Soluzione finale secondo euristico
-fprimopost = f5post
-fritardoprimopost = f5_ritardo_post
-ritardo_pesato_post_primo = ritardo_post_pesato_5
-soluzionefinale = soluzione5post
-
-## STAMPE FINALI
-print(f"{Fore.MAGENTA}{Style.BRIGHT}\n{'='*40}")
-print(f"{Fore.MAGENTA}{Style.BRIGHT}RISULTATI FINALI".center(40))
-print(f"{Fore.MAGENTA}{Style.BRIGHT}{'='*40}\n")
-
-print(f"{Fore.YELLOW}RISULTATO FINALE (SETUP): {fprimopost} minuti di setup\n")
-print(f"{Fore.YELLOW}RISULTATO FINALE (CONSEGNE): {-fritardoprimopost} ore di ritardo\n")
-print(f"{Fore.YELLOW}RISULTATO FINALE (CONSEGNE): {-ritardo_pesato_post_primo} ore di ritardo pesato\n")
-print(f"{Fore.YELLOW}SCHEDULATE FINALI: {len(soluzionefinale)}")
-
-soluzionefinale2, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionefinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo)
-
-##GRASP
-#iter = 1 #Definito prima o dal GUI
-
-#Impostazione migliore soluzione per il GRASP
-fbest = f_obj_final
-fritardobest = f_ritardo_final
-fritardopesatobest = f_ritardo_pesato_final
-soluzionebest = soluzionefinale2
-veicoli_best = deepcopy(lista_veicoli)
-commesse_fallite_best = commesse_fallite
-
-#Calcolo del divisore, per porre i setup ed i ritardi più o meno nello stesso ordine di grandezza
-raw_divid = abs(f_ritardo_pesato_final.total_seconds()/3600) / fbest
-divid = round(raw_divid / 10) * 10
-if divid == 0:
-    divid = 1
-
-#Calcolo della funzione obiettivo migliore come input al GRASP
-fobest = alfa*fbest -((1-alfa)*(fritardopesatobest.total_seconds()/3600)/divid) #+ multip*(-len(soluzionefinale) + schedulabili)
-
-for _ in range(iter):
-    print("\n" + "="*24)
-    print(f"|||ITERAZIONE: {_} / {iter}|||")
-    print("="*24 + "\n")
-
-    #NB: gli input sono ricalcolati a ogni iterazione; non è ottimale ma è per evitare problemi con le due strutture dati utilizzate
-    #NB2: questo si dimostra particolarmente conveniente nella nuova logica di veicoli
+    ##ELABORAZIONI SU INPUT(s)
     lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
     read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
     inizio_schedulazione=lista_macchine[0].data_inizio_schedulazione
     lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedulazione) #Lista base oggetti commessa
+    schedulabili = len(lista_commesse)
     incompatibili = read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse); estraggo le eventuali incompatibili con ogni macchina
     lista_veicoli=read_excel.read_excel_veicoli(file_veicoli_excel) #Lista base oggetti veicolo
     lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
@@ -365,52 +107,136 @@ for _ in range(iter):
 
     init(autoreset=True)  # Ripristina i colori dopo ogni print
 
+
     commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
     lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
     df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
 
-    ## EURISTICO COSTRUTTIVO
+    if not df_errati.empty:
+        if os.path.basename(os.getcwd()) == "progettoIS":
+            output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/Problemi_veicoli.xlsx')
+        else:
+            output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/Problemi_veicoli.xlsx')
+
+    ##EURISTICO DI BASE
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
+    print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G1+G2)".center(40))
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
+    print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE LETTE CORRETTAMENTE (NO CAMPI MANCANTI, ALMENO UNA COMPATIBILITA' MACCHINA): {len(lista_commesse)}")
+    #print(f"{Fore.GREEN}{Style.BRIGHT}COMMESSE ESCLUSE PER INCOMPATIBILITA' CON TUTTE LE MACCHINE: {len(incompatibili)}")
+
     start_time_eur = time.time()
+
+    print(len(commesse_da_schedulare))
     schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato, df_tass = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
     #output.write_output_soluzione_euristica(schedulazione3, os.getcwd() + '/Dati_output/euristico_costruttivo.xlsx')
+    print(f'SCARTATI DAL PRIMO EURISTICO - Direttamente al Gruppo tre: {len(dizionario_filtri)}')
+    print(f'INPUT AL PRIMO EURISTICO: {len(lista_commesse) - len(dizionario_filtri)}')
+    print(f'FALLIMENTI PRIMO EURISTICO: {len(causa_fallimento)}')
+    print(f'ASSEGNATI PRIMO EURISTICO: {len(lista_commesse) - len(dizionario_filtri) - len(causa_fallimento)}')
     commesse_non_schedulate = causa_fallimento | dizionario_filtri | commesse_veicoli_errati #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
+
+    print(f"\n{Fore.RED}{Style.BRIGHT}COMMESSE NON SCHEDULATE AL PRIMO EURISTICO (su veicoli): {len(commesse_non_schedulate)}")
+    print(f"{Fore.RED}Dettaglio motivi: {commesse_non_schedulate}")
+    print(f"\n{Fore.YELLOW}Funzione obiettivo euristico (setup): {f_obj3} minuti di setup")
+    print(f"{Fore.YELLOW}Funzione obiettivo euristico (consegna): {-f_obj3_ritardo} ore di ritardo\n")
+    print(f"{Fore.YELLOW}Funzione obiettivo euristico (consegna): {-f_obj3_ritardo_pesato} ore di ritardo pesato\n")
+
     end_time_eur = time.time()
     tot_time_eur = end_time_eur - start_time_eur
+
+    #solver.grafico_schedulazione(schedulazione3)
 
     ## DEEPCOPIES PER RICERCHE LOCALI (prima fase)
     lista_macchine_copy = deepcopy(lista_macchine)
     lista_macchine_copy1 = deepcopy(lista_macchine)
     lista_macchine_copy2 = deepcopy(lista_macchine)
+    lista_veicoli_copy = deepcopy(lista_veicoli)
+    lista_veicoli_copy1 = deepcopy(lista_veicoli)
+    lista_veicoli_copy2 = deepcopy(lista_veicoli)
 
     ## RICERCHE LOCALI (su primo euristico)
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
+    print(f"{Fore.CYAN}{Style.BRIGHT}RICERCHE LOCALI".center(40))
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}\n")
+
+    # M2M
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+    print(f"{Fore.CYAN}{Style.BRIGHT}Greedy + LS1 (Insert inter-macchina)")
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+
     start1 = time.time()
-    soluzione1, f1, contatoreLS1, f1_ritardo, ritardo_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy, f_obj3, lista_veicoli)
+    soluzione1, f1, contatoreLS1, f1_ritardo, ritardo_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy, f_obj3, lista_veicoli_copy)
+
+    #print(f1)
+    print(f"{Fore.YELLOW}Risultato LS1 (setup): ottenuto {f1-f_obj3} minuti di setup")
+    print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-f1_ritardo + f_obj3_ritardo} ore di ritardo")
+    print(f"{Fore.YELLOW}Risultato LS1 (consegna): ottenuto {-ritardo_pesato_1 + f_obj3_ritardo_pesato} ore di ritardo pesato")
+    print(f"Mosse LS1: {contatoreLS1}")
     #output.write_output_soluzione_euristica(soluzione1, os.getcwd() +'/Dati_output/insert_inter.xlsx')
     tot1 = time.time() - start1
+    #solver.grafico_schedulazione(soluzione1)
 
-    # SEQUENZA PARZIALE
+    # INSERT INTRA (Sequenza Parziale)
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+    print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2 (sequenza parziale)")
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
     start_time_tot = time.time()
-    soluzione4, f4, contatoreLS2, f4_ritardo, ritardo_pesato_4 = solver.insert_intra(lista_macchine_copy, f1, lista_veicoli)
+    soluzione4, f4, contatoreLS2, f4_ritardo, ritardo_pesato_4 = solver.insert_intra(lista_macchine_copy, f1, lista_veicoli_copy)
+    print(f'Mosse LS1+LS2: {contatoreLS1+contatoreLS2}')
+    #soluzione_parziale = [b for a in soluzione4 for b in a]
+    #print(f4)
+    #print(-f4_ritardo)
     #output.write_output_soluzione_euristica(soluzione4, os.getcwd() + '/Dati_output/sequenza_parziale.xlsx')
+    print(f"{Fore.YELLOW}Risultato LS1+LS2 (setup): ottenuto {f4-f1} minuti di setup")
+    print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-f4_ritardo+f1_ritardo} ore di ritardo")
+    print(f"{Fore.YELLOW}Risultato LS1+LS2 (consegna): {-ritardo_pesato_4+ritardo_pesato_1} ore di ritardo pesato")
 
-    # SEQUENZA COMPLETA
-    soluzione5, f5, contatoreLS3, f5_ritardo, ritardo_pesato_5 = solver.swap_intra(lista_macchine_copy, f4, lista_veicoli)
+    # INSERT INTER (Sequenza Finale)
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+    print(f"{Fore.CYAN}{Style.BRIGHT}G+LS1+LS2+LS3 (sequenza finale)")
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+    soluzione5, f5, contatoreLS3, f5_ritardo, ritardo_pesato_5 = solver.swap_intra(lista_macchine_copy, f4, lista_veicoli_copy)
+    print(f'Mosse LS1+LS2+LS3: {contatoreLS1+contatoreLS2+contatoreLS3}')
+    #soluzione_sequenza = [b for a in soluzione5 for b in a]
+    #print(f5_ritardo)
+    #print(f4_ritardo)
+    print(f"{Fore.YELLOW}Risultato LS1+LS2+LS3 (setup): ottenuto {f5-f4} minuti di setup")
+    print(f"{Fore.YELLOW}Risultato LS1+LS2+LS3 (consegna): ottenuto {-f5_ritardo+f4_ritardo} ore di ritardo")
+    print(f"{Fore.YELLOW}Risultato LS1+LS2+LS3 (consegna): ottenuto {-ritardo_pesato_5+ritardo_pesato_4} ore di ritardo pesato")
     #output.write_output_soluzione_euristica(soluzione5, os.getcwd() + '/Dati_output/sequenza.xlsx')
     tot_tot = time.time() - start_time_tot
+    #print(f5)
+    print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (setup): ottenuto {f5-f_obj3} minuti di setup")
+    print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (consegna): ottenuto {-f5_ritardo+f_obj3_ritardo} ore di ritardo")
+    print(f"{Fore.YELLOW}RISPARMIO SEQUENZA (consegna): ottenuto {-ritardo_pesato_5+f_obj3_ritardo_pesato} ore di ritardo pesato")
 
     #Soluzione finale primo euristico
     fprimo = f5
     fritardoprimo = f5_ritardo
     ritardo_pesato_primo = ritardo_pesato_5
     macchine_post = lista_macchine_copy
+    #veicoli_post = lista_veicoli_copy
     soluzionebasepost = soluzione5
 
+    print(f"{Fore.YELLOW}RISULTATO PARZIALE PRIMA SEQUENZA (setup): ottenuto {f5} minuti di setup")
+    print(f"{Fore.YELLOW}RISULTATO PARZIALE PRIMA SEQUENZA (consegna): ottenuto {-f5_ritardo} ore di ritardo")
+    print(f"{Fore.YELLOW}RISULTATO PARZIALE PRIMA SEQUENZA (consegna 'pesata'): ottenuto {-ritardo_pesato_5} ore di ritardo pesato")
+
     # EURISTICO NUOVO (gruppo3)
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
+    print(f"{Fore.CYAN}{Style.BRIGHT}EURISTICO COSTRUTTIVO (G3)".center(40))
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
     ritardo5 = -f5_ritardo.total_seconds()/3600 
+    #ritardo2 = -f2_ritardo.total_seconds()/3600
+    #ritardo3 = -f3_ritardo.total_seconds()/3600
 
     start_time_post = time.time()
     soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato, commesse_fallite = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
-    #output.write_output_soluzione_euristica(soluzionepost, os.getcwd() + '/PS-VRP/Dati_output/euristico_post.xlsx')
+    print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (setup): {fpost} minuti di setup")
+    print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-fpost_ritardo} ore di ritardo")
+    print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-ritardo_post_pesato} ore di ritardo pesato")
+    #output.write_output_soluzione_euristica(soluzionepost, os.getcwd() + '/Dati_output/euristico_post.xlsx')
     #solver.grafico_schedulazione(soluzionepost)
     post_time = time.time() - start_time_post
 
@@ -423,127 +249,316 @@ for _ in range(iter):
     ## RICERCHE LOCALI (su secondo euristico)
 
     # M2M - Bis
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+    print(f"{Fore.CYAN}{Style.BRIGHT}LS1[G3] (Insert inter-macchina)")
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+
     start1_post = time.time()
     soluzione1post, f1post, contatoreLS1post, f1_ritardo_post, ritardo_post_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy3, fpost, lista_veicoli)
+    #print(f1post)
+    print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (setup): ottenuto {f1post-fpost} minuti di setup")
+    print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (consegna): ottenuto {-f1_ritardo_post + fpost_ritardo} ore di ritardo")
+    print(f"{Fore.YELLOW}Risultato LS1[LS[G1+G2]+G3] (consegna): ottenuto {-ritardo_post_pesato_1 + ritardo_post_pesato} ore di ritardo pesato")
+    print(f"Mosse LS1 - post: {contatoreLS1post}")
     #output.write_output_soluzione_euristica(soluzione1post, os.getcwd() + '/Dati_output/insert_inter_post.xlsx')
     tot1_post = time.time() - start1_post
 
     # SEQUENZA PARZIALE
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+    print(f"{Fore.CYAN}{Style.BRIGHT}LS1+LS2[LS[G1+G2]+G3] (sequenza parziale)")
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
     start_time_tot_post = time.time()
     soluzione4post, f4post, contatoreLS2post, f4_ritardo_post, ritardo_post_pesato_4 = solver.insert_intra(lista_macchine_copy3, f1post, lista_veicoli)
+    print(f'Mosse LS1+LS2 - post: {contatoreLS1post+contatoreLS2post}')
+    #solver.grafico_schedulazione(soluzione4post)
+    print(f'f4 {f4post}, f1 {f1post}')
+    #output.write_output_soluzione_euristica(soluzione4post, os.getcwd() + '/Dati_output/sequenza_parziale_post.xlsx')
+    print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (setup): ottenuto {f4post-f1post} minuti di setup")
+    print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (consegna): ottenuto {-f4_ritardo_post+f1_ritardo_post} ore di ritardo")
+    print(f"{Fore.YELLOW}Risultato LS1+LS2[LS[G1+G2]+G3] (consegna): ottenuto {-ritardo_post_pesato_4+ritardo_post_pesato_1} ore di ritardo pesato")
 
     # SEQUENZA COMPLETA
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
+    print(f"{Fore.CYAN}{Style.BRIGHT}LS[LS[G1+G2]+G3] (sequenza finale)")
+    print(f"{Fore.CYAN}{Style.BRIGHT}{'-'*40}")
     soluzione5post, f5post, contatoreLS3post, f5_ritardo_post, ritardo_post_pesato_5 = solver.swap_intra(lista_macchine_copy3, f4post, lista_veicoli)
-    tot_tot_post = time.time() - start_time_tot_post
+    print(f'Mosse LS1+LS2+LS3 - post: {contatoreLS1post+contatoreLS2post+contatoreLS3post}')
+    print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (setup): ottenuto {f5post-f4post} minuti di setup")
+    print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-f5_ritardo_post+f4_ritardo_post} ore di ritardo")
+    print(f"{Fore.YELLOW}Risultato LS[LS[G1+G2]+G3] (consegna): ottenuto {-ritardo_post_pesato_5+ritardo_post_pesato_4} ore di ritardo pesato")
+
+    #Output di errore - commesse con veicolo errato e pertanto escluse (ERRORE NON RISOLUBILE DAL CODICE)
+    commesse_in_5post = {c['commessa'] for c in soluzione5post}
+    df = pd.DataFrame([
+        {
+            'id': c
+        }
+        for c in commesse_veicoli_errati
+    ])
+
+    #Output di errore - commesse non schedulate (problemi release date)
+    df2 = pd.DataFrame([
+        {
+            'id': c.id_commessa,
+            'release_date': c.release_date,
+            'tassativita': c.tassativita
+        }
+        for c in commesse_fallite
+    ])
+
+    #L'output di errore legato ai veicoli in sé è precedente (presso "elaborazione input(s)")
+    if os.path.basename(os.getcwd()) == "progettoIS":
+        output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
+        output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
+        output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
+    else:
+        output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
+        output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
+        output.write_tassative_error_output(df_tass,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
+
     ritardo1 = -f1_ritardo_post.total_seconds()/3600
 
     #Soluzione finale secondo euristico
     fprimopost = f5post
     fritardoprimopost = f5_ritardo_post
     ritardo_pesato_post_primo = ritardo_post_pesato_5
-    soluzionequasifinale = soluzione5post
-
-    soluzionefinale, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionequasifinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo)
+    soluzionefinale = soluzione5post
 
     ## STAMPE FINALI
-    delta_fo_setup = f_obj_final - fbest
-    delta_fo_ritardo_pesato = -f_ritardo_pesato_final + fritardopesatobest
-    delta = solver.calcolo_delta(delta_fo_setup, delta_fo_ritardo_pesato)
-    #fo = alfa*f_obj_final - ((1-alfa)*(f_ritardo_pesato_final.total_seconds()/3600/divid))
-    print(f_obj_final, f_ritardo_pesato_final.total_seconds()/3600)
-    print(delta_fo_setup, delta_fo_ritardo_pesato.total_seconds()/3600)
-    #print(fo, fobest)
-    eps = 0.00001
+    print(f"{Fore.MAGENTA}{Style.BRIGHT}\n{'='*40}")
+    print(f"{Fore.MAGENTA}{Style.BRIGHT}RISULTATI FINALI".center(40))
+    print(f"{Fore.MAGENTA}{Style.BRIGHT}{'='*40}\n")
 
-    if delta < -eps: #and len(soluzionefinale) >= len(soluzionebest):
-        print(len(soluzionefinale), len(soluzionebest))
-        fbest = f_obj_final #aggiornamento funzione obiettivo solo setup
-        fritardobest = f_ritardo_final #aggiornamento funzione obiettivo solo ritardo non pesato
-        fritardopesatobest = f_ritardo_pesato_final #aggiornamento funzione obiettivo solo ritardo pesato
-        #fobest = fo #aggiornamento funzione obiettivo setup+ritardi pesati
-        soluzionebest = soluzionefinale #aggiornamento soluzione
-        veicoli_best = deepcopy(lista_veicoli)
-        commesse_fallite_best = commesse_fallite
+    print(f"{Fore.YELLOW}RISULTATO FINALE (SETUP): {fprimopost} minuti di setup\n")
+    print(f"{Fore.YELLOW}RISULTATO FINALE (CONSEGNE): {-fritardoprimopost} ore di ritardo\n")
+    print(f"{Fore.YELLOW}RISULTATO FINALE (CONSEGNE): {-ritardo_pesato_post_primo} ore di ritardo pesato\n")
+    print(f"{Fore.YELLOW}SCHEDULATE FINALI: {len(soluzionefinale)}")
 
-        #Output di errore 1 - veicoli problematici
-            #write_output a seguito
+    soluzionefinale2, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionefinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo)
 
-        #Output di errore 2 - commesse con veicoli errati
-        df = pd.DataFrame([
-            {
-                'id': c
-            }
-            for c in commesse_veicoli_errati
-        ])
+    ##GRASP
+    #iter = 1 #Definito prima o dal GUI
 
-        #Output di errore 3 - commesse non schedulate (problemi release date euristico finale)
-        df2 = pd.DataFrame([
-            {
-                'id': c.id_commessa,
-                'release_date': c.release_date,
-                'tassativita': c.tassativita
-            }
-            for c in commesse_fallite
-        ])
+    #Impostazione migliore soluzione per il GRASP
+    fbest = f_obj_final
+    fritardobest = f_ritardo_final
+    fritardopesatobest = f_ritardo_pesato_final
+    soluzionebest = soluzionefinale2
+    veicoli_best = deepcopy(lista_veicoli)
+    commesse_fallite_best = commesse_fallite
 
-        #Output di errore 4 - tassative non schedulate come tali (problemi release date euristico ciclo 1)
-            #write_output a seguito
+    #Calcolo del divisore, per porre i setup ed i ritardi più o meno nello stesso ordine di grandezza
+    raw_divid = abs(f_ritardo_pesato_final.total_seconds()/3600) / fbest
+    divid = round(raw_divid / 10) * 10
+    if divid == 0:
+        divid = 1
 
-        if os.path.basename(os.getcwd()) == "PS-VRP":
-            output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/Problemi_veicoli.xlsx')
-            output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
-            output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
-            output.write_tassative_error_output(df_tass,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
+    #Calcolo della funzione obiettivo migliore come input al GRASP
+    fobest = alfa*fbest -((1-alfa)*(fritardopesatobest.total_seconds()/3600)/divid) #+ multip*(-len(soluzionefinale) + schedulabili)
 
-        elif os.path.basename(os.getcwd()) == "progettoIS":
-            output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/Problemi_veicoli.xlsx')
-            output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
-            output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
-            output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
+    for _ in range(iter):
+        print("\n" + "="*24)
+        print(f"|||ITERAZIONE: {_} / {iter}|||")
+        print("="*24 + "\n")
+
+        #NB: gli input sono ricalcolati a ogni iterazione; non è ottimale ma è per evitare problemi con le due strutture dati utilizzate
+        #NB2: questo si dimostra particolarmente conveniente nella nuova logica di veicoli
+        lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
+        read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
+        inizio_schedulazione=lista_macchine[0].data_inizio_schedulazione
+        lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedulazione) #Lista base oggetti commessa
+        incompatibili = read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse); estraggo le eventuali incompatibili con ogni macchina
+        lista_veicoli=read_excel.read_excel_veicoli(file_veicoli_excel) #Lista base oggetti veicolo
+        lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
+        lista_veicoli=sorted(lista_veicoli,key=lambda veicolo:veicolo.data_partenza)
+
+        init(autoreset=True)  # Ripristina i colori dopo ogni print
+
+        commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
+        lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
+        df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
+
+        ## EURISTICO COSTRUTTIVO
+        start_time_eur = time.time()
+        schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato, df_tass = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
+        #output.write_output_soluzione_euristica(schedulazione3, os.getcwd() + '/Dati_output/euristico_costruttivo.xlsx')
+        commesse_non_schedulate = causa_fallimento | dizionario_filtri | commesse_veicoli_errati #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
+        end_time_eur = time.time()
+        tot_time_eur = end_time_eur - start_time_eur
+
+        ## DEEPCOPIES PER RICERCHE LOCALI (prima fase)
+        lista_macchine_copy = deepcopy(lista_macchine)
+        lista_macchine_copy1 = deepcopy(lista_macchine)
+        lista_macchine_copy2 = deepcopy(lista_macchine)
+
+        ## RICERCHE LOCALI (su primo euristico)
+        start1 = time.time()
+        soluzione1, f1, contatoreLS1, f1_ritardo, ritardo_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy, f_obj3, lista_veicoli)
+        #output.write_output_soluzione_euristica(soluzione1, os.getcwd() +'/Dati_output/insert_inter.xlsx')
+        tot1 = time.time() - start1
+
+        # SEQUENZA PARZIALE
+        start_time_tot = time.time()
+        soluzione4, f4, contatoreLS2, f4_ritardo, ritardo_pesato_4 = solver.insert_intra(lista_macchine_copy, f1, lista_veicoli)
+        #output.write_output_soluzione_euristica(soluzione4, os.getcwd() + '/Dati_output/sequenza_parziale.xlsx')
+
+        # SEQUENZA COMPLETA
+        soluzione5, f5, contatoreLS3, f5_ritardo, ritardo_pesato_5 = solver.swap_intra(lista_macchine_copy, f4, lista_veicoli)
+        #output.write_output_soluzione_euristica(soluzione5, os.getcwd() + '/Dati_output/sequenza.xlsx')
+        tot_tot = time.time() - start_time_tot
+
+        #Soluzione finale primo euristico
+        fprimo = f5
+        fritardoprimo = f5_ritardo
+        ritardo_pesato_primo = ritardo_pesato_5
+        macchine_post = lista_macchine_copy
+        soluzionebasepost = soluzione5
+
+        # EURISTICO NUOVO (gruppo3)
+        ritardo5 = -f5_ritardo.total_seconds()/3600 
+
+        start_time_post = time.time()
+        soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato, commesse_fallite = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
+        #output.write_output_soluzione_euristica(soluzionepost, os.getcwd() + '/PS-VRP/Dati_output/euristico_post.xlsx')
+        #solver.grafico_schedulazione(soluzionepost)
+        post_time = time.time() - start_time_post
+
+        ## DEEPCOPIES PER RICERCHE LOCALI (seconda fase)
+        lista_macchine_copy3 = deepcopy(macchine_post)
+        lista_macchine_copy4 = deepcopy(macchine_post)
+        lista_macchine_copy5 = deepcopy(macchine_post)
 
 
-print(f"{Fore.YELLOW}SETUP (BEST SOLUTION): {fbest:.2f}s")
-print(f"{Fore.YELLOW}RITARDO (BEST SOLUTION): {-fritardobest} ore")
-print(f"{Fore.YELLOW}RITARDO PESATO (BEST SOLUTION): {-fritardopesatobest} ore")
-print(f"{Fore.YELLOW}SCHEDULAZIONI FINALI: {len(soluzionebest)}")
+        ## RICERCHE LOCALI (su secondo euristico)
 
-if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/Dati_output/schedulazione.xlsx')
-if os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione.xlsx')
-if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_output_ridotto(soluzionebest, os.getcwd() + '/Dati_output/schedulazione_ridotta.xlsx')
-if os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_output_ridotto(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.xlsx')
-if os.path.basename(os.getcwd()) == "PS-VRP":
-    output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/Dati_output/schedulazione_ridotta.txt')
-if os.path.basename(os.getcwd()) == "progettoIS":
-    output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.txt')
+        # M2M - Bis
+        start1_post = time.time()
+        soluzione1post, f1post, contatoreLS1post, f1_ritardo_post, ritardo_post_pesato_1 = solver.insert_inter_macchina(lista_macchine_copy3, fpost, lista_veicoli)
+        #output.write_output_soluzione_euristica(soluzione1post, os.getcwd() + '/Dati_output/insert_inter_post.xlsx')
+        tot1_post = time.time() - start1_post
 
-end_time_schedulazione = time.time()
+        # SEQUENZA PARZIALE
+        start_time_tot_post = time.time()
+        soluzione4post, f4post, contatoreLS2post, f4_ritardo_post, ritardo_post_pesato_4 = solver.insert_intra(lista_macchine_copy3, f1post, lista_veicoli)
 
-seconds = end_time_schedulazione - start_time_schedulazione
-minutes, secs = divmod(round(seconds), 60)
-print(f"La schedulazione ha impiegato: {minutes}:{secs:02d} minuti")  # formato x:yz
+        # SEQUENZA COMPLETA
+        soluzione5post, f5post, contatoreLS3post, f5_ritardo_post, ritardo_post_pesato_5 = solver.swap_intra(lista_macchine_copy3, f4post, lista_veicoli)
+        tot_tot_post = time.time() - start_time_tot_post
+        ritardo1 = -f1_ritardo_post.total_seconds()/3600
 
-import pickle
+        #Soluzione finale secondo euristico
+        fprimopost = f5post
+        fritardoprimopost = f5_ritardo_post
+        ritardo_pesato_post_primo = ritardo_post_pesato_5
+        soluzionequasifinale = soluzione5post
 
-# Definisci il percorso (adatta la logica cartelle se necessario)
-if os.path.basename(os.getcwd()) == "progettoIS":
-     path_pkl = os.path.join(os.getcwd(), "PS-VRP", "Dati_output", "ultimo_grafico.pkl")
-else:
-     path_pkl = os.path.join(os.getcwd(), "Dati_output", "ultimo_grafico.pkl")
+        soluzionefinale, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionequasifinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo)
 
-try:
-    os.makedirs(os.path.dirname(path_pkl), exist_ok=True)
-    with open(path_pkl, "wb") as f:
-        pickle.dump(soluzionebest, f)
-    print(f"Dati per grafico dinamico salvati in: {path_pkl}")
-except Exception as e:
-    print(f"Errore nel salvataggio pickle: {e}")
+        ## STAMPE FINALI
+        delta_fo_setup = f_obj_final - fbest
+        delta_fo_ritardo_pesato = -f_ritardo_pesato_final + fritardopesatobest
+        delta = solver.calcolo_delta(delta_fo_setup, delta_fo_ritardo_pesato)
+        #fo = alfa*f_obj_final - ((1-alfa)*(f_ritardo_pesato_final.total_seconds()/3600/divid))
+        print(f_obj_final, f_ritardo_pesato_final.total_seconds()/3600)
+        print(delta_fo_setup, delta_fo_ritardo_pesato.total_seconds()/3600)
+        #print(fo, fobest)
+        eps = 0.00001
 
-# --- APERTURA GRAFICO ---
-print("AVVIO GRAFICO...")
-solver.grafico_schedulazione(soluzionebest)
+        if delta < -eps: #and len(soluzionefinale) >= len(soluzionebest):
+            print(len(soluzionefinale), len(soluzionebest))
+            fbest = f_obj_final #aggiornamento funzione obiettivo solo setup
+            fritardobest = f_ritardo_final #aggiornamento funzione obiettivo solo ritardo non pesato
+            fritardopesatobest = f_ritardo_pesato_final #aggiornamento funzione obiettivo solo ritardo pesato
+            #fobest = fo #aggiornamento funzione obiettivo setup+ritardi pesati
+            soluzionebest = soluzionefinale #aggiornamento soluzione
+            veicoli_best = deepcopy(lista_veicoli)
+            commesse_fallite_best = commesse_fallite
 
-print("SCHEDULAZIONE COMPLETATA")
+            #Output di errore 1 - veicoli problematici
+                #write_output a seguito
+
+            #Output di errore 2 - commesse con veicoli errati
+            df = pd.DataFrame([
+                {
+                    'id': c
+                }
+                for c in commesse_veicoli_errati
+            ])
+
+            #Output di errore 3 - commesse non schedulate (problemi release date euristico finale)
+            df2 = pd.DataFrame([
+                {
+                    'id': c.id_commessa,
+                    'release_date': c.release_date,
+                    'tassativita': c.tassativita
+                }
+                for c in commesse_fallite
+            ])
+
+            #Output di errore 4 - tassative non schedulate come tali (problemi release date euristico ciclo 1)
+                #write_output a seguito
+
+            if os.path.basename(os.getcwd()) == "progettoIS":
+                output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/Problemi_veicoli.xlsx')
+                output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
+                output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
+                output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
+            else:
+                output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/Problemi_veicoli.xlsx')
+                output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
+                output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
+                output.write_tassative_error_output(df_tass,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
+
+
+
+    print(f"{Fore.YELLOW}SETUP (BEST SOLUTION): {fbest:.2f}s")
+    print(f"{Fore.YELLOW}RITARDO (BEST SOLUTION): {-fritardobest} ore")
+    print(f"{Fore.YELLOW}RITARDO PESATO (BEST SOLUTION): {-fritardopesatobest} ore")
+    print(f"{Fore.YELLOW}SCHEDULAZIONI FINALI: {len(soluzionebest)}")
+
+    if os.path.basename(os.getcwd()) == "progettoIS":
+        output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione.xlsx')
+    else:
+        output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/Dati_output/schedulazione.xlsx')
+
+    if os.path.basename(os.getcwd()) == "progettoIS":
+        output.write_output_ridotto(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.xlsx')
+    else:
+        output.write_output_ridotto(soluzionebest, os.getcwd() + '/Dati_output/schedulazione_ridotta.xlsx')
+
+    if os.path.basename(os.getcwd()) == "progettoIS":
+        output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.txt')
+    else:
+        output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/Dati_output/schedulazione_ridotta.txt')
+
+
+    end_time_schedulazione = time.time()
+
+    seconds = end_time_schedulazione - start_time_schedulazione
+    minutes, secs = divmod(round(seconds), 60)
+    print(f"La schedulazione ha impiegato: {minutes}:{secs:02d} minuti")  # formato x:yz
+
+    import pickle
+
+    # Definisci il percorso (adatta la logica cartelle se necessario)
+    if os.path.basename(os.getcwd()) == "progettoIS":
+        path_pkl = os.path.join(os.getcwd(), "PS-VRP", "Dati_output", "grafico_schedulazione.pkl")
+    else:
+        path_pkl = os.path.join(os.getcwd(), "Dati_output", "grafico_schedulazione.pkl")
+
+    try:
+        os.makedirs(os.path.dirname(path_pkl), exist_ok=True)
+        with open(path_pkl, "wb") as f:
+            pickle.dump(soluzionebest, f)
+        print(f"Dati per grafico dinamico salvati in: {path_pkl}")
+    except Exception as e:
+        print(f"Errore nel salvataggio pickle: {e}")
+
+    # --- APERTURA GRAFICO ---
+    print("AVVIO GRAFICO...")
+    solver.grafico_schedulazione(soluzionebest)
+
+    print("SCHEDULAZIONE COMPLETATA")
+
+if __name__ == "__main__":
+    esecuzione()

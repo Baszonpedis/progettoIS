@@ -8,6 +8,7 @@ import sys
 from PIL import Image, ImageTk
 import solver
 import pickle
+import main
 
 # --- PALETTE VORTEX UI (Dark Mode) ---
 COLOR_BG_MAIN = "#1e1e1e"       # Sfondo finestra
@@ -40,9 +41,18 @@ def get_image_path(image_name):
 
 def get_main_script_path():
     base_path = get_base_path()
-    paths = [os.path.join(base_path, "main.py"), "main.py"]
-    for path in paths:
-        if os.path.exists(path): return path
+    
+    # 1. Cerca nella stessa cartella di gui.py
+    path1 = os.path.join(base_path, "main.py")
+    if os.path.exists(path1): 
+        return path1
+        
+    # 2. Cerca nella cartella superiore (caso comune in sviluppo)
+    path2 = os.path.join(os.path.dirname(base_path), "main.py")
+    if os.path.exists(path2):
+        return path2
+        
+    # 3. Fallback
     return "main.py"
 
 def get_input_file_smart(nome_file):
@@ -251,17 +261,33 @@ class App:
                 'PARAM_ITER': self.iter_val.get()
             })
             
-            p = subprocess.Popen([sys.executable, get_main_script_path()], 
+            # --- LOGICA DI AVVIO ROBUSTA ---
+            script_path = get_main_script_path()
+            working_dir = os.path.dirname(script_path) if os.path.exists(script_path) else os.getcwd()
+
+            if getattr(sys, 'frozen', False):
+                # MODO EXE: Lancia se stesso in modalità worker
+                cmd = [sys.executable, "--worker"]
+                # Nell'EXE la working dir è gestita internamente, non forziamola troppo
+                cwd_to_use = os.getcwd()
+            else:
+                # MODO SCRIPT: Lancia python puntando al file assoluto
+                cmd = [sys.executable, script_path]
+                # FONDAMENTALE: Dice a Python di "spostarsi" nella cartella del main.py
+                cwd_to_use = working_dir
+
+            p = subprocess.Popen(cmd, 
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
                                  text=True, bufsize=1, universal_newlines=True, 
-                                 env=env)
+                                 env=env, 
+                                 cwd=cwd_to_use, # <--- QUESTA AGGIUNTA È VITALE)
+            )
             
             for line in p.stdout:
                 self.root.after(0, lambda l=line: self.out_txt.insert(tk.END, l) or self.out_txt.see(tk.END))
             
-            # Quando il processo finisce (dopo aver chiuso il grafico), chiamiamo _reset_ui
-            stderr_out = p.stderr.read()
-            self.root.after(0, lambda: self._reset_ui(p.poll(), stderr_out))
+            stderr = p.stderr.read()
+            self.root.after(0, lambda: self._reset_ui(p.poll(), stderr))
             
         except Exception as e:
             self.root.after(0, lambda: self._reset_ui(1, str(e)))
@@ -308,8 +334,8 @@ class App:
         path_2 = os.path.join(os.getcwd(), "PS-VRP", "Dati_output", "grafico_schedulazione.pkl")
         
         target_path = None
-        if os.path.exists(path_1): target_path = path_1
-        elif os.path.exists(path_2): target_path = path_2
+        if os.path.exists(path_2): target_path = path_2
+        else: target_path = path_1
         
         if not target_path:
             messagebox.showwarning("File non trovato", "Nessun dato di grafico salvato trovato.\nEsegui prima una schedulazione.")
@@ -331,10 +357,16 @@ class App:
             messagebox.showerror("Errore", f"Impossibile aprire il grafico:\n{e}")
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    try:
-        from ctypes import windll
-        windll.shcore.SetProcessDpiAwareness(1)
-    except: pass
-    app = App(root)
-    root.mainloop()
+    # Controllo magico: Sono un operaio o il capo?
+    if len(sys.argv) > 1 and sys.argv[1] == "--worker":
+        # SONO UN OPERAIO: Eseguo i calcoli ed esco
+        main.esecuzione()
+    else:
+        # SONO IL CAPO: Apro l'interfaccia grafica
+        root = tk.Tk()
+        try:
+            from ctypes import windll
+            windll.shcore.SetProcessDpiAwareness(1)
+        except: pass
+        app = App(root)
+        root.mainloop()
