@@ -1141,7 +1141,7 @@ def GRASP_randomizer(lista_commesse):
             #print(cost)
         return lista_commesse_randomized
 
-#GRAFICO
+#GRAFICO GANTT
 import matplotlib.pyplot as plt
 from matplotlib.text import Annotation
 from datetime import timedelta
@@ -1179,36 +1179,44 @@ def grafico_schedulazione(schedulazione):
     colori_veicoli = {}
     gi = 0
     for v in veicoli:
-        colori_veicoli[v] = '#d9b904' if v is None else green_shades[gi % len(green_shades)]
-        if v is not None: gi += 1
+        if v is None:
+            colori_veicoli[v] = '#d9b904'
+        else:
+            colori_veicoli[v] = green_shades[gi % len(green_shades)]
+            gi += 1
 
     fig, ax = plt.subplots(figsize=(12, 6))
     bars = []
     schedula_by_bar = {}
 
-    # timeline
+    # TIMELINE
     inizi = [s["inizio_setup"] for s in schedulazione] + [s["inizio_lavorazione"] for s in schedulazione]
     fine  = [s["fine_setup"]  for s in schedulazione] + [s["fine_lavorazione"]  for s in schedulazione]
+    
+    if not inizi: return
+
     t0 = min(inizi)
     t1 = max(fine)
 
-    # calcolo blocchi non produzione (15:00→07:00 + weekend)
+    # CALCOLO BLOCCHI NON PRODUZIONE
     blocchi_np = []
     ct = t0.replace(hour=0, minute=0, second=0, microsecond=0)
-    while ct < t1:
+    end_date = t1 + timedelta(days=1)
+    
+    while ct < end_date:
         wd = ct.weekday()
-        if wd == 4:  # venerdì
+        if wd == 4: # venerdì
             s = ct + timedelta(hours=15)
             e = (ct + timedelta(days=3)).replace(hour=7)
-            if s < t1 and e > t0: blocchi_np.append((max(s, t0), min(e, t1)))
+            blocchi_np.append((max(s, t0), min(e, t1)))
             ct += timedelta(days=3)
         else:
             s = ct + timedelta(hours=15)
             e = (ct + timedelta(days=1)).replace(hour=7)
-            if s < t1 and e > t0: blocchi_np.append((max(s, t0), min(e, t1)))
+            blocchi_np.append((max(s, t0), min(e, t1)))
             ct += timedelta(days=1)
 
-    # calcola durata utile per setup (senza NP)
+    # DURATION HELPER
     def calcola_durata_netto(start, end, blocchi_np):
         durata = timedelta(0)
         cursor = start
@@ -1225,24 +1233,24 @@ def grafico_schedulazione(schedulazione):
                 cursor = prossimo_stop
         return durata
 
-    # disegno effettivo
+    # DISEGNO BARRE
     for s in schedulazione:
         y = macchine.index(s["macchina"])
 
-        # --- SETUP (rosso / grigio) ---
+        # --- SETUP ---
+        durata_netta = calcola_durata_netto(s["inizio_setup"], s["fine_setup"], blocchi_np)
         for start, end, tipo in split_intervallo(s["inizio_setup"], s["fine_setup"], blocchi_np):
             durata = end - start
             colore = 'red' if tipo=='p' else desatura('red', 0.7)
             bar = ax.barh(y, durata, left=start, height=0.5, color=colore, edgecolor='black')[0]
             bars.append(bar)
-            # tooltip
             schedula_by_bar[bar] = {
                 'type': 'setup',
                 'data': s,
-                'durata_netto': calcola_durata_netto(s["inizio_setup"], s["fine_setup"], blocchi_np)
+                'durata_netto': durata_netta
             }
 
-        # --- LAVORAZIONE (giallo/verde / grigio) ---
+        # --- LAVORAZIONE ---
         base_col = colori_veicoli[s["veicolo"]]
         for start, end, tipo in split_intervallo(s["inizio_lavorazione"], s["fine_lavorazione"], blocchi_np):
             durata = end - start
@@ -1254,19 +1262,15 @@ def grafico_schedulazione(schedulazione):
                 'data': s
             }
 
-    # etichette e formato
+    # FORMATTAZIONE
     ax.set_yticks(range(len(macchine)))
     ax.set_yticklabels(macchine)
     ax.set_xlim(t0, t1)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m %H:%M'))
-    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-    ax.set_ylim(-0.5, len(macchine)-0.5)
     fig.autofmt_xdate()
-    ax.set_xlabel('Tempo')
-    ax.set_ylabel('Macchina')
     ax.set_title('Schedulazione')
 
-    # tooltip come prima
+    # TOOLTIP
     tooltip = Annotation('', xy=(0,0), xytext=(15,15), textcoords='offset points',
                          bbox=dict(boxstyle="round", fc="w", ec="k"),
                          arrowprops=dict(arrowstyle="->"))
@@ -1275,29 +1279,30 @@ def grafico_schedulazione(schedulazione):
 
     def on_motion(event):
         vis = False
-        for bar in bars:
-            contains, _ = bar.contains(event)
-            if contains:
-                info = schedula_by_bar[bar]
-                s = info['data']
-                tooltip.xy = (event.xdata, event.ydata)
-                if info['type']=='setup':
-                    testo = (f"TEMPO DI SETUP\n"
-                             f"Commessa: {s['commessa']}\n"
-                             f"Durata utile: {info['durata_netto']}")
-                else:
-                    veicolo = s["veicolo"]
-                    nome = veicolo.nome if veicolo is not None else "Senza veicolo"
-                    testo = f"Commessa: {s['commessa']}\nVeicolo: {nome}"
-                tooltip.set_text(testo)
-                tooltip.set_visible(True)
-                vis = True
-                break
+        if event.inaxes == ax:
+            for bar in bars:
+                if bar.contains(event)[0]:
+                    info = schedula_by_bar[bar]
+                    s = info['data']
+                    tooltip.xy = (event.xdata, event.ydata)
+                    
+                    if info['type']=='setup':
+                        testo = (f"TEMPO DI SETUP\n"
+                                 f"Commessa: {s['commessa']}\n"
+                                 f"Durata utile: {info['durata_netto']}")
+                    else:
+                        veicolo = s["veicolo"]
+                        nome = veicolo.nome if veicolo is not None else "Senza veicolo"
+                        testo = f"Commessa: {s['commessa']}\nVeicolo: {nome}"
+                    
+                    tooltip.set_text(testo)
+                    tooltip.set_visible(True)
+                    vis = True
+                    break
         if not vis:
             tooltip.set_visible(False)
         fig.canvas.draw_idle()
 
     fig.canvas.mpl_connect("motion_notify_event", on_motion)
-
     plt.tight_layout()
     plt.show()

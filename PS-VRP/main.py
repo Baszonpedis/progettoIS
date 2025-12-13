@@ -451,6 +451,7 @@ for _ in range(iter):
     delta = solver.calcolo_delta(delta_fo_setup, delta_fo_ritardo_pesato)
     #fo = alfa*f_obj_final - ((1-alfa)*(f_ritardo_pesato_final.total_seconds()/3600/divid))
     print(f_obj_final, f_ritardo_pesato_final.total_seconds()/3600)
+    print(delta_fo_setup, delta_fo_ritardo_pesato.total_seconds()/3600)
     #print(fo, fobest)
     eps = 0.00001
 
@@ -525,4 +526,24 @@ seconds = end_time_schedulazione - start_time_schedulazione
 minutes, secs = divmod(round(seconds), 60)
 print(f"La schedulazione ha impiegato: {minutes}:{secs:02d} minuti")  # formato x:yz
 
-solver.grafico_schedulazione(soluzionebest)  #Graficazione finale
+import pickle
+
+# Definisci il percorso (adatta la logica cartelle se necessario)
+if os.path.basename(os.getcwd()) == "progettoIS":
+     path_pkl = os.path.join(os.getcwd(), "PS-VRP", "Dati_output", "ultimo_grafico.pkl")
+else:
+     path_pkl = os.path.join(os.getcwd(), "Dati_output", "ultimo_grafico.pkl")
+
+try:
+    os.makedirs(os.path.dirname(path_pkl), exist_ok=True)
+    with open(path_pkl, "wb") as f:
+        pickle.dump(soluzionebest, f)
+    print(f"Dati per grafico dinamico salvati in: {path_pkl}")
+except Exception as e:
+    print(f"Errore nel salvataggio pickle: {e}")
+
+# --- APERTURA GRAFICO ---
+print("AVVIO GRAFICO...")
+solver.grafico_schedulazione(soluzionebest)
+
+print("SCHEDULAZIONE COMPLETATA")

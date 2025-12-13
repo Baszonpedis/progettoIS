@@ -5,500 +5,336 @@ import subprocess
 import threading
 import os
 import sys
-from PIL import Image, ImageTk #modulo pillow
+from PIL import Image, ImageTk
+import solver
+import pickle
+
+# --- PALETTE VORTEX UI (Dark Mode) ---
+COLOR_BG_MAIN = "#1e1e1e"       # Sfondo finestra
+COLOR_BG_CARD = "#252526"       # Sfondo schede
+COLOR_ACCENT = "#007acc"        # Blu Elettrico
+COLOR_ACCENT_HOVER = "#0098ff"  # Blu più chiaro per hover
+COLOR_TEXT = "#e1e1e1"          # Bianco sporco
+COLOR_TEXT_DIM = "#a0a0a0"      # Testo secondario
+COLOR_INPUT_BG = "#3c3c3c"      # Sfondo caselle input
+COLOR_BORDER = "#3e3e42"        # Bordi
+COLOR_SUCCESS = "#4ec9b0"       # Verde acqua
+
+# FONT DIMENSIONI
+FONT_SIZE_BASE = 11
+FONT_SIZE_TITLE = 21
+FONT_SIZE_BTN = 12
+
+FONT_FAMILY = "Segoe UI" if sys.platform == "win32" else "Roboto"
 
 def get_base_path():
-    """Ottiene il percorso base corretto per PyInstaller"""
-    if getattr(sys, 'frozen', False):
-        # Siamo in un bundle PyInstaller
-        return sys._MEIPASS
-    else:
-        # Esecuzione normale Python
-        return os.path.dirname(os.path.abspath(__file__))
+    if getattr(sys, 'frozen', False): return sys._MEIPASS
+    return os.path.dirname(os.path.abspath(__file__))
 
 def get_image_path(image_name):
-    '''Funzione per ottenere il percorso dell'immagine'''
     base_path = get_base_path()
-    # Controlla prima nella root, poi in una sottocartella 'assets' o 'images'
-    possible_paths = [
-        os.path.join(base_path, image_name),
-        os.path.join(base_path, "assets", image_name),
-        os.path.join(base_path, "images", image_name)
-    ]
-    for path in possible_paths:
-        if os.path.exists(path):
-            return path
-    return None # Ritorna None se l'immagine non viene trovata
+    paths = [os.path.join(base_path, p, image_name) for p in ["", "assets", "images"]]
+    for path in paths:
+        if os.path.exists(path): return path
+    return None
 
 def get_main_script_path():
-    """Trova il percorso corretto di main.py"""
     base_path = get_base_path()
-    
-    # Prova diversi percorsi possibili
-    possible_paths = [
-        os.path.join(base_path, "main.py"),
-        os.path.join(os.path.dirname(base_path), "main.py"),
-        "main.py"  # Se è nel PATH o nella directory corrente
-    ]
-    
-    for path in possible_paths:
-        if os.path.exists(path):
-            return path
-    
-    # Se non troviamo main.py, proviamo a eseguirlo direttamente
-    # (utile se è stato incluso nel bundle o è nel PATH)
+    paths = [os.path.join(base_path, "main.py"), "main.py"]
+    for path in paths:
+        if os.path.exists(path): return path
     return "main.py"
 
-def get_input_file(nome_file):
-    """Restituisce il percorso completo del file in Dati_input se esiste, altrimenti stringa vuota"""
-    base_dirs = [
-        os.path.join(os.getcwd(), "Dati_input"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "Dati_input")
+def get_input_file_smart(nome_file):
+    cwd = os.getcwd()
+    current_dir_name = os.path.basename(cwd)
+    paths_to_check = [
+        os.path.join(cwd, nome_file),
+        os.path.join(cwd, "Dati_input", nome_file)
     ]
-    for base in base_dirs:
-        file_path = os.path.join(base, nome_file)
-        if os.path.exists(file_path):
-            return file_path
-    return ""  # Non trovato
+    if current_dir_name == "PS-VRP":
+        paths_to_check.insert(0, os.path.join(cwd, "Dati_input", nome_file))
+    elif current_dir_name == "progettoIS":
+        paths_to_check.insert(0, os.path.join(cwd, "PS-VRP", "Dati_input", nome_file))
+
+    for path in paths_to_check:
+        if os.path.exists(path): return path
+    return ""
 
 class App:
     def __init__(self, root):
-
-        #Parametri per regolare dimensioni, font, etc
         self.root = root
-        self.root.title("Schedulatore del taglio")
-        self.root.geometry("800x750")
-        self.root.resizable(True, True)
-        default_font = tkFont.nametofont("TkDefaultFont")
-        default_font.configure(size=11, family="Fira Sans")
+        self.root.title("Schedulatore del Taglio")
+        self.root.geometry("1000x850") 
+        self.root.configure(bg=COLOR_BG_MAIN)
 
-        self.root.option_add("*Font", default_font)
+        try:
+            icon = get_image_path("istituto_stampa_s_r_l__logo.png")
+            if icon: self.root.iconphoto(True, tk.PhotoImage(file=icon))
+        except: pass
 
-        # --- IMPOSTA L'ICONA DELLA FINESTRA E DELLA BARRA DELLE APPLICAZIONI ---
-        icon_path_ico = get_image_path("istituto_stampa_s_r_l__logo.ico") # Preferito per Windows
-        icon_path_png = get_image_path("istituto_stampa_s_r_l__logo.png") # Alternativa per PNG/GIF
-
-        if icon_path_ico:
-            try:
-                self.root.iconbitmap(icon_path_ico)
-            except tk.TclError:
-                print(f"Attenzione: Impossibile caricare l'icona ICO da {icon_path_ico}. Proverò con PNG.")
-                if icon_path_png:
-                    try:
-                        photo = tk.PhotoImage(file=icon_path_png)
-                        self.root.iconphoto(True, photo)
-                    except tk.TclError:
-                        print(f"Attenzione: Impossibile caricare l'icona PNG da {icon_path_png}.")
-                else:
-                    print("Nessun file icona ICO o PNG trovato per la finestra.")
-        elif icon_path_png:
-            try:
-                photo = tk.PhotoImage(file=icon_path_png)
-                self.root.iconphoto(True, photo)
-            except tk.TclError:
-                print(f"Attenzione: Impossibile caricare l'icona PNG da {icon_path_png}.")
-        else:
-            print("Nessun file icona (ICO o PNG) trovato per la finestra.")
-
-        # Variabili per i file
-        self.file_commesse = tk.StringVar(value=get_input_file("Commesse_da_tagliare.xlsx"))
-        self.file_macchine = tk.StringVar(value=get_input_file("Scheda_Macchine_Taglio.xlsx"))
-        self.file_veicoli = tk.StringVar(value=get_input_file("vettori.xlsx"))
+        # File Inputs
+        self.file_commesse = tk.StringVar(value=get_input_file_smart("Commesse_da_tagliare.xlsx"))
+        self.file_macchine = tk.StringVar(value=get_input_file_smart("Scheda_Macchine_Taglio.xlsx"))
+        self.file_veicoli = tk.StringVar(value=get_input_file_smart("vettori.xlsx"))
         
-        # Parametri solver
+        # Parametri
         self.alfa_val = tk.DoubleVar(value=0.7)
-        self.beta_val = tk.StringVar(value="0.2")
+        self.alfa_str = tk.StringVar(value="0.7")
+        self.beta_val = tk.StringVar(value="0.1") 
         self.iter_val = tk.StringVar(value="10")
 
+        self.setup_styles()
         self.setup_ui()
 
+    def setup_styles(self):
+        style = ttk.Style()
+        try: style.theme_use('clam')
+        except: pass 
+        
+        style.configure(".", background=COLOR_BG_MAIN, foreground=COLOR_TEXT, font=(FONT_FAMILY, FONT_SIZE_BASE))
+        style.configure("Card.TFrame", background=COLOR_BG_CARD, relief="flat")
+        style.configure("Card.TLabelframe", background=COLOR_BG_CARD, relief="solid", borderwidth=1, bordercolor=COLOR_BORDER)
+        style.configure("Card.TLabelframe.Label", background=COLOR_BG_CARD, foreground=COLOR_ACCENT, font=(FONT_FAMILY, FONT_SIZE_BASE + 1, "bold"))
+        style.configure("Card.TLabel", background=COLOR_BG_CARD, foreground=COLOR_TEXT, font=(FONT_FAMILY, FONT_SIZE_BASE))
+        style.configure("Title.TLabel", background=COLOR_BG_MAIN, foreground=COLOR_TEXT, font=(FONT_FAMILY, FONT_SIZE_TITLE, "bold"))
+        
+        style.configure("Primary.TButton", font=(FONT_FAMILY, FONT_SIZE_BTN, "bold"), background=COLOR_ACCENT, foreground="white", borderwidth=0, focusthickness=0, padding=10)
+        style.map("Primary.TButton", background=[('active', COLOR_ACCENT_HOVER), ('disabled', '#444444')])
+        
+        style.configure("Secondary.TButton", font=(FONT_FAMILY, FONT_SIZE_BASE), background="#3e3e42", foreground=COLOR_TEXT, borderwidth=0, focusthickness=0)
+        style.map("Secondary.TButton", background=[('active', "#505050")])
+        
+        style.configure("TEntry", fieldbackground=COLOR_INPUT_BG, foreground="white", insertcolor="white", borderwidth=0, font=(FONT_FAMILY, FONT_SIZE_BASE))
+        style.configure("Horizontal.TScale", background=COLOR_BG_CARD, troughcolor=COLOR_INPUT_BG, sliderthickness=15)
+
+    def create_card(self, parent, title=None):
+        if title: 
+            f = ttk.LabelFrame(parent, text=f" {title} ", style="Card.TLabelframe", padding=15)
+        else:
+            f = ttk.Frame(parent, style="Card.TFrame", padding=15)
+        return f
+
     def setup_ui(self):
-        # Frame principale con scrollbar se necessario
-        main_frame = ttk.Frame(self.root)
-        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        main = ttk.Frame(self.root)
+        main.pack(fill="both", expand=True, padx=25, pady=25)
 
-        # --- HEADER CON LOGO E PARAMETRI AFFIANCATI ---
-        header_frame = ttk.Frame(main_frame)
-        header_frame.pack(fill="x", pady=(0, 15))
-
-        # Frame sinistro per il logo
-        logo_frame = ttk.Frame(header_frame)
-        logo_frame.pack(side="left", anchor="nw")
-
-        # Carica e mostra il logo
+        # --- HEADER ---
+        head = ttk.Frame(main)
+        head.pack(fill="x", pady=(0, 25))
+        
         logo_path = get_image_path("istituto_stampa_s_r_l__logo-removebg-preview.png")
-        self.logo_image = None
-        self.logo_label = None
-
         if logo_path:
             try:
                 img = Image.open(logo_path)
-                # Ridimensiona il logo mantenendo le proporzioni originali
-                # Impostiamo un'altezza massima di 120px e calcoliamo la larghezza proporzionale
-                original_width, original_height = img.size
-                max_height = 120
-                aspect_ratio = original_width / original_height
-                new_height = min(max_height, original_height)
-                new_width = int(new_height * aspect_ratio)
-                
-                img = img.resize((new_width, new_height), Image.LANCZOS)
+                img.thumbnail((220, 90), Image.LANCZOS)
                 self.logo_image = ImageTk.PhotoImage(img)
-                self.logo_label = ttk.Label(logo_frame, image=self.logo_image)
-                self.logo_label.pack()
-            except FileNotFoundError:
-                messagebox.showerror("Errore Logo", f"Immagine del logo non trovata: {logo_path}")
-            except Exception as e:
-                messagebox.showerror("Errore Logo", f"Impossibile caricare l'immagine del logo: {e}")
-        else:
-            print("Nessun file logo interno ('logo_grande.png') trovato.")
+                lbl = ttk.Label(head, image=self.logo_image, background="#e0e0e0") 
+                lbl.pack(side="left", padx=(0, 20))
+            except: pass
+        
+        titles = ttk.Frame(head)
+        titles.pack(side="left", fill="both")
+        ttk.Label(titles, text="Schedulatore del Taglio", style="Title.TLabel").pack(anchor="w", pady=(10,0))
 
-        # Frame destro per i parametri di configurazione
-        params_frame = ttk.LabelFrame(header_frame, text="Parametri di configurazione", padding=15)
-        params_frame.pack(side="right", fill="both", expand=True, padx=(20, 0))
+        # --- PARAMETRI ---
+        p_card = self.create_card(main, "Parametri Algoritmo")
+        p_card.pack(fill="x", pady=(0, 15))
+        
+        def on_slider_move(val):
+            rounded_val = round(float(val), 1)
+            self.alfa_val.set(rounded_val)
+            self.alfa_str.set(f"{rounded_val:.1f}")
 
-        # Parametro Alfa con slider + input manuale
-        alfa_frame = ttk.Frame(params_frame)
-        alfa_frame.pack(fill="x", pady=(0,8))
-
-        ttk.Label(alfa_frame, text="α (LS):").pack(side="left")
-
-        # Variabile stringa per input manuale
-        self.alfa_str = tk.StringVar(value=str(self.alfa_val.get()))
-
-        # Slider
-        self.alfa_slider = ttk.Scale(
-            alfa_frame,
-            from_=0.0,
-            to=1.0,
-            orient="horizontal",
-            variable=self.alfa_val,
-            length=180
-        )
-        self.alfa_slider.pack(side="left", padx=8)
-
-        # Entry per input manuale
-        alfa_entry = ttk.Entry(alfa_frame, textvariable=self.alfa_str, width=6)
-        alfa_entry.pack(side="left", padx=(8,0))
-
-        # Aggiorna Entry quando cambia slider
-        def on_slider_change(*args):
-            value = round(self.alfa_val.get(), 3)  # più preciso
-            self.alfa_str.set(str(value))
-
-        self.alfa_val.trace_add("write", on_slider_change)
-
-        # Aggiorna slider quando cambia input manuale
-        def on_entry_change(*args):
+        def on_text_change(*args):
             try:
-                value = float(self.alfa_str.get())
-                self.alfa_val.set(value)
-            except ValueError:
-                pass  # Ignora input non numerici
+                val = float(self.alfa_str.get())
+                if 0.0 <= val <= 1.0: self.alfa_val.set(val) 
+            except ValueError: pass
 
-        self.alfa_str.trace_add("write", on_entry_change)
+        self.alfa_str.trace_add("write", on_text_change)
 
-
-        # Parametro Beta
-        beta_frame = ttk.Frame(params_frame)
-        beta_frame.pack(fill="x", pady=(0,8))
+        # Riga 1
+        row1 = ttk.Frame(p_card, style="Card.TFrame")
+        row1.pack(fill="x", pady=5)
         
-        ttk.Label(beta_frame, text="β (GRASP):").pack(side="left")
-        beta_entry = ttk.Entry(beta_frame, textvariable=self.beta_val, width=12)
-        beta_entry.pack(side="left", padx=(8,0))
-        ttk.Label(beta_frame, text="(suggerito: 0.2)").pack(side="left", padx=(5,0))
-
-        # Parametro Iter
-        iter_frame = ttk.Frame(params_frame)
-        iter_frame.pack(fill="x")
-
-        ttk.Label(iter_frame, text="Numero di iterazioni:").pack(side="left")
-        iter_entry = ttk.Entry(iter_frame, textvariable=self.iter_val, width=12)
-        iter_entry.pack(side="left", padx=(8,0))
-        ttk.Label(iter_frame, text="(suggerito: almeno 10)").pack(side="left", padx=(5,0))
-
-        # --- FRAME PER LA SELEZIONE DEI FILE ---
-        file_frame = ttk.LabelFrame(main_frame, text="Selezionare manualmente i file di Input (formato .xlsx) se non rilevati correttamente", padding=10)
-        file_frame.pack(pady=(0,10), fill="x")
-
-        # Configurazione grid per ridimensionamento
-        file_frame.columnconfigure(1, weight=1)
-
-        # File Commesse
-        ttk.Label(file_frame, text="Estrazione Commesse:").grid(row=0, column=0, sticky="w", padx=(0,5), pady=3)
-        entry_commesse = ttk.Entry(file_frame, textvariable=self.file_commesse)
-        entry_commesse.grid(row=0, column=1, sticky="ew", padx=5, pady=3)
-        ttk.Button(file_frame, text="Sfoglia", 
-                  command=lambda: self.select_file(self.file_commesse, "Commesse")).grid(row=0, column=2, padx=(5,0), pady=3)
-
-        # File Macchine
-        ttk.Label(file_frame, text="Estrazione Macchine:").grid(row=1, column=0, sticky="w", padx=(0,5), pady=3)
-        entry_macchine = ttk.Entry(file_frame, textvariable=self.file_macchine)
-        entry_macchine.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
-        ttk.Button(file_frame, text="Sfoglia", 
-                  command=lambda: self.select_file(self.file_macchine, "Macchine")).grid(row=1, column=2, padx=(5,0), pady=3)
-
-        # File Veicoli
-        ttk.Label(file_frame, text="Estrazione Veicoli:").grid(row=2, column=0, sticky="w", padx=(0,5), pady=3)
-        entry_veicoli = ttk.Entry(file_frame, textvariable=self.file_veicoli)
-        entry_veicoli.grid(row=2, column=1, sticky="ew", padx=5, pady=3)
-        ttk.Button(file_frame, text="Sfoglia", 
-                  command=lambda: self.select_file(self.file_veicoli, "Veicoli")).grid(row=2, column=2, padx=(5,0), pady=3)
-
-        # --- FRAME PER I CONTROLLI ---
-        control_frame = ttk.Frame(main_frame)
-        control_frame.pack(pady=(0,10), fill="x")
-
-        # Pulsanti
-        button_frame = ttk.Frame(control_frame)
-        button_frame.pack()
-
-        self.start_button = ttk.Button(button_frame, text="🚀 Avvia schedulazione", 
-                                     command=self.start_main_script)
-        self.start_button.pack(side="left", padx=(0,10))
-
-        ttk.Button(button_frame, text="📁 Apri cartella Output", 
-                  command=self.open_output_folder).pack(side="left")
-
-        # --- PROGRESS FRAME (inizialmente nascosto) ---
-        self.progress_frame = ttk.LabelFrame(main_frame, text="Stato schedulazione", padding=10)
+        ttk.Label(row1, text="α (LS):", style="Card.TLabel", width=12).pack(side="left")
+        scale = ttk.Scale(row1, from_=0.0, to=1.0, variable=self.alfa_val, orient="horizontal", style="Horizontal.TScale", length=250, command=on_slider_move)
+        scale.pack(side="left", padx=10, pady = 6)
+        entry_alfa = ttk.Entry(row1, textvariable=self.alfa_str, width=6, justify="center", font=(FONT_FAMILY, FONT_SIZE_BASE + 1))
+        entry_alfa.pack(side="left")
         
-        self.progress_bar = ttk.Progressbar(self.progress_frame, orient="horizontal", 
-                                          mode="indeterminate", length=400)
-        self.progress_bar.pack(pady=(0,5))
-        
-        self.progress_label = ttk.Label(self.progress_frame, text="In attesa...")
-        self.progress_label.pack()
+        # Riga 2
+        row2 = ttk.Frame(p_card, style="Card.TFrame")
+        row2.pack(fill="x", pady=(10, 5))
 
-        # --- TEXT WIDGET PER L'OUTPUT CON PIÙ SPAZIO ---
-        self.output_frame = ttk.LabelFrame(main_frame, text="Output schedulazione", padding=5)
+        ttk.Label(row2, text="β (GRASP):", style="Card.TLabel", width=12).pack(side="left")
+        ttk.Entry(row2, textvariable=self.beta_val, width=12, justify="center", font=(FONT_FAMILY, FONT_SIZE_BASE)).pack(side="left", padx=(10, 30))
         
-        # Text widget con scrollbar - altezza aumentata
-        text_frame = ttk.Frame(self.output_frame)
-        text_frame.pack(fill="both", expand=True)
+        ttk.Label(row2, text="Iterazioni:", style="Card.TLabel").pack(side="left")
+        ttk.Entry(row2, textvariable=self.iter_val, width=12, justify="center", font=(FONT_FAMILY, FONT_SIZE_BASE) ).pack(side="left", padx=10)
+
+        # --- FILE INPUTS ---
+        f_card = self.create_card(main, "Input Dati")
+        f_card.pack(fill="x", pady=(0, 15))
+        f_card.columnconfigure(1, weight=1)
         
-        self.output_text = tk.Text(text_frame, height=15, wrap="word", font=("Consolas", 9))
-        scrollbar = ttk.Scrollbar(text_frame, orient="vertical", command=self.output_text.yview)
-        self.output_text.configure(yscrollcommand=scrollbar.set)
-        
-        self.output_text.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-
-    def update_alfa_label(self, *args):
-        """Aggiorna la label del parametro alfa (step 0.1)"""
-        value = round(self.alfa_val.get(), 1)  # arrotonda al primo decimale
-        self.alfa_val.set(value)               # forza lo slider sul valore arrotondato
-        self.alfa_label.config(text=f"{value:.1f}")
-
-    def select_file(self, var, tipo_file):
-        """Apre dialog per selezione file Excel"""
-        file_path = filedialog.askopenfilename(
-            title=f"Seleziona file Excel - {tipo_file}",
-            filetypes=[("File Excel", "*.xlsx *.xls"), ("Tutti i file", "*.*")]
-        )
-        if file_path:
-            var.set(file_path)
-
-    def open_output_folder(self):
-        """Apre la cartella di output con gestione più flessibile"""
-        # Prova diversi percorsi possibili per la cartella di output
-        possible_dirs = [
-            os.path.join(os.getcwd(), "Dati_output"),
-            os.path.join(os.getcwd(), "output"),
-            os.path.join(os.getcwd(), "Output"),
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "Dati_output"),
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
+        files = [
+            ("📁 Commesse", self.file_commesse, "Commesse"), 
+            ("⚙️ Macchine", self.file_macchine, "Macchine"), 
+            ("🚚 Veicoli", self.file_veicoli, "Veicoli")
         ]
         
-        output_dir = None
-        for directory in possible_dirs:
-            if os.path.exists(directory):
-                output_dir = directory
-                break
+        for i, (lbl, var, t) in enumerate(files):
+            ttk.Label(f_card, text=lbl, style="Card.TLabel").grid(row=i, column=0, sticky="w", pady=10)
+            entry = ttk.Entry(f_card, textvariable=var, font=(FONT_FAMILY, FONT_SIZE_BASE + 1))
+            entry.grid(row=i, column=1, sticky="ew", padx=15, pady=10)
+            ttk.Button(f_card, text="Sfoglia", style="Secondary.TButton", command=lambda x=var, y=t: self.select_file(x, y)).grid(row=i, column=2, pady=10)
+
+        # --- AZIONI ---
+        act = ttk.Frame(main)
+        act.pack(fill="x", pady=(0, 15))
         
-        if output_dir:
-            try:
-                if sys.platform == "win32":
-                    os.startfile(output_dir)
-                elif sys.platform == "darwin":
-                    subprocess.run(["open", output_dir])
-                else:
-                    subprocess.run(["xdg-open", output_dir])
-            except Exception as e:
-                messagebox.showerror("Errore", f"Impossibile aprire la cartella: {e}")
-        else:
-            # Se non trova nessuna cartella esistente, crea "Dati_output"
-            default_output = os.path.join(os.getcwd(), "Dati_output")
-            try:
-                os.makedirs(default_output, exist_ok=True)
-                messagebox.showinfo("Info", f"Creata cartella di output:\n{default_output}")
-                if sys.platform == "win32":
-                    os.startfile(default_output)
-                elif sys.platform == "darwin":
-                    subprocess.run(["open", default_output])
-                else:
-                    subprocess.run(["xdg-open", default_output])
-            except Exception as e:
-                messagebox.showerror("Errore", f"Impossibile creare/aprire la cartella di output: {e}")
+        self.start_btn = ttk.Button(act, text="AVVIA SCHEDULAZIONE", style="Primary.TButton", command=self.start_main_script)
+        self.start_btn.pack(side="left", fill="x", expand=True, padx=(0, 10))
 
-    def validate_inputs(self):
-        """Valida tutti gli input prima della schedulazione"""
-        errors = []
+        # RIAPRI GRAFICO
+        ttk.Button(act, text="APRI GRAFICO", style="Primary.TButton", command=self.reload_graph).pack(side="left", fill="x", expand=True, padx=(0, 10))
+        
+        ttk.Button(act, text="APRI OUTPUT", style="Primary.TButton", command=self.open_output_folder).pack(side="left", fill="x", expand=True)
 
-        # Controlla i file
-        files = {
-            "Commesse": self.file_commesse.get(),
-            "Macchine": self.file_macchine.get(),
-            "Veicoli": self.file_veicoli.get()
-        }
+        # --- CONSOLE ---
+        out_card = self.create_card(main)
+        out_card.pack(fill="both", expand=True)
+        
+        self.p_bar = ttk.Progressbar(out_card, mode="indeterminate", style="Horizontal.TProgressbar")
+        self.status = ttk.Label(out_card, text="Sistema pronto.", style="Card.TLabel", font=(FONT_FAMILY, 9, "italic"))
+        self.status.pack(anchor="w", pady=(0,5))
+        
+        t_frame = ttk.Frame(out_card)
+        t_frame.pack(fill="both", expand=True)
+        
+        self.out_txt = tk.Text(t_frame, height=10, 
+                               font=("Consolas", FONT_SIZE_BASE), 
+                               bg="#101010", fg="#cccccc",
+                               insertbackground="white", relief="flat",
+                               padx=10, pady=10)
+        
+        sb = ttk.Scrollbar(t_frame, command=self.out_txt.yview)
+        self.out_txt.configure(yscrollcommand=sb.set)
+        
+        self.out_txt.pack(side="left", fill="both", expand=True)
+        sb.pack(side="right", fill="y")
 
-        for nome, path in files.items():
-            if not path:
-                errors.append(f"File {nome} non selezionato")
-            elif not os.path.exists(path):
-                errors.append(f"File {nome} non trovato: {path}")
-            elif not path.lower().endswith(('.xlsx', '.xls')):
-                errors.append(f"File {nome} deve essere un file Excel (.xlsx o .xls)")
-
-        # Controlla beta
-        try:
-            beta_val = float(self.beta_val.get())
-            if beta_val < 0:
-                errors.append("Il parametro Beta deve essere un numero positivo o zero")
-        except ValueError:
-            errors.append("Il parametro Beta deve essere un numero valido")
-
-        return errors
+    def select_file(self, var, tipo):
+        f = filedialog.askopenfilename(title=f"Seleziona {tipo}", filetypes=[("Excel", "*.xlsx *.xls")])
+        if f: var.set(f)
 
     def start_main_script(self):
-        """Avvia la schedulazione principale"""
-        # Valida gli input
-        errors = self.validate_inputs()
-        if errors:
-            messagebox.showerror("Errori di input", "\n".join(errors))
+        self.start_btn.config(state="disabled")
+        self.p_bar.pack(fill="x", pady=(0, 10), before=self.status)
+        self.p_bar.start(10)
+        self.status.config(text="Esecuzione algoritmo in corso...", foreground=COLOR_ACCENT)
+        self.out_txt.delete(1.0, tk.END)
+        self.out_txt.insert(tk.END, "> Avvio processo...\n")
+        threading.Thread(target=self._run_thread, daemon=True).start()
+
+    def _run_thread(self):
+        try:
+            env = os.environ.copy()
+            env.update({
+                'FILE_COMMESSE': self.file_commesse.get(),
+                'FILE_MACCHINE': self.file_macchine.get(),
+                'FILE_VEICOLI': self.file_veicoli.get(),
+                'PARAM_ALFA': str(self.alfa_val.get()),
+                'PARAM_BETA': self.beta_val.get(),
+                'PARAM_ITER': self.iter_val.get()
+            })
+            
+            p = subprocess.Popen([sys.executable, get_main_script_path()], 
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+                                 text=True, bufsize=1, universal_newlines=True, 
+                                 env=env)
+            
+            for line in p.stdout:
+                self.root.after(0, lambda l=line: self.out_txt.insert(tk.END, l) or self.out_txt.see(tk.END))
+            
+            # Quando il processo finisce (dopo aver chiuso il grafico), chiamiamo _reset_ui
+            stderr_out = p.stderr.read()
+            self.root.after(0, lambda: self._reset_ui(p.poll(), stderr_out))
+            
+        except Exception as e:
+            self.root.after(0, lambda: self._reset_ui(1, str(e)))
+
+    def _reset_ui(self, code, err):
+        """Ripristina l'UI dopo che il Main (e il Grafico) sono stati chiusi"""
+        self.p_bar.stop()
+        self.p_bar.pack_forget()
+        self.start_btn.config(state="normal")
+        
+        if code == 0:
+            self.status.config(text="Completato con successo.", foreground=COLOR_SUCCESS)
+            self.out_txt.insert(tk.END, "\n=== PROCESSO TERMINATO ===\n")
+            messagebox.showinfo("Fatto", "Schedulazione completata!")
+        else:
+            self.status.config(text="Processo terminato (Verificare output).", foreground="#e67e22")
+            if err:
+                self.out_txt.insert(tk.END, f"\n[NOTE/ERRORI]:\n{err}")
+            messagebox.showinfo("Info", "Il processo è terminato.")
+
+    def open_output_folder(self):
+        paths = [os.path.join(os.getcwd(), "Dati_output"), os.path.join(os.getcwd(), "PS-VRP", "Dati_output")]
+        path_to_open = paths[0]
+        for p in paths:
+            if os.path.exists(p):
+                path_to_open = p
+                break
+        if not os.path.exists(path_to_open):
+            try: os.makedirs(path_to_open)
+            except: pass
+        try:
+            if sys.platform == "win32": os.startfile(path_to_open)
+            else: subprocess.run(["xdg-open", path_to_open])
+        except Exception as e:
+            messagebox.showerror("Errore", str(e))
+
+        
+    # --- NUOVA FUNZIONE PER RIAPRIRE IL GRAFICO ---
+    def reload_graph(self):
+        """Legge il file pickle e riapre il grafico Matplotlib interattivo"""
+        
+        # Cerca il file .pkl nei percorsi standard
+        path_1 = os.path.join(os.getcwd(), "Dati_output", "grafico_schedulazione.pkl")
+        path_2 = os.path.join(os.getcwd(), "PS-VRP", "Dati_output", "grafico_schedulazione.pkl")
+        
+        target_path = None
+        if os.path.exists(path_1): target_path = path_1
+        elif os.path.exists(path_2): target_path = path_2
+        
+        if not target_path:
+            messagebox.showwarning("File non trovato", "Nessun dato di grafico salvato trovato.\nEsegui prima una schedulazione.")
             return
 
-        # Prepara l'interfaccia per la schedulazione
-        self.start_button.config(state=tk.DISABLED)
-        self.progress_frame.pack(pady=(0,10), fill="x")
-        self.progress_bar.start()
-        self.progress_label.config(text="Avvio schedulazione...")
-        
-        # Mostra il frame di output
-        self.output_frame.pack(pady=(0,10), fill="both", expand=True)
-        self.output_text.delete(1.0, tk.END)
-        self.output_text.insert(tk.END, "=== Avvio schedulazione ===\n")
-
-        # Avvia in thread separato
-        threading.Thread(target=self._run_main_script_thread, daemon=True).start()
-
-    def _run_main_script_thread(self):
-        """Esegue lo script principale in thread separato"""
         try:
-            # Prepara i parametri
-            commesse_path = self.file_commesse.get()
-            macchine_path = self.file_macchine.get()
-            veicoli_path = self.file_veicoli.get()
-            alfa = self.alfa_val.get()
-            beta = float(self.beta_val.get())
-            iter = int(self.iter_val.get())
-
-            # Aggiorna il progress
-            self.root.after(0, lambda: self.progress_label.config(text="Configurazione parametri..."))
-            self.root.after(0, lambda: self.output_text.insert(tk.END, f"File Commesse: {os.path.basename(commesse_path)}\n"))
-            self.root.after(0, lambda: self.output_text.insert(tk.END, f"File Macchine: {os.path.basename(macchine_path)}\n"))
-            self.root.after(0, lambda: self.output_text.insert(tk.END, f"File Veicoli: {os.path.basename(veicoli_path)}\n"))
-            self.root.after(0, lambda: self.output_text.insert(tk.END, f"Alfa: {alfa:.2f}, Beta: {beta}, Iter: {iter}\n\n"))
-
-            # Prepara l'ambiente
-            env_vars = os.environ.copy()
-            env_vars.update({
-                'FILE_COMMESSE': commesse_path,
-                'FILE_MACCHINE': macchine_path,
-                'FILE_VEICOLI': veicoli_path,
-                'PARAM_ALFA': str(alfa),
-                'PARAM_BETA': str(beta),
-                'PARAM_ITER': str(iter)
-            })
-
-            # Trova il percorso di main.py
-            main_script_path = get_main_script_path()
-            
-            self.root.after(0, lambda: self.progress_label.config(text="Esecuzione script principale..."))
-            self.root.after(0, lambda: self.output_text.insert(tk.END, f"Esecuzione: {main_script_path}\n\n"))
-
-            # Costruisci il comando
-            cmd = [sys.executable, main_script_path]
-            
-            # Esegui il processo
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                env=env_vars,
-                bufsize=1,
-                universal_newlines=True
-            )
-
-            # Leggi l'output in tempo reale
-            while True:
-                output = process.stdout.readline()
-                if output == '' and process.poll() is not None:
-                    break
-                if output:
-                    self.root.after(0, lambda line=output: self.output_text.insert(tk.END, line))
-                    self.root.after(0, lambda: self.output_text.see(tk.END))
-
-            # Ottieni il risultato finale
-            stderr_output = process.stderr.read()
-            return_code = process.poll()
-
-            if return_code == 0:
-                self.root.after(0, lambda: self._show_success(stderr_output))
+            if solver:
+                # Carica i dati grezzi
+                with open(target_path, "rb") as f:
+                    data = pickle.load(f)
+                
+                print("Riapertura grafico da file salvato...")
+                # Lancia il grafico (bloccherà la GUI finché aperto, ma è immediato)
+                solver.grafico_schedulazione(data)
             else:
-                self.root.after(0, lambda: self._show_error(return_code, stderr_output))
-
+                messagebox.showerror("Errore", "Modulo 'solver' non importato correttamente.")
+                
         except Exception as e:
-            self.root.after(0, lambda: self._show_exception(e))
-
-    def _show_success(self, stderr_output):
-        """Mostra il risultato di successo"""
-        self.progress_label.config(text="✅ Schedulazione completata con successo!")
-        self.output_text.insert(tk.END, "\n=== SCHEDULAZIONE COMPLETATA ===\n")
-        
-        if stderr_output:
-            self.output_text.insert(tk.END, f"Note/Avvisi:\n{stderr_output}\n")
-        
-        messagebox.showinfo("Completato", "La schedulazione è stata completata con successo!")
-        self._reset_ui()
-
-    def _show_error(self, return_code, stderr_output):
-        """Mostra errori di schedulazione"""
-        self.progress_label.config(text="❌ Errore durante la schedulazione")
-        self.output_text.insert(tk.END, f"\n=== ERRORE (codice {return_code}) ===\n")
-        self.output_text.insert(tk.END, stderr_output)
-        
-        messagebox.showerror(
-            "Errore", 
-            f"La schedulazione è terminata con errore (codice {return_code}).\n\n"
-            "Controlla l'output per i dettagli."
-        )
-        self._reset_ui()
-
-    def _show_exception(self, exception):
-        """Mostra eccezioni inaspettate"""
-        self.progress_label.config(text="❌ Errore inaspettato")
-        self.output_text.insert(tk.END, f"\n=== ERRORE INASPETTATO ===\n{str(exception)}\n")
-        
-        messagebox.showerror("Errore Inaspettato", f"Si è verificato un errore: {exception}")
-        self._reset_ui()
-
-    def _reset_ui(self):
-        """Ripristina l'interfaccia utente"""
-        self.progress_bar.stop()
-        self.start_button.config(state=tk.NORMAL)
+            messagebox.showerror("Errore", f"Impossibile aprire il grafico:\n{e}")
 
 if __name__ == "__main__":
     root = tk.Tk()
+    try:
+        from ctypes import windll
+        windll.shcore.SetProcessDpiAwareness(1)
+    except: pass
     app = App(root)
     root.mainloop()
