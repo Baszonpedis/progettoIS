@@ -69,7 +69,7 @@ def read_attrezzaggio_macchine(nome_file,lista_macchine):
         lista_macchine[i].attrezzaggio={'numero_coltelli':df['numero file ult lavoro'][i],
                                         'diametro_tubo':df['diam tubo ult lavoro'][i]}
 
-def read_excel_commesse(nome_file,inizio_schedulazione):
+def read_excel_commesse(nome_file,inizio_schedulazione, file_errori = None):
     """
     :param nome_file: nome del file da leggere relativo alle commesse
     :return: lista di oggetti macchina
@@ -80,13 +80,8 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
     colonne_commesse_foglio=['Commesse::fascia','Commesse::Diam int tubo']
     for col in colonne_commesse_foglio:
         df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col] = df.loc[df['Anagrafica incarti::tipologia taglio'] == 'foglio', col].fillna(0)
-    if os.path.basename(os.getcwd()) == "PS-VRP":
-        output.write_error_output(df,os.getcwd() + '/Dati_output/Problemi_lettura_Excel.xlsx')
-    elif os.path.basename(os.getcwd()) == "progettoIS":
-        output.write_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/Problemi_lettura_Excel.xlsx')
-    else:
-        print("ERRORE: la directory di output degli errori lettura non è correttamente impostata")
-
+    if file_errori:
+        output.write_error_output(df,file_errori)
 
     #Campi riempiti per evitare che vengano rimossi dal .dropna (campi "facoltativi")
     df['Commesse::CODICE DI ZONA'] = df['Commesse::CODICE DI ZONA'].fillna(0)
@@ -117,7 +112,7 @@ def read_excel_commesse(nome_file,inizio_schedulazione):
         lista_commesse.append(Commessa(*f))
     return lista_commesse
 
-def read_compatibilita(nome_file,lista_commesse):
+def read_compatibilita(nome_file,lista_commesse, file_errori=None):
     """
     :param nome_file: nome del file da leggere relativo alle compatibilita commessa-macchina
     :param lista_commesse: lista di oggetti Commessa a cui andare ad aggiungere le compatibilita con le macchine
@@ -138,8 +133,7 @@ def read_compatibilita(nome_file,lista_commesse):
     count_removed_err_rows = df['compatibilità macchine taglio::check dati'] \
         .str.contains(r'ERR', na=False, case=False).sum()
 
-    print("Commesse rimosse per check dati ERR in estrazione")
-    print(count_removed_err_rows)
+    print(f'Commesse rimosse per check dati ERR in estrazione: {count_removed_err_rows}')
 
     df=df.dropna()
 
@@ -183,16 +177,10 @@ def read_compatibilita(nome_file,lista_commesse):
 
 
     # Esporta le commesse incompatibili in un file Excel
-    if commesse_incompatibili:
-        # Supponendo che ogni oggetto Commessa abbia un metodo `to_dict()` per esportare i dati
+    if commesse_incompatibili and file_errori:
         incompatibili_dict = [{'commessa': c.id_commessa, 'motivo': 'nessuna compatibilità con alcuna macchina'} for c in commesse_incompatibili]
         df_incompatibili = pd.DataFrame(incompatibili_dict)
-        if os.path.basename(os.getcwd()) == "PS-VRP":
-            df_incompatibili.to_excel( os.getcwd() + '/Dati_output/Problemi_incompatibilità.xlsx', index=False)
-        elif os.path.basename(os.getcwd()) == "progettoIS":
-            df_incompatibili.to_excel( os.getcwd() + '/PS-VRP/Dati_output/Problemi_incompatibilità.xlsx', index=False)
-        else:
-            print("ERRORE: la directory di output degli errori compatibilità non è correttamente impostata")
+        output.write_incompatibili_error_output(df_incompatibili, file_errori)
     return incompatibili_dict
 
 def read_excel_veicoli(nome_file):

@@ -15,15 +15,21 @@ def esecuzione():
     ##INPUT(s) [Macchine, Commesse, Veicoli (Vettori)]
     print("=== AVVIO MAIN.PY ===")
 
+    # Definizione della cartella di output
     path_output = os.path.join(os.getcwd(), "Dati_output")
-
     if not os.path.exists(path_output):
         try:
             os.makedirs(path_output)
             print(f"Creata cartella output: {path_output}")
         except OSError as e:
             print(f"Errore creazione cartella output: {e}")
-    
+
+    # Definizione di un file unico per i problemi emersi nell'elaborazione del codice
+    if os.path.basename(os.getcwd()) == "progettoIS":
+        file_errori_unico = os.path.join(os.getcwd(), 'PS-VRP', 'Dati_output', 'Report_Problemi.xlsx')
+    else:
+         file_errori_unico = os.path.join(os.getcwd(), 'Dati_output', 'Report_Problemi.xlsx')
+
     # Leggi dalle variabili d'ambiente (passate dalla GUI)
     file_commesse_excel = os.getenv('FILE_COMMESSE')
     file_veicoli_excel = os.getenv('FILE_VEICOLI')
@@ -93,30 +99,26 @@ def esecuzione():
     #divid = 10 (impostato dinamicamente)
     #multip = 1000
 
-
     ##ELABORAZIONI SU INPUT(s)
     lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
     read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
     inizio_schedulazione=lista_macchine[0].data_inizio_schedulazione
-    lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedulazione) #Lista base oggetti commessa
-    schedulabili = len(lista_commesse)
-    incompatibili = read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse); estraggo le eventuali incompatibili con ogni macchina
+    lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedulazione,file_errori_unico) #Lista base oggetti commessa
+    #schedulabili = len(lista_commesse)
+    read_excel.read_compatibilita(file_commesse_excel,lista_commesse,file_errori_unico) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse); estraggo le eventuali incompatibili con ogni macchina
     lista_veicoli=read_excel.read_excel_veicoli(file_veicoli_excel) #Lista base oggetti veicolo
     lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
     lista_veicoli=sorted(lista_veicoli,key=lambda veicolo:veicolo.data_partenza)
 
     init(autoreset=True)  # Ripristina i colori dopo ogni print
 
-
     commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
     lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
     df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
 
+    # Aggiunge problemi legati agli oggetti veicolo se ce ne sono
     if not df_errati.empty:
-        if os.path.basename(os.getcwd()) == "progettoIS":
-            output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/Problemi_veicoli.xlsx')
-        else:
-            output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/Problemi_veicoli.xlsx')
+        output.write_veicoli_error_output(df_errati, file_errori_unico)
 
     ##EURISTICO DI BASE
     print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
@@ -307,14 +309,11 @@ def esecuzione():
     ])
 
     #L'output di errore legato ai veicoli in sé è precedente (presso "elaborazione input(s)")
-    if os.path.basename(os.getcwd()) == "progettoIS":
-        output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
-        output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
-        output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
-    else:
-        output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
-        output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
-        output.write_tassative_error_output(df_tass,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
+    output.error_commesse_in_veicoli_errati(df,file_errori_unico)
+
+    #I due output di errore a seguito non sono più rilevanti in seguito all'aggiornamento del codice
+    #output.write_tassative_error_output(df2,file_errori_unico)
+    #output.write_tassative_error_output(df_tass,file_errori_unico)
 
     ritardo1 = -f1_ritardo_post.total_seconds()/3600
 
@@ -366,8 +365,8 @@ def esecuzione():
         lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
         read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)
         inizio_schedulazione=lista_macchine[0].data_inizio_schedulazione
-        lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedulazione) #Lista base oggetti commessa
-        incompatibili = read_excel.read_compatibilita(file_commesse_excel,lista_commesse) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse); estraggo le eventuali incompatibili con ogni macchina
+        lista_commesse=read_excel.read_excel_commesse(file_commesse_excel,inizio_schedulazione,file_errori_unico) #Lista base oggetti commessa
+        read_excel.read_compatibilita(file_commesse_excel,lista_commesse,file_errori_unico) #aggiungo le compatibilita commessa-macchina alle commesse della lista passata come parametro(lista con tutte le commesse); estraggo le eventuali incompatibili con ogni macchina
         lista_veicoli=read_excel.read_excel_veicoli(file_veicoli_excel) #Lista base oggetti veicolo
         lista_macchine=sorted(lista_macchine,key=lambda macchina:macchina.nome_macchina)
         lista_veicoli=sorted(lista_veicoli,key=lambda veicolo:veicolo.data_partenza)
@@ -498,18 +497,12 @@ def esecuzione():
             #Output di errore 4 - tassative non schedulate come tali (problemi release date euristico ciclo 1)
                 #write_output a seguito
 
-            if os.path.basename(os.getcwd()) == "progettoIS":
-                output.write_veicoli_error_output(df_errati, os.getcwd() +'/PS-VRP/Dati_output/Problemi_veicoli.xlsx')
-                output.write_tassative_error_output(df,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
-                output.write_tassative_error_output(df2,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
-                output.write_tassative_error_output(df_tass,os.getcwd() + '/PS-VRP/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
-            else:
-                output.write_veicoli_error_output(df_errati, os.getcwd() +'/Dati_output/Problemi_veicoli.xlsx')
-                output.write_tassative_error_output(df,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Veicolo')
-                output.write_tassative_error_output(df2,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'Release Date (RD)')
-                output.write_tassative_error_output(df_tass,os.getcwd() + '/Dati_output/Problemi_schedulazione_commesse.xlsx', 'RD Tassative')
+            output.write_veicoli_error_output(df_errati, file_errori_unico)
+            output.error_commesse_in_veicoli_errati(df, file_errori_unico)
 
-
+            #Gli output di errore 3 e 4 non si verificano più in seguito al cambiamento del codice
+            #output.write_tassative_error_output(df2, file_errori_unico)
+            #output.write_tassative_error_output(df_tass, file_errori_unico)
 
     print(f"{Fore.YELLOW}SETUP (BEST SOLUTION): {fbest:.2f}s")
     print(f"{Fore.YELLOW}RITARDO (BEST SOLUTION): {-fritardobest} ore")
@@ -518,19 +511,14 @@ def esecuzione():
 
     if os.path.basename(os.getcwd()) == "progettoIS":
         output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione.xlsx')
+        output.write_output_ridotto(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.xlsx')
+        output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.txt')
+        output.write_output_commesse_veicoli(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_veicoli.xlsx')
     else:
         output.write_output_soluzione_euristica(soluzionebest, os.getcwd() + '/Dati_output/schedulazione.xlsx')
-
-    if os.path.basename(os.getcwd()) == "progettoIS":
-        output.write_output_ridotto(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.xlsx')
-    else:
         output.write_output_ridotto(soluzionebest, os.getcwd() + '/Dati_output/schedulazione_ridotta.xlsx')
-
-    if os.path.basename(os.getcwd()) == "progettoIS":
-        output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/PS-VRP/Dati_output/schedulazione_ridotta.txt')
-    else:
         output.write_output_ridotto_txt(soluzionebest, os.getcwd() + '/Dati_output/schedulazione_ridotta.txt')
-
+        output.write_output_commesse_veicoli(soluzionebest, os.getcwd() + '/Dati_output/schedulazione_veicoli.xlsx')
 
     end_time_schedulazione = time.time()
 
@@ -554,10 +542,8 @@ def esecuzione():
     except Exception as e:
         print(f"Errore nel salvataggio pickle: {e}")
 
-    # --- APERTURA GRAFICO ---
-    print("AVVIO GRAFICO...")
+    print("APERTURA GRAFICO...")
     solver.grafico_schedulazione(soluzionebest)
-
     print("SCHEDULAZIONE COMPLETATA")
 
 if __name__ == "__main__":
