@@ -14,7 +14,7 @@ import random
 #alfa = 1 #Parametro per le ricerche locali - consigliato: [0.7-0.9]; si ricordi che zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
 #beta = 0.2 #Parametro per il GRASP (metaeuristico) - consigliato: [0.1-0.3]
 
-max_ritardo = timedelta(days = 60)
+max_ritardo = timedelta(days = 9000) ##CAMBIATO PER TESTING
 
 # Leggi i parametri dalle variabili d'ambiente (stesse che legge main.py)
 def get_solver_parameters():
@@ -70,7 +70,7 @@ def associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, 
                 commessa.veicolo = veicolo_non_in_estrazione
             else: #veicoli fuori dall'estrazione interni (comportamento scorretto)
                 veicolo_non_in_estrazione = Veicolo(str(int(commessa.id_tassativo))+" (interno)", 0, None, None)
-                print(f'ATTENZIONE: Il veicolo {veicolo_non_in_estrazione.nome} non è in estrazione! Rimuovo commesse associate')
+                #print(f'ATTENZIONE: Il veicolo {veicolo_non_in_estrazione.nome} non è in estrazione! Rimuovo commesse associate')
                 #lista_veicoli.append(veicolo_non_in_estrazione)
                 commesse_da_schedulare.remove(commessa) #tolgo la commessa dalle schedulande
                 commesse_veicoli_errati[commessa.id_commessa] = "Il veicolo associato alla commessa dovrebbe essere in estrazione, ma non c'è" #aggiungo la commessa ad un dizionario da assorbire con gli altri dizionari di errore
@@ -107,7 +107,8 @@ def associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, 
 def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, tempo_processamento, inizio_schedulazione, schedulazione: list, minuti_inizio_lavorazione, tipo):
     fine_lavorazione = aggiungi_minuti(minuti_inizio_lavorazione + tempo_setup + tempo_processamento,inizio_schedulazione)
     veicolo = commessa.veicolo
-    tempo_medio_attesa = timedelta(days = 10)
+    #tempo_medio_attesa = timedelta(days = 10)
+    tempo_medio_attesa = timedelta(days=0) #Rimuovo il malus per il testing; dovrebbe in ogni caso succedere SOLO per commesse tassative esterne
     if commessa.tassativita == "X":
         if 0 in commessa.zona_cliente: #commesse esterne tassative
             commessa.ritardo = max(min(commessa.due_date - fine_lavorazione, timedelta(days = 0)), -max_ritardo)
@@ -208,7 +209,10 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
     #A seguito, si differenzia tra i vari tipi di commesse (in ordine: tassative esterne, tassative interne corrette, tassative interne scorrette, interne zona aperta, altre)
     #Questo a fine di calcolare il "ritardomossa" - ovvero il ritardo associato alla mossa nella soluzione ricostruita
     
-    tempo_medio_attesa = timedelta(days = 10)
+    ##NB: MODIFICATO PER DIVENTARE VINCOLO HARD DI NUOVO
+    tempo_medio_attesa = timedelta(days = 999)
+    counter = 0
+
     
     if commessa.tassativita == "X": #tassative
         if 0 in commessa.zona_cliente: #tassative esterne
@@ -232,14 +236,23 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
                     veicolo = v #aggiorno il veicolo
                     break
             if changed == False: #Disassociazione in assenza di veicoli alternativi
+                counter +=1
                 #print(f'Commessa {commessa.id_commessa} disassociata in assenza di altri veicoli coerenti')
                 commessa.veicolo.temp_capacity += commessa.kg_da_tagliare
-                ritardomossa =  max(min(commessa.due_date - data_fine_lavorazione - tempo_medio_attesa, timedelta(days = 0)), -max_ritardo) #Vincolo SOFT a non compiere mosse che mandano in ritardo veicoli se non si hanno alternative
+                ritardomossa = -timedelta(days = 999)
                 veicolo = None
+                ##RITARDO PUNITIVO - PER TESTNG
+                
+
+
         if veicolo is not None: #Questo se non si entra nell'if precedente o se ci si entra e se ne esce con un veicolo
             ritardomossa = max(min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0)), -max_ritardo)
     else: #altre (serve se la funzione dovesse essere mai chiamata anche su commesse solo su macchina, del gruppo 3)
-        ritardomossa = max(min(commessa.due_date - data_fine_lavorazione - tempo_medio_attesa, timedelta(days = 0)), -max_ritardo)
+        #ritardomossa = max(min(commessa.due_date - data_fine_lavorazione - tempo_medio_attesa, timedelta(days = 0)), -max_ritardo)
+
+        ##NB: CAMBIATA PER TESTING ISTANZE
+        ritardomossa = max(min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0)), -max_ritardo)
+
     schedulazione.append({"commessa": id,
                           "macchina": macchina_lavorazione,
                           "release date": release_date,
@@ -263,7 +276,7 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
                           "priorita": commessa.priorita_cliente})
 
 ##EURISTICO COSTRUTTIVO (Greedy)
-def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, lista_veicoli:list):
+def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, lista_veicoli:list, beta):
 
     #INIZIALIZZAZIONI
     causa_fallimento={} #Dizionario con formato "commessa_fallita:motivo"
@@ -285,8 +298,10 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     #for i in lista_commesse_tassative:
     #    print(i.priorita_cliente, i.due_date.timestamp())
 
-    #se beta = 0, la lista commesse tassative non viene cambiata rispetto al sort iniziale
-    lista_commesse_tassative = GRASP_randomizer(lista_commesse_tassative)
+    '''CHANGE'''
+    if beta != 0:
+        print(beta)
+        lista_commesse_tassative = GRASP_randomizer(lista_commesse_tassative)
 
     #PRIMO CICLO WHILE
     #Si assegnano per prime tutte le commesse tassative alle macchine (l'assegnazione al veicolo è fatta dalla funzione apposita)
@@ -352,8 +367,9 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     
     commesse_da_schedulare.sort(key=lambda commessa:(commessa.due_date.timestamp(), +commessa.priorita_cliente)) #Ordinamento: prima in base alla due date; a parità, in base alla priorità del cliente
 
-    #se beta = 0, la lista commesse_da_schedulare non viene cambiata rispetto al sort iniziale
-    commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
+    '''CHANGE'''
+    if beta != 0:
+        commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
 
     #SECONDO CICLO WHILE
     #Provo a inserire tutte le commesse interne a zona aperta (su macchine e veicoli)
@@ -419,7 +435,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     return schedulazione, f_obj, causa_fallimento, lista_macchine, commesse_residue, f_obj_ritardo, f_obj_ritardo_pesato, df
 
 ##EURISTICO POST (Greedy 2)
-def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commesse_scartate: list, f_obj_base, f_obj_ritardo, f_obj_ritardo_pesato):
+def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commesse_scartate: list, f_obj_base, f_obj_ritardo, f_obj_ritardo_pesato, beta):
     
     commesse_da_schedulare = commesse_residue + commesse_scartate #Tutte quelle non schedulate per vari motivi nel secondo ciclo + le scartate dal filtro
 
@@ -433,8 +449,10 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     commesse_da_schedulare.sort(key=lambda commessa:(commessa.due_date.timestamp(), +commessa.priorita_cliente)) #Ordinamento: prima in base alla due date; a parità, in base alla priorità del cliente
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # è il primo lunedi disponibile che è uguale per tutte le macchine
 
-    #se beta = 0, la lista commesse_da_schedulare non viene cambiata rispetto al sort iniziale
-    commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
+
+    '''CHANGE'''
+    if beta != 0:
+        commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
 
     #TERZO CICLO WHILE
     #Inserisco solo sulle macchine tutte le commesse mancanti (Interne zona chiusa, Esterne non tassative)
@@ -512,7 +530,7 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     return soluzionepost, f_obj, fpost_ritardo, fpost_ritardo_pesato, commesse_fallite
 
 ##EURISTICO RICOSTRUTTIVO (Greedy 3)
-def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base, f_obj_ritardo, f_obj_ritardo_pesato):
+def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base, f_obj_ritardo, f_obj_ritardo_pesato, beta):
     
     commesse_da_schedulare = commesse_residue #Tutte le commesse residue, per problemi di release date
 
@@ -526,8 +544,9 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
     commesse_da_schedulare.sort(key=lambda commessa:(commessa.due_date.timestamp(), +commessa.priorita_cliente)) #Ordinamento: prima in base alla due date; a parità, in base alla priorità del cliente
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # è il primo lunedi disponibile che è uguale per tutte le macchine
 
-    #se beta = 0, la lista commesse_da_schedulare non viene cambiata rispetto al sort iniziale
-    commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
+    '''CHANGE'''
+    if beta != 0:
+        commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
 
     #QUARTO CICLO WHILE
     #Inserisco solo sulle macchine tutte le commesse mancanti (per problemi di release_date)
@@ -573,8 +592,8 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
 
     commesse_fallite = [c for c in commesse_da_schedulare]
 
-    if commesse_fallite == []:
-        print("TUTTE LE COMMESSE RESIDUE CORRETTAMENTE SCHEDULATE!")
+    #if commesse_fallite == []:
+    #    print("TUTTE LE COMMESSE RESIDUE CORRETTAMENTE SCHEDULATE!")
 
     lista_macchine = lista_macchine2.copy()
 
@@ -1119,8 +1138,7 @@ def GRASP_randomizer(lista_commesse):
     #caso puramente greedy, la lista è già ordinata di conseguenza quando avviene la chiamata nel codice
     if beta == 0:
         return lista_commesse
-    
-    #casi con beta > 0 (elementi randomici)
+        #casi con beta > 0 (elementi randomici)
     else:
         while lista_commesse:
             massimo = max(cost)

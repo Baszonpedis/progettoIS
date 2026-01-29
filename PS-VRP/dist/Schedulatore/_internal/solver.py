@@ -332,12 +332,12 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
         if not schedulazione_eseguita:
             lista_macchine.remove(macchina)
     
-    if len(lista_commesse_tassative) > 0:
-        print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
-        print(f'ATTENZIONE: alcune commesse tassative hanno release date troppo avanzata per essere schedulate come tali / propriamente; le seguenti commesse verranno trattate come commesse normali:')
-        for i in lista_commesse_tassative:
-            print(i.id_commessa)
-        print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
+    #if len(lista_commesse_tassative) > 0:
+    #    print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
+    #    print(f'ATTENZIONE: alcune commesse tassative hanno release date troppo avanzata per essere schedulate come tali / propriamente; le seguenti commesse verranno trattate come commesse normali:')
+    #    for i in lista_commesse_tassative:
+    #        print(i.id_commessa)
+    #    print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
 
     df = pd.DataFrame([{
         'id': c.id_commessa,
@@ -481,12 +481,12 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
             #    if macchina.minuti_ultima_lavorazione - minimo < 60:
             lista_macchine.remove(macchina)
     
-    if len(commesse_da_schedulare) > 0:
-        print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
-        print(f'ATTENZIONE: alcune commesse non possono essere schedulate (release date troppo avanzata):')
-        for i in commesse_da_schedulare:
-            print(i.id_commessa)
-        print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
+    #if len(commesse_da_schedulare) > 0:
+    #    print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
+    #    print(f'ATTENZIONE: alcune commesse non possono essere schedulate (release date troppo avanzata):')
+    #    for i in commesse_da_schedulare:
+    #        print(i.id_commessa)
+    #    print(f'-------------------------------------------------------------------------------------------------------------------------------------------------------')
 
     commesse_fallite = [c for c in commesse_da_schedulare]
 
@@ -551,7 +551,7 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
                 fpost_ritardo+=commessa.ritardo
                 fpost_ritardo_pesato+=commessa.ritardo/commessa.priorita_cliente
                 commesse_da_schedulare.remove(commessa)
-                print(f'INSERITA COMMESSA {commessa.id_commessa} su macchina {macchina.nome_macchina} con tempo di inizio taglio {tempo_inizio_taglio} e considerando che la macchina avveva tempo {macchina._minuti_fine_ultima_lavorazione}')
+                #print(f'INSERITA COMMESSA {commessa.id_commessa} su macchina {macchina.nome_macchina} con tempo di inizio taglio {tempo_inizio_taglio} e considerando che la macchina avveva tempo {macchina._minuti_fine_ultima_lavorazione}')
                 #In caso di commesse reputate tali (e.g. stessi identici metri da tagliare) si forza, con il codice a seguito, la loro schedulazione in sequenza; questa non è permanente, ed è mutabile dalle ricerche locali in seguito
                 for commessa2 in commesse_da_schedulare:
                     if commessa.id_commessa == commessa2.id_commessa or commessa.fascia_iniziale == commessa2.fascia_iniziale and commessa.fascia_finale == commessa2.fascia_finale and commessa.diametro_tubo == commessa2.diametro_tubo and commessa2.compatibilita[macchina.nome_macchina] == 1: #and commessa2._minuti_release_date <= macchina._minuti_fine_ultima_lavorazione:
@@ -597,10 +597,10 @@ def insert_inter_macchina(lista_macchine: list, f_obj, lista_veicoli):
     for m in lista_macchine:
         if len(m.lista_commesse_processate)>1:
             ultima_lavorazione=m.ultima_lavorazione
-            print("LS1\n")
+            #print("LS1\n")
             for pos in range(1,len(m.lista_commesse_processate)):
                 commessa = m.lista_commesse_processate[pos]
-                print(commessa.id_commessa, commessa.ritardo/commessa.priorita_cliente)
+                #print(commessa.id_commessa, commessa.ritardo/commessa.priorita_cliente)
                 tempo_setup_commessa=m.calcolo_tempi_setup(m.lista_commesse_processate[pos-1],m.lista_commesse_processate[pos])
                 tempo_processamento_commessa=commessa.metri_da_tagliare/m.velocita_taglio_media
                 fine_lavorazione = aggiungi_minuti(ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa,inizio_schedulazione)
@@ -880,10 +880,10 @@ def insert_intra(lista_macchine: list, f_obj, lista_veicoli):
     for m in lista_macchine:
         if len(m.lista_commesse_processate)>1:
             ultima_lavorazione=m.ultima_lavorazione
-            print("LS2\n")
+            #print("LS2\n")
             for pos in range(1,len(m.lista_commesse_processate)):
                 commessa = m.lista_commesse_processate[pos]
-                print(commessa.id_commessa, commessa.ritardo/commessa.priorita_cliente)
+                #print(commessa.id_commessa, commessa.ritardo/commessa.priorita_cliente)
                 tempo_setup_commessa=m.calcolo_tempi_setup(m.lista_commesse_processate[pos-1],m.lista_commesse_processate[pos])
                 tempo_processamento_commessa=commessa.metri_da_tagliare/m.velocita_taglio_media
                 fine_lavorazione = aggiungi_minuti(ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa,inizio_schedulazione)
@@ -1015,10 +1015,10 @@ def swap_intra(lista_macchine, f_obj, lista_veicoli):
     for m in lista_macchine:
         if len(m.lista_commesse_processate)>1:
             ultima_lavorazione=m.ultima_lavorazione
-            print("LS3\n")
+            #print("LS3\n")
             for pos in range(1,len(m.lista_commesse_processate)):
                 commessa = m.lista_commesse_processate[pos]
-                print(commessa.id_commessa, commessa.ritardo/commessa.priorita_cliente)
+                #print(commessa.id_commessa, commessa.ritardo/commessa.priorita_cliente)
                 tempo_setup_commessa=m.calcolo_tempi_setup(m.lista_commesse_processate[pos-1],m.lista_commesse_processate[pos])
                 tempo_processamento_commessa=commessa.metri_da_tagliare/m.velocita_taglio_media
                 fine_lavorazione = aggiungi_minuti(ultima_lavorazione + tempo_setup_commessa + tempo_processamento_commessa,inizio_schedulazione)

@@ -48,7 +48,7 @@ def esecuzione():
     # Converti i parametri numerici
     try:
         alfa = float(alfa_str) if alfa_str else 0.7  # Default
-        beta = float(beta_str) if beta_str else 0.2  # Default
+        beta = float(beta_str) if beta_str else 1  # Default
         iter = int(iter_str) if iter_str else 5 #Default; int per poter essere essere correttamente usato nella funzione range()
         print(f"Parametri convertiti - Alfa: {alfa}, Beta: {beta}")
     except (ValueError, TypeError):
@@ -130,7 +130,7 @@ def esecuzione():
     start_time_eur = time.time()
 
     print(len(commesse_da_schedulare))
-    schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato, df_tass = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
+    schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato, df_tass = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli, 0)
     #output.write_output_soluzione_euristica(schedulazione3, os.getcwd() + '/Dati_output/euristico_costruttivo.xlsx')
     print(f'SCARTATI DAL PRIMO EURISTICO - Direttamente al Gruppo tre: {len(dizionario_filtri)}')
     print(f'INPUT AL PRIMO EURISTICO: {len(lista_commesse) - len(dizionario_filtri)}')
@@ -234,7 +234,7 @@ def esecuzione():
     #ritardo3 = -f3_ritardo.total_seconds()/3600
 
     start_time_post = time.time()
-    soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato, commesse_fallite = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
+    soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato, commesse_fallite = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo, 0)
     print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (setup): {fpost} minuti di setup")
     print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-fpost_ritardo} ore di ritardo")
     print(f"{Fore.YELLOW}Funzione obiettivo (LS[G1+G2]+G3) (consegna): {-ritardo_post_pesato} ore di ritardo pesato")
@@ -323,7 +323,7 @@ def esecuzione():
     ritardo_pesato_post_primo = ritardo_post_pesato_5
     soluzionefinale = soluzione5post
 
-    soluzionefinale2, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionefinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo)
+    soluzionefinale2, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionefinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo, 0)
 
     ## STAMPE FINALI
     print(f"{Fore.MAGENTA}{Style.BRIGHT}\n{'='*40}")
@@ -379,7 +379,7 @@ def esecuzione():
 
         ## EURISTICO COSTRUTTIVO
         start_time_eur = time.time()
-        schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato, df_tass = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli)
+        schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato, df_tass = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli, beta)
         #output.write_output_soluzione_euristica(schedulazione3, os.getcwd() + '/Dati_output/euristico_costruttivo.xlsx')
         commesse_non_schedulate = causa_fallimento | dizionario_filtri | commesse_veicoli_errati #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
         end_time_eur = time.time()
@@ -417,7 +417,7 @@ def esecuzione():
         ritardo5 = -f5_ritardo.total_seconds()/3600 
 
         start_time_post = time.time()
-        soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato, commesse_fallite = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo)
+        soluzionepost, fpost, fpost_ritardo, ritardo_post_pesato, commesse_fallite = solver.euristico_post(soluzionebasepost, commesse_residue, macchine_post, commesse_scartate, fprimo, fritardoprimo, ritardo_pesato_primo, beta)
         #output.write_output_soluzione_euristica(soluzionepost, os.getcwd() + '/PS-VRP/Dati_output/euristico_post.xlsx')
         #solver.grafico_schedulazione(soluzionepost)
         post_time = time.time() - start_time_post
@@ -451,7 +451,7 @@ def esecuzione():
         ritardo_pesato_post_primo = ritardo_post_pesato_5
         soluzionequasifinale = soluzione5post
 
-        soluzionefinale, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionequasifinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo)
+        soluzionefinale, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionequasifinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo, beta)
 
         ## STAMPE FINALI
         delta_fo_setup = f_obj_final - fbest
@@ -464,6 +464,7 @@ def esecuzione():
         eps = 0.00001
 
         if delta < -eps: #and len(soluzionefinale) >= len(soluzionebest):
+            print("NEW BEST SOLUTION")
             #print(len(soluzionefinale), len(soluzionebest))
             fbest = f_obj_final #aggiornamento funzione obiettivo solo setup
             fritardobest = f_ritardo_final #aggiornamento funzione obiettivo solo ritardo non pesato
