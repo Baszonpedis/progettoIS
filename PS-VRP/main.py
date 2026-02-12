@@ -8,6 +8,9 @@ from copy import deepcopy
 import time
 from colorama import Fore, Style, init
 import pandas as pd
+import random
+
+random.seed(1)
 
 def esecuzione():
     start_time_schedulazione = time.time()
@@ -112,7 +115,7 @@ def esecuzione():
 
     init(autoreset=True)  # Ripristina i colori dopo ogni print
 
-    commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
+    commesse_da_schedulare, dizionario_filtri, commesse_scartate, commesse_troppo_in_la = solver.filtro_commesse(lista_commesse, lista_veicoli)
     lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
     df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
 
@@ -132,14 +135,14 @@ def esecuzione():
     print(len(commesse_da_schedulare))
     schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato, df_tass = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli, 0)
     #output.write_output_soluzione_euristica(schedulazione3, os.getcwd() + '/Dati_output/euristico_costruttivo.xlsx')
-    print(f'SCARTATI DAL PRIMO EURISTICO - Direttamente al Gruppo tre: {len(dizionario_filtri)}')
-    print(f'INPUT AL PRIMO EURISTICO: {len(lista_commesse) - len(dizionario_filtri)}')
-    print(f'FALLIMENTI PRIMO EURISTICO: {len(causa_fallimento)}')
-    print(f'ASSEGNATI PRIMO EURISTICO: {len(lista_commesse) - len(dizionario_filtri) - len(causa_fallimento)}')
+    print(f'SCARTATI DAL PRIMO EURISTICO: {len(commesse_troppo_in_la + commesse_scartate)}')
+    print(f'INPUT AL PRIMO EURISTICO: {len(commesse_da_schedulare)}')
+    print(f'FALLIMENTI PRIMO EURISTICO: {len(commesse_residue)}')
+    print(f'ASSEGNATI PRIMO EURISTICO: {len(commesse_da_schedulare) - len(commesse_residue)}')
     commesse_non_schedulate = causa_fallimento | dizionario_filtri | commesse_veicoli_errati #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
 
-    print(f"\n{Fore.RED}{Style.BRIGHT}COMMESSE NON SCHEDULATE AL PRIMO EURISTICO (su veicoli): {len(commesse_non_schedulate)}")
-    print(f"{Fore.RED}Dettaglio motivi: {commesse_non_schedulate}")
+    #print(f"\n{Fore.RED}{Style.BRIGHT}COMMESSE NON SCHEDULATE AL PRIMO EURISTICO (su veicoli): {len(commesse_non_schedulate)}")
+    #print(f"{Fore.RED}Dettaglio motivi: {commesse_non_schedulate}")
     print(f"\n{Fore.YELLOW}Funzione obiettivo euristico (setup): {f_obj3} minuti di setup")
     print(f"{Fore.YELLOW}Funzione obiettivo euristico (consegna): {-f_obj3_ritardo} ore di ritardo\n")
     print(f"{Fore.YELLOW}Funzione obiettivo euristico (consegna): {-f_obj3_ritardo_pesato} ore di ritardo pesato\n")
@@ -323,7 +326,7 @@ def esecuzione():
     ritardo_pesato_post_primo = ritardo_post_pesato_5
     soluzionefinale = soluzione5post
 
-    soluzionefinale2, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionefinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo, 0)
+    soluzionefinale2, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionefinale, commesse_fallite + commesse_troppo_in_la, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo, 0)
 
     ## STAMPE FINALI
     print(f"{Fore.MAGENTA}{Style.BRIGHT}\n{'='*40}")
@@ -373,7 +376,7 @@ def esecuzione():
 
         init(autoreset=True)  # Ripristina i colori dopo ogni print
 
-        commesse_da_schedulare, dizionario_filtri, commesse_scartate = solver.filtro_commesse(lista_commesse, lista_veicoli)
+        commesse_da_schedulare, dizionario_filtri, commesse_scartate, commesse_troppo_in_la = solver.filtro_commesse(lista_commesse, lista_veicoli)
         lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
         df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
 
@@ -451,7 +454,7 @@ def esecuzione():
         ritardo_pesato_post_primo = ritardo_post_pesato_5
         soluzionequasifinale = soluzione5post
 
-        soluzionefinale, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionequasifinale, commesse_fallite, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo, beta)
+        soluzionefinale, f_obj_final, f_ritardo_final, f_ritardo_pesato_final = solver.eur_final(soluzionequasifinale, commesse_fallite + commesse_troppo_in_la, lista_macchine, fprimopost, fritardoprimopost, ritardo_pesato_post_primo, beta)
 
         ## STAMPE FINALI
         delta_fo_setup = f_obj_final - fbest
