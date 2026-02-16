@@ -360,7 +360,7 @@ def esecuzione():
 
     for _ in range(iter):
         print("\n" + "="*24)
-        print(f"|||ITERAZIONE: {_} / {iter}|||")
+        print(f"|||ITERAZIONE: {_+1} / {iter}|||")
         print("="*24 + "\n")
 
         #NB: gli input sono ricalcolati a ogni iterazione; non è ottimale ma è per evitare problemi con le due strutture dati utilizzate

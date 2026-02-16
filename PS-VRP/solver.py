@@ -108,7 +108,7 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
     fine_lavorazione = aggiungi_minuti(minuti_inizio_lavorazione + tempo_setup + tempo_processamento,inizio_schedulazione)
     veicolo = commessa.veicolo
     #tempo_medio_attesa = timedelta(days = 10)
-    tempo_medio_attesa = timedelta(days=0) #Rimuovo il malus per il testing; dovrebbe in ogni caso succedere SOLO per commesse tassative esterne
+    tempo_medio_attesa = timedelta(days=0) #Rimuovo il malus per il TESTING; dovrebbe in ogni caso succedere SOLO per commesse tassative esterne
     if commessa.tassativita == "X":
         if 0 in commessa.zona_cliente: #commesse esterne tassative
             commessa.ritardo = max(min(commessa.due_date - fine_lavorazione, timedelta(days = 0)), -max_ritardo)
@@ -145,7 +145,7 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
 
 #Filtra tutte le commesse lette correttamente in base alle zone aperte ed alle partenze dei veicoli
 def filtro_commesse(lista_commesse:list,lista_veicoli):
-    delta_esclusione = timedelta(days = 7)
+    delta_esclusione = timedelta(days = 31) ### IMPOSTATO A 31gg PER TESTING
     #lista_veicoli_disponibili = [veicolo for veicolo in lista_veicoli] #if veicolo.disponibilita == 1]  # lista che contiene i veicoli disponibili (veicoli filtrati per disponibilità)
     zone_aperte = set([veicolo.zone_coperte for veicolo in lista_veicoli if not math.isnan(veicolo.zone_coperte)])  # set contenente tutte le zone aperte (una lista può contenere duplicati, mentre un set ha elementi unici)
     commesse_da_tagliare = [] #commesse assegnabili in base alle zone
@@ -273,7 +273,6 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
             ritardomossa = max(min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0)), -max_ritardo)
     else: #altre (serve se la funzione dovesse essere mai chiamata anche su commesse solo su macchina, del gruppo 3)
         #ritardomossa = max(min(commessa.due_date - data_fine_lavorazione - tempo_medio_attesa, timedelta(days = 0)), -max_ritardo)
-
         ##NB: CAMBIATA PER TESTING ISTANZE
         ritardomossa = max(min(commessa.due_date - data_fine_lavorazione, timedelta(days = 0)), -max_ritardo)
 
@@ -320,13 +319,11 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     #ORDINAMENTO PRIMO CICLO
     lista_commesse_tassative.sort(key=lambda commessa:(commessa.due_date.timestamp(), +commessa.priorita_cliente)) #Ordinamento: prima in base alla due date; a parità, in base alla priorità del cliente
     if beta != 0:
-        print(beta)
         lista_commesse_tassative = GRASP_randomizer(lista_commesse_tassative)
 
     #PRIMO CICLO WHILE (Nuovo)
     #Si assegnano per prime tutte le commesse tassative alle macchine (l'assegnazione al veicolo è fatta dalla funzione apposita)
     while len(lista_commesse_tassative) > 0 and len(lista_macchine) > 0:
-        schedulazione_eseguita = False
         migliore_assegnazione = None
         migliore_f_obj = float('inf')
         
@@ -366,7 +363,6 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
             comm = migliore_assegnazione['commessa']
             macc = migliore_assegnazione['macchina']
             
-            schedulazione_eseguita = True
             f_obj += migliore_assegnazione['tempo_setup']
             
             aggiorna_schedulazione(comm, macc, 
@@ -421,7 +417,6 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
     #SECONDO CICLO WHILE (NUOVO)
     #Provo a inserire tutte le commesse interne a zona aperta (su macchine e veicoli)
     while len(commesse_da_schedulare) > 0 and len(lista_macchine) > 0:
-        schedulazione_eseguita = False
         migliore_assegnazione = None
         migliore_f_obj = float('inf')
 
@@ -472,9 +467,7 @@ def euristico_costruttivo(commesse_da_schedulare:list, lista_macchine:list, list
             comm = migliore_assegnazione['commessa']
             macc = migliore_assegnazione['macchina']
             veic = migliore_assegnazione['veicolo']
-            
-            schedulazione_eseguita = True
-            
+                        
             # Assegno veicolo e decremento capacità
             comm.veicolo = veic
             veic.capacita -= comm.kg_da_tagliare
@@ -562,8 +555,6 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     commesse_da_schedulare.sort(key=lambda commessa:(commessa.due_date.timestamp(), +commessa.priorita_cliente)) #Ordinamento: prima in base alla due date; a parità, in base alla priorità del cliente
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # è il primo lunedi disponibile che è uguale per tutte le macchine
 
-
-    '''CHANGE'''
     if beta != 0:
         commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
 
@@ -573,7 +564,6 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
         # Rimarranno solo fuori quelle con release date problematica
     
     while len(commesse_da_schedulare) > 0 and len(lista_macchine) > 0:
-        schedulazione_eseguita = False
         migliore_assegnazione = None
         migliore_f_obj = float('inf')
 
@@ -615,9 +605,7 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
         if migliore_assegnazione is not None:
             comm = migliore_assegnazione['commessa']
             macc = migliore_assegnazione['macchina']
-            
-            schedulazione_eseguita = True
-            
+                        
             # Aggiorno statistiche globali
             f_obj += migliore_assegnazione['tempo_setup']
             
@@ -700,7 +688,6 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
     commesse_da_schedulare.sort(key=lambda commessa:(commessa.due_date.timestamp(), +commessa.priorita_cliente)) #Ordinamento: prima in base alla due date; a parità, in base alla priorità del cliente
     inizio_schedulazione = lista_macchine[0].data_inizio_schedulazione  # è il primo lunedi disponibile che è uguale per tutte le macchine
 
-    '''CHANGE'''
     if beta != 0:
         commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
 
@@ -709,7 +696,6 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
     # se la release date è futura.
     
     while len(commesse_da_schedulare) > 0 and len(lista_macchine) > 0:
-        schedulazione_eseguita = False
         migliore_assegnazione = None
         migliore_f_obj = float('inf')
 
@@ -734,7 +720,7 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
                     tempo_fine_lavorazione = tempo_inizio_taglio + tempo_processamento + tempo_setup
                     data_fine_lavorazione = aggiungi_minuti(tempo_fine_lavorazione, inizio_schedulazione)
 
-                    # Calcolo Ritardo (usando variabili globali o passate come alfa/max_ritardo)
+                    # Calcolo Ritardo
                     ritardo_previsto = calcola_ritardo(commessa, data_fine_lavorazione, max_ritardo)
                     ritardo_pesato_ore = ritardo_previsto.total_seconds() / (3600 * commessa.priorita_cliente)
 
@@ -758,9 +744,7 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
             comm = migliore_assegnazione['commessa']
             macc = migliore_assegnazione['macchina']
             t_inizio = migliore_assegnazione['tempo_inizio_taglio']
-            
-            schedulazione_eseguita = True
-            
+                        
             # Aggiorno statistiche
             f_obj += migliore_assegnazione['tempo_setup']
             
