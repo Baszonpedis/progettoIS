@@ -363,7 +363,7 @@ def esecuzione():
         print(f"|||ITERAZIONE: {_+1} / {iter}|||")
         print("="*24 + "\n")
 
-        #NB: gli input sono ricalcolati a ogni iterazione; non è ottimale ma è per evitare problemi con le due strutture dati utilizzate
+        #NB: gli input sono ricalcolati a ogni iterazione; non è perfetto, ma non causa alcun rallentamento significativo
         #NB2: questo si dimostra particolarmente conveniente nella nuova logica di veicoli
         lista_macchine=read_excel.read_excel_macchine(file_macchine_excel) #Lista base oggetti macchina
         read_excel.read_attrezzaggio_macchine(file_macchine_excel,lista_macchine)

@@ -14,7 +14,7 @@ import random
 #alfa = 1 #Parametro per le ricerche locali - consigliato: [0.7-0.9]; si ricordi che zero minimizza i ritardi (proporzionalmente a priorità cliente), uno minimizza i setup
 #beta = 0.2 #Parametro per il GRASP (metaeuristico) - consigliato: [0.1-0.3]
 
-max_ritardo = timedelta(days = 9999) ##CAMBIATO PER TESTING
+max_ritardo = timedelta(days = 60) ##CAMBIATO PER TESTING
 
 # Leggi i parametri dalle variabili d'ambiente (stesse che legge main.py)
 def get_solver_parameters():
@@ -112,8 +112,10 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
     if commessa.tassativita == "X":
         if 0 in commessa.zona_cliente: #commesse esterne tassative
             commessa.ritardo = max(min(commessa.due_date - fine_lavorazione, timedelta(days = 0)), -max_ritardo)
-        else: #commesse interne tassative correttamente inserite in estrazione
+        elif commessa.veicolo != None: #commesse interne tassative correttamente inserite in estrazione
             commessa.ritardo = max(min(veicolo.data_partenza - fine_lavorazione, timedelta(days = 0)), -max_ritardo)
+        else: #commesse che sarebbero interne tassative, ma finiscono per essere esterne
+            commessa.ritardo = max(min(commessa.due_date - fine_lavorazione, timedelta(days = 0)), -max_ritardo)
     elif commessa.veicolo != None: #commesse interne zona aperta
         ##OLD - commessa.ritardo = min(max(veicolo.data_partenza, commessa.due_date) - fine_lavorazione, timedelta(days = 0))
         commessa.ritardo = max(min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0)), -max_ritardo)
@@ -145,7 +147,7 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
 
 #Filtra tutte le commesse lette correttamente in base alle zone aperte ed alle partenze dei veicoli
 def filtro_commesse(lista_commesse:list,lista_veicoli):
-    delta_esclusione = timedelta(days = 31) ### IMPOSTATO A 31gg PER TESTING
+    delta_esclusione = timedelta(days = 6) ### IMPOSTATO A 31gg PER TESTING
     #lista_veicoli_disponibili = [veicolo for veicolo in lista_veicoli] #if veicolo.disponibilita == 1]  # lista che contiene i veicoli disponibili (veicoli filtrati per disponibilità)
     zone_aperte = set([veicolo.zone_coperte for veicolo in lista_veicoli if not math.isnan(veicolo.zone_coperte)])  # set contenente tutte le zone aperte (una lista può contenere duplicati, mentre un set ha elementi unici)
     commesse_da_tagliare = [] #commesse assegnabili in base alle zone
@@ -198,9 +200,12 @@ def calcola_ritardo(commessa: Commessa, fine_lavorazione, max_ritardo):
     if commessa.tassativita == "X":
         if 0 in commessa.zona_cliente:  # commesse esterne tassative
             ritardo = max(min(commessa.due_date - fine_lavorazione, timedelta(days=0)), -max_ritardo)
-        else:  # commesse interne tassative
+        elif commessa.veicolo != None:  # commesse interne tassative
             veicolo = commessa.veicolo
+            print(commessa.id_commessa)
             ritardo = max(min(veicolo.data_partenza - fine_lavorazione, timedelta(days=0)), -max_ritardo)
+        else: #commesse che sarebbero interne tassative, ma finiscono per essere esterne
+            ritardo = max(min(commessa.due_date - fine_lavorazione, timedelta(days=0)), -max_ritardo)
     elif commessa.veicolo != None:  # commesse interne zona aperta
         veicolo = commessa.veicolo
         ritardo = max(min(commessa.due_date - veicolo.data_partenza, timedelta(days=0)), -max_ritardo)
