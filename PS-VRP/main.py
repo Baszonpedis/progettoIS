@@ -117,11 +117,11 @@ def esecuzione():
 
     commesse_da_schedulare, dizionario_filtri, commesse_scartate, commesse_troppo_in_la = solver.filtro_commesse(lista_commesse, lista_veicoli)
     lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
-    df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
+    lista_commesse_tassative, commesse_da_schedulare, df_creati_auto = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
 
     # Aggiunge problemi legati agli oggetti veicolo se ce ne sono
-    if not df_errati.empty:
-        output.write_veicoli_error_output(df_errati, file_errori_unico)
+    if not df_creati_auto.empty:
+        output.write_veicoli_error_output(df_creati_auto, file_errori_unico)
 
     ##EURISTICO DI BASE
     print(f"{Fore.CYAN}{Style.BRIGHT}{'='*40}")
@@ -139,7 +139,7 @@ def esecuzione():
     print(f'INPUT AL PRIMO EURISTICO: {len(commesse_da_schedulare)}')
     print(f'FALLIMENTI PRIMO EURISTICO: {len(commesse_residue)}')
     print(f'ASSEGNATI PRIMO EURISTICO: {len(commesse_da_schedulare) - len(commesse_residue)}')
-    commesse_non_schedulate = causa_fallimento | dizionario_filtri | commesse_veicoli_errati #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
+    commesse_non_schedulate = causa_fallimento | dizionario_filtri #| commesse_veicoli_errati #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
 
     #print(f"\n{Fore.RED}{Style.BRIGHT}COMMESSE NON SCHEDULATE AL PRIMO EURISTICO (su veicoli): {len(commesse_non_schedulate)}")
     #print(f"{Fore.RED}Dettaglio motivi: {commesse_non_schedulate}")
@@ -294,12 +294,12 @@ def esecuzione():
 
     #Output di errore - commesse con veicolo errato e pertanto escluse (ERRORE NON RISOLUBILE DAL CODICE)
     commesse_in_5post = {c['commessa'] for c in soluzione5post}
-    df = pd.DataFrame([
-        {
-            'id': c
-        }
-        for c in commesse_veicoli_errati
-    ])
+    #df = pd.DataFrame([
+    #    {
+    #        'id': c
+    #    }
+    #    for c in commesse_veicoli_errati
+    #])
 
     #Output di errore - commesse non schedulate (problemi release date)
     df2 = pd.DataFrame([
@@ -312,7 +312,7 @@ def esecuzione():
     ])
 
     #L'output di errore legato ai veicoli in sé è precedente (presso "elaborazione input(s)")
-    output.error_commesse_in_veicoli_errati(df,file_errori_unico)
+    #output.error_commesse_in_veicoli_errati(df,file_errori_unico)
 
     #I due output di errore a seguito non sono più rilevanti in seguito all'aggiornamento del codice
     #output.write_tassative_error_output(df2,file_errori_unico)
@@ -378,13 +378,17 @@ def esecuzione():
 
         commesse_da_schedulare, dizionario_filtri, commesse_scartate, commesse_troppo_in_la = solver.filtro_commesse(lista_commesse, lista_veicoli)
         lista_commesse_tassative = [c for c in commesse_da_schedulare if c.tassativita == "X"]
-        df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
+        lista_commesse_tassative, commesse_da_schedulare, df_creati_auto = solver.associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli)
+
+        # Aggiunge problemi legati agli oggetti veicolo se ce ne sono
+        if not df_creati_auto.empty:
+            output.write_veicoli_error_output(df_creati_auto, file_errori_unico)
 
         ## EURISTICO COSTRUTTIVO
         start_time_eur = time.time()
         schedulazione3, f_obj3, causa_fallimento, lista_macchine, commesse_residue, f_obj3_ritardo, f_obj3_ritardo_pesato, df_tass = solver.euristico_costruttivo(commesse_da_schedulare, lista_macchine, lista_veicoli, beta)
         #output.write_output_soluzione_euristica(schedulazione3, os.getcwd() + '/Dati_output/euristico_costruttivo.xlsx')
-        commesse_non_schedulate = causa_fallimento | dizionario_filtri | commesse_veicoli_errati #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
+        commesse_non_schedulate = causa_fallimento | dizionario_filtri #| commesse_veicoli_errati #| commesse_oltre_data (in caso d'uso, da reinserire eventualmente anche come output della chiamata al solver)
         end_time_eur = time.time()
         tot_time_eur = end_time_eur - start_time_eur
 
@@ -481,12 +485,12 @@ def esecuzione():
                 #write_output a seguito
 
             #Output di errore 2 - commesse con veicoli errati
-            df = pd.DataFrame([
-                {
-                    'id': c
-                }
-                for c in commesse_veicoli_errati
-            ])
+            #df = pd.DataFrame([
+            #    {
+            #        'id': c
+            #    }
+            #    for c in commesse_veicoli_errati
+            #])
 
             #Output di errore 3 - commesse non schedulate (problemi release date euristico finale)
             df2 = pd.DataFrame([
@@ -501,8 +505,8 @@ def esecuzione():
             #Output di errore 4 - tassative non schedulate come tali (problemi release date euristico ciclo 1)
                 #write_output a seguito
 
-            output.write_veicoli_error_output(df_errati, file_errori_unico)
-            output.error_commesse_in_veicoli_errati(df, file_errori_unico)
+            #output.write_veicoli_error_output(df_errati, file_errori_unico)
+            #output.error_commesse_in_veicoli_errati(df, file_errori_unico)
 
             #Gli output di errore 3 e 4 non si verificano più in seguito al cambiamento del codice
             #output.write_tassative_error_output(df2, file_errori_unico)

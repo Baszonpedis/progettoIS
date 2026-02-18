@@ -56,32 +56,35 @@ def aggiungi_minuti(minuti,data):
 
 #Associa ad ogni commessa tassativa il proprio veicolo tassativo
 def associa_veicoli_tassativi(lista_commesse_tassative, commesse_da_schedulare, lista_veicoli):
-    lista_veicoli_errati = []
-    commesse_veicoli_errati = {}
+    #lista_veicoli_errati = []
+    #commesse_veicoli_errati = {}
     mappa_veicoli = {veicolo.nome: veicolo for veicolo in lista_veicoli} #dizionario oggetti 'veicolo'
-    for commessa in lista_commesse_tassative: #ciclo for per assegnazione dei veicoli alle commesse tassative tramite corrispondenza id_tassativo e dizionario mappa_veicoli
-        if commessa.id_tassativo in mappa_veicoli:
+    veicoli_creati_auto = []
+    
+    for commessa in lista_commesse_tassative:
+        if commessa.id_tassativo in mappa_veicoli: #veicolo in estrazione, non è necessario analizzare anche la zona_cliente
             commessa.veicolo = mappa_veicoli[commessa.id_tassativo]
-        else: #se l'id tassativo punta ad un veicolo fuori dalla mappa veicolo (e dunque fuori dall'estrazione)
-            if 0 in commessa.zona_cliente: #veicoli fuori dall'estrazione esterni (comportamento corretto)
-                veicolo_non_in_estrazione = Veicolo(str(int(commessa.id_tassativo))+" (esterno)", 0, None, None)
-                #print(f'Il veicolo {veicolo_non_in_estrazione.nome} non è in estrazione! Aggiunto alla lista')
-                lista_veicoli.append(veicolo_non_in_estrazione)
-                commessa.veicolo = veicolo_non_in_estrazione
-            else: #veicoli fuori dall'estrazione interni (comportamento scorretto)
-                veicolo_non_in_estrazione = Veicolo(str(int(commessa.id_tassativo))+" (interno)", 0, None, None)
-                #print(f'ATTENZIONE: Il veicolo {veicolo_non_in_estrazione.nome} non è in estrazione! Rimuovo commesse associate')
-                #lista_veicoli.append(veicolo_non_in_estrazione)
-                commesse_da_schedulare.remove(commessa) #tolgo la commessa dalle schedulande
-                commesse_veicoli_errati[commessa.id_commessa] = "Il veicolo associato alla commessa dovrebbe essere in estrazione, ma non c'è" #aggiungo la commessa ad un dizionario da assorbire con gli altri dizionari di errore
-                lista_veicoli_errati.append(veicolo_non_in_estrazione) #lista per dataframe per la creazione di un file di errore
-    df_errati = pd.DataFrame([{
-        'nome': v.nome,
-        'peso': v.capacita,
-        'zone': v.zone_coperte,
-        'partenza': v.data_partenza
-    } for v in lista_veicoli_errati])
-    return(df_errati, lista_commesse_tassative, commesse_da_schedulare, commesse_veicoli_errati)
+        else: #veicolo non in estrazione
+            nome_veicolo = (
+                str(int(commessa.id_tassativo))+(" (esterno)")
+            )
+            veicolo_virtuale = Veicolo(
+                nome_veicolo,
+                commessa.due_date, #data_partenza = due_date della commessa
+                None,
+                0 #capacità nulla
+            )
+            lista_veicoli.append(veicolo_virtuale)
+            commessa.veicolo = veicolo_virtuale
+            veicoli_creati_auto.append({
+                'nome': veicolo_virtuale.nome,
+                'capacita': veicolo_virtuale.capacita,
+                'zone': veicolo_virtuale.zone_coperte,
+                'partenza': veicolo_virtuale.data_partenza,
+                'note': f'Creato automaticamente per commessa {commessa.id_commessa}'
+            })
+    df_creati_auto = pd.DataFrame(veicoli_creati_auto)
+    return(lista_commesse_tassative, commesse_da_schedulare, df_creati_auto)
 
 '''def raggruppa_commesse_identiche(lista_commesse):
     commesse_raggruppate = []
@@ -115,6 +118,7 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
         elif commessa.veicolo != None: #commesse interne tassative correttamente inserite in estrazione
             commessa.ritardo = max(min(veicolo.data_partenza - fine_lavorazione, timedelta(days = 0)), -max_ritardo)
         else: #commesse che sarebbero interne tassative, ma finiscono per essere esterne
+            print(commessa.id_commessa)
             commessa.ritardo = max(min(commessa.due_date - fine_lavorazione, timedelta(days = 0)), -max_ritardo)
     elif commessa.veicolo != None: #commesse interne zona aperta
         ##OLD - commessa.ritardo = min(max(veicolo.data_partenza, commessa.due_date) - fine_lavorazione, timedelta(days = 0))
@@ -147,7 +151,7 @@ def aggiorna_schedulazione(commessa: Commessa, macchina: Macchina, tempo_setup, 
 
 #Filtra tutte le commesse lette correttamente in base alle zone aperte ed alle partenze dei veicoli
 def filtro_commesse(lista_commesse:list,lista_veicoli):
-    delta_esclusione = timedelta(days = 6) ### IMPOSTATO A 31gg PER TESTING
+    delta_esclusione = timedelta(days = 10) ### IMPOSTATO A 31gg PER TESTING
     #lista_veicoli_disponibili = [veicolo for veicolo in lista_veicoli] #if veicolo.disponibilita == 1]  # lista che contiene i veicoli disponibili (veicoli filtrati per disponibilità)
     zone_aperte = set([veicolo.zone_coperte for veicolo in lista_veicoli if not math.isnan(veicolo.zone_coperte)])  # set contenente tutte le zone aperte (una lista può contenere duplicati, mentre un set ha elementi unici)
     commesse_da_tagliare = [] #commesse assegnabili in base alle zone
@@ -202,7 +206,7 @@ def calcola_ritardo(commessa: Commessa, fine_lavorazione, max_ritardo):
             ritardo = max(min(commessa.due_date - fine_lavorazione, timedelta(days=0)), -max_ritardo)
         elif commessa.veicolo != None:  # commesse interne tassative
             veicolo = commessa.veicolo
-            print(commessa.id_commessa)
+            #print(commessa.id_commessa)
             ritardo = max(min(veicolo.data_partenza - fine_lavorazione, timedelta(days=0)), -max_ritardo)
         else: #commesse che sarebbero interne tassative, ma finiscono per essere esterne
             ritardo = max(min(commessa.due_date - fine_lavorazione, timedelta(days=0)), -max_ritardo)
@@ -242,7 +246,7 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
     #Questo a fine di calcolare il "ritardomossa" - ovvero il ritardo associato alla mossa nella soluzione ricostruita
     
     ##NB: MODIFICATO PER DIVENTARE VINCOLO HARD DI NUOVO
-    tempo_medio_attesa = timedelta(days = 999)
+    tempo_medio_attesa = -timedelta(days = 999) ##RITARDO PUNITIVO - PER TESTNG
     counter = 0
 
     if commessa.tassativita == "X": #tassative
@@ -270,9 +274,8 @@ def return_schedulazione(commessa: Commessa, macchina:Macchina, minuti_setup, mi
                 counter +=1
                 #print(f'Commessa {commessa.id_commessa} disassociata in assenza di altri veicoli coerenti')
                 commessa.veicolo.temp_capacity += commessa.kg_da_tagliare
-                ritardomossa = -timedelta(days = 999)
+                ritardomossa = tempo_medio_attesa
                 veicolo = None
-                ##RITARDO PUNITIVO - PER TESTNG
                 
         if veicolo is not None: #Questo se non si entra nell'if precedente o se ci si entra e se ne esce con un veicolo
             ritardomossa = max(min(commessa.due_date - veicolo.data_partenza, timedelta(days = 0)), -max_ritardo)
@@ -563,7 +566,7 @@ def euristico_post(soluzione, commesse_residue:list, lista_macchine:list, commes
     if beta != 0:
         commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
 
-    # TERZO CICLO WHILE (Nuovo - Ottimizzato Best Fit)
+    # TERZO CICLO WHILE (Best Fit)
     # Inserisco solo sulle macchine tutte le commesse mancanti
         # (Interne zona chiusa, Esterne non tassative, Scartate precedenti)
         # Rimarranno solo fuori quelle con release date problematica
@@ -696,15 +699,14 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
     if beta != 0:
         commesse_da_schedulare = GRASP_randomizer(commesse_da_schedulare)
 
-    # QUARTO CICLO WHILE (Nuovo - Ottimizzato Best Fit con gestione Release Date)
-    # Inserisco sulle macchine le commesse residue, accettando eventuali tempi di attesa (idle time)
-    # se la release date è futura.
+    # QUARTO CICLO WHILE (Best fit)
+    # Inserisco sulle macchine le commesse residue, accettando eventuali tempi di attesa (idle time) se la release date è futura.
     
     while len(commesse_da_schedulare) > 0 and len(lista_macchine) > 0:
         migliore_assegnazione = None
         migliore_f_obj = float('inf')
 
-        # 1. Valuto TUTTE le combinazioni Commessa-Macchina
+        # 1. Valuto tutte le combinazioni Commessa-Macchina
         for commessa in commesse_da_schedulare:
             for macchina in lista_macchine:
                 # Controllo base: Disponibilità e Compatibilità
@@ -744,7 +746,7 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
                             'tempo_inizio_taglio': tempo_inizio_taglio # Importante salvarlo qui
                         }
 
-        # 2. Eseguo SOLO la migliore assegnazione
+        # 2. Eseguo solo la migliore assegnazione
         if migliore_assegnazione is not None:
             comm = migliore_assegnazione['commessa']
             macc = migliore_assegnazione['macchina']
@@ -753,7 +755,7 @@ def eur_final(soluzione, commesse_residue:list, lista_macchine:list, f_obj_base,
             # Aggiorno statistiche
             f_obj += migliore_assegnazione['tempo_setup']
             
-            # Scrivo schedulazione (notare che passiamo t_inizio calcolato, che potrebbe includere l'attesa)
+            # Scrivo schedulazione
             aggiorna_schedulazione(comm, macc, 
                                    migliore_assegnazione['tempo_setup'],
                                    migliore_assegnazione['tempo_processamento'],
